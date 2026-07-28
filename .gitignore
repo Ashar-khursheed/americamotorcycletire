@@ -1,0 +1,64 @@
+# Global / System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.log
+
+# IDE & Editor Directories
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+.fleet/
+.nova/
+.zed/
+
+# Environment Configuration
+.env
+.env.*
+!.env.example
+
+# Frontend (Next.js / Node)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env*
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+frontend/*.tsbuildinfo
+frontend/.vercel/
+
+# Backend (Laravel / PHP)
+backend/vendor/
+backend/node_modules/
+backend/.env
+backend/.env.*
+backend/.env.backup
+backend/.env.production
+backend/storage/*.key
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/public/storage
+backend/public/hot
+backend/public/build
+backend/auth.json
+backend/.phpunit.result.cache
+backend/.phpunit.cache
+backend/Homestead.json
+backend/Homestead.yaml
+
+# General Dependencies & Logs
+node_modules/
+vendor/
+*.log
