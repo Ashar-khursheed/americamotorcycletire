@@ -17,16 +17,32 @@ export function HeroBanner() {
   const [selectedModel, setSelectedModel] = useState('');
 
   useEffect(() => {
-    api.get('/fitments/options')
+    const params: Record<string, string> = {};
+    if (selectedYear) params.year = selectedYear;
+    if (selectedMake) params.make = selectedMake;
+    if (selectedModel) params.model = selectedModel;
+
+    api.get('/fitments/options', { params })
       .then((res) => {
         if (res.data) {
-          setYears(res.data.years || []);
-          setMakes(res.data.makes || []);
-          setModels(res.data.models || []);
+          const newYears = res.data.years || [];
+          const newMakes = res.data.makes || [];
+          const newModels = res.data.models || [];
+
+          setYears(newYears);
+          setMakes(newMakes);
+          setModels(newModels);
+
+          if (selectedMake && !newMakes.includes(selectedMake)) {
+            setSelectedMake('');
+          }
+          if (selectedModel && !newModels.includes(selectedModel)) {
+            setSelectedModel('');
+          }
         }
       })
       .catch(() => { });
-  }, []);
+  }, [selectedYear, selectedMake, selectedModel]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

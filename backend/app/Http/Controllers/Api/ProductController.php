@@ -47,19 +47,38 @@ class ProductController extends Controller
 
     public function getFitmentOptions(Request $request)
     {
-        $query = ProductFitment::query();
+        $year = $request->input('year');
+        $make = $request->input('make');
+        $model = $request->input('model');
+        $position = $request->input('position');
 
-        if ($request->filled('year')) {
-            $query->where('year', $request->input('year'));
-        }
-        if ($request->filled('make')) {
-            $query->where('make', $request->input('make'));
-        }
+        // 1. Years list: filter by make, model, position (excluding year filter)
+        $yearsQuery = ProductFitment::query()->whereNotNull('year')->where('year', '!=', '');
+        if (!empty($make)) $yearsQuery->where('make', $make);
+        if (!empty($model)) $yearsQuery->where('model', $model);
+        if (!empty($position)) $yearsQuery->where('position', $position);
+        $years = $yearsQuery->distinct()->pluck('year')->sortDesc()->values();
 
-        $years = ProductFitment::whereNotNull('year')->distinct()->pluck('year')->sortDesc()->values();
-        $makes = (clone $query)->whereNotNull('make')->distinct()->pluck('make')->sort()->values();
-        $models = (clone $query)->whereNotNull('model')->distinct()->pluck('model')->sort()->values();
-        $positions = (clone $query)->whereNotNull('position')->distinct()->pluck('position')->sort()->values();
+        // 2. Makes list: filter by year, model, position (excluding make filter)
+        $makesQuery = ProductFitment::query()->whereNotNull('make')->where('make', '!=', '');
+        if (!empty($year)) $makesQuery->where('year', $year);
+        if (!empty($model)) $makesQuery->where('model', $model);
+        if (!empty($position)) $makesQuery->where('position', $position);
+        $makes = $makesQuery->distinct()->pluck('make')->sort()->values();
+
+        // 3. Models list: filter by year, make, position (excluding model filter)
+        $modelsQuery = ProductFitment::query()->whereNotNull('model')->where('model', '!=', '');
+        if (!empty($year)) $modelsQuery->where('year', $year);
+        if (!empty($make)) $modelsQuery->where('make', $make);
+        if (!empty($position)) $modelsQuery->where('position', $position);
+        $models = $modelsQuery->distinct()->pluck('model')->sort()->values();
+
+        // 4. Positions list: filter by year, make, model (excluding position filter)
+        $positionsQuery = ProductFitment::query()->whereNotNull('position')->where('position', '!=', '');
+        if (!empty($year)) $positionsQuery->where('year', $year);
+        if (!empty($make)) $positionsQuery->where('make', $make);
+        if (!empty($model)) $positionsQuery->where('model', $model);
+        $positions = $positionsQuery->distinct()->pluck('position')->sort()->values();
 
         return response()->json([
             'years' => $years,

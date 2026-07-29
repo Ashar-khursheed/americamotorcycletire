@@ -37,17 +37,38 @@ function ProductsContent() {
   const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
-    // Read fitments options
-    api.get('/fitments/options')
+    // Dynamic dependent fitment options fetcher
+    const params: Record<string, string> = {};
+    if (selectedYear) params.year = selectedYear;
+    if (selectedMake) params.make = selectedMake;
+    if (selectedModel) params.model = selectedModel;
+    if (selectedPosition) params.position = selectedPosition;
+
+    api.get('/fitments/options', { params })
       .then((res) => {
         if (res.data) {
-          setYearsList(res.data.years || []);
-          setMakesList(res.data.makes || []);
-          setModelsList(res.data.models || []);
-          setPositionsList(res.data.positions || []);
+          const newYears = res.data.years || [];
+          const newMakes = res.data.makes || [];
+          const newModels = res.data.models || [];
+          const newPositions = res.data.positions || [];
+
+          setYearsList(newYears);
+          setMakesList(newMakes);
+          setModelsList(newModels);
+          setPositionsList(newPositions);
+
+          if (selectedMake && !newMakes.includes(selectedMake)) {
+            setSelectedMake('');
+          }
+          if (selectedModel && !newModels.includes(selectedModel)) {
+            setSelectedModel('');
+          }
+          if (selectedPosition && !newPositions.includes(selectedPosition)) {
+            setSelectedPosition('');
+          }
         }
       }).catch(() => { });
-  }, []);
+  }, [selectedYear, selectedMake, selectedModel, selectedPosition]);
 
   useEffect(() => {
     setLoading(true);
