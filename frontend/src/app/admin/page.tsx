@@ -302,14 +302,19 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem('bmg_admin_active_tab');
-    if (saved) {
+    if (saved && saved !== 'edit_product') {
       setActiveTabState(saved as any);
+    } else {
+      setActiveTabState('products');
+      localStorage.setItem('bmg_admin_active_tab', 'products');
     }
   }, []);
 
   const setActiveTab = (tab: any) => {
     setActiveTabState(tab);
-    localStorage.setItem('bmg_admin_active_tab', tab);
+    if (tab !== 'edit_product') {
+      localStorage.setItem('bmg_admin_active_tab', tab);
+    }
   };
 
   // Auth Guard & Theme State
@@ -2469,6 +2474,20 @@ export default function AdminDashboardPage() {
                 )}
               </div>
             </form>
+          </div>
+        )}
+
+        {activeTab === 'edit_product' && !editingProduct && (
+          <div className="text-center py-20 bg-[#101010] rounded-xl border border-[#222222]">
+            <Package className="w-12 h-12 text-[#BF8647] mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-white uppercase mb-2">No Product Selected</h3>
+            <p className="text-xs text-gray-400 mb-6">Select a product from the list to edit its details and vehicle fitments.</p>
+            <button
+              onClick={() => setActiveTab('products')}
+              className="bg-[#BF8647] text-black font-extrabold text-xs uppercase px-6 py-2.5 rounded-lg hover:bg-[#D49A50]"
+            >
+              Return to Products List
+            </button>
           </div>
         )}
 

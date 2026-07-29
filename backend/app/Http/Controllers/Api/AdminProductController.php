@@ -65,52 +65,52 @@ class AdminProductController extends Controller
                 mkdir($folderPath, 0777, true);
             }
 
+            $hash = md5($imageUrl);
+            $filename = 'prod_' . $hash . '.webp';
+            $localFilePath = $folderPath . '/' . $filename;
+            $assetUrl = asset('storage/products/' . $filename);
+
+            if (file_exists($localFilePath) && filesize($localFilePath) > 0) {
+                return $assetUrl;
+            }
+
+            $rawBinary = null;
+
             // 1. Handle Base64 Data URI
             if (str_starts_with($imageUrl, 'data:image/')) {
-                $hash = md5($imageUrl);
-                $filename = 'prod_' . $hash . '.png';
-                $localFilePath = $folderPath . '/' . $filename;
-                $assetUrl = asset('storage/products/' . $filename);
-
-                if (file_exists($localFilePath) && filesize($localFilePath) > 0) {
-                    return $assetUrl;
-                }
-
                 $parts = explode(',', $imageUrl, 2);
                 if (count($parts) === 2) {
-                    $decoded = base64_decode($parts[1]);
-                    file_put_contents($localFilePath, $decoded);
-                    return $assetUrl;
+                    $rawBinary = base64_decode($parts[1]);
                 }
             }
-
-            // 2. Handle External HTTP/HTTPS Remote Image URL
-            if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
-                $ext = pathinfo(parse_url($imageUrl, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
-                if (strlen($ext) > 4 || empty($ext)) $ext = 'jpg';
-
-                // Deterministic filename based on MD5 of URL -> prevents duplicate image files!
-                $filename = 'prod_' . md5($imageUrl) . '.' . $ext;
-                $localFilePath = $folderPath . '/' . $filename;
-                $assetUrl = asset('storage/products/' . $filename);
-
-                // If image file ALREADY exists locally, reuse existing file without downloading!
-                if (file_exists($localFilePath) && filesize($localFilePath) > 0) {
-                    return $assetUrl;
-                }
-
+            // 2. Handle External Remote Image URL
+            else if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
                 $context = stream_context_create([
-                    'http' => ['timeout' => 2, 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'],
+                    'http' => ['timeout' => 3, 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'],
                     'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
                 ]);
-                $contents = @file_get_contents($imageUrl, false, $context);
-                if ($contents) {
-                    file_put_contents($localFilePath, $contents);
-                    return $assetUrl;
+                $rawBinary = @file_get_contents($imageUrl, false, $context);
+            }
+
+            if (!empty($rawBinary)) {
+                // Try converting raw image binary to WebP via GD
+                if (function_exists('imagecreatefromstring') && function_exists('imagewebp')) {
+                    $imgRes = @imagecreatefromstring($rawBinary);
+                    if ($imgRes !== false) {
+                        imagealphablending($imgRes, true);
+                        imagesavealpha($imgRes, true);
+                        imagewebp($imgRes, $localFilePath, 80);
+                        imagedestroy($imgRes);
+                        return $assetUrl;
+                    }
                 }
+
+                // Fallback: save binary as webp file
+                file_put_contents($localFilePath, $rawBinary);
+                return $assetUrl;
             }
         } catch (\Throwable $e) {
-            Log::error("Failed to convert image to local server: " . $e->getMessage());
+            Log::error("Failed to convert image to WebP: " . $e->getMessage());
         }
 
         return $imageUrl;
