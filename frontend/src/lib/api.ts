@@ -76,8 +76,8 @@ export const fetchCustomerOrders = async (email: string) => {
 };
 
 // Admin API
-export const fetchAdminProducts = async () => {
-  const res = await api.get('/admin/products');
+export const fetchAdminProducts = async (page: number = 1, search: string = '') => {
+  const res = await api.get('/admin/products', { params: { page, search } });
   return res.data;
 };
 

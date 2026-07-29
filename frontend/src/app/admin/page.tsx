@@ -27,6 +27,9 @@ import {
   Download,
   Sun,
   Moon,
+  Search,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   fetchAdminProducts,
@@ -332,6 +335,11 @@ export default function AdminDashboardPage() {
   const [brandsRaw, setBrandsRaw] = useState<any>([]);
   const [siteSettings, setSiteSettings] = useState<any>({});
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Products Search & Pagination State
+  const [productSearch, setProductSearch] = useState('');
+  const [productPage, setProductPage] = useState(1);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   // Global Product Options State
   const defaultGlobalOptions = [
@@ -719,11 +727,36 @@ export default function AdminDashboardPage() {
   const safeBrands = extractArray(brandsRaw);
 
   // Load All Data from Laravel APIs
+  const loadAdminProducts = async (page: number = productPage, search: string = productSearch) => {
+    setLoadingProducts(true);
+    try {
+      const data = await fetchAdminProducts(page, search);
+      setProductsRaw(data);
+    } catch (err) {
+      console.error('Error loading admin products:', err);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setProductPage(1);
+    loadAdminProducts(1, productSearch);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const lastPage = productsRaw?.data?.last_page || 1;
+    if (newPage < 1 || newPage > lastPage) return;
+    setProductPage(newPage);
+    loadAdminProducts(newPage, productSearch);
+  };
+
   const loadAllData = async () => {
     setLoading(true);
     try {
       const [prodData, orderData, catData, brandData, setData] = await Promise.all([
-        fetchAdminProducts(),
+        fetchAdminProducts(productPage, productSearch),
         fetchAdminOrders(),
         fetchCategories(),
         fetchBrands(),
@@ -1166,10 +1199,10 @@ export default function AdminDashboardPage() {
                   </span>
                 </div>
                 <div className={`text-3xl font-black font-heading tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {safeProducts.length}
+                  {(productsRaw?.data?.total || safeProducts.length).toLocaleString()}
                 </div>
                 <div className={`text-[10px] uppercase tracking-widest mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                  Active SKU Inventory Records
+                  Total Inventory Product Records
                 </div>
               </div>
             </div>
@@ -1294,10 +1327,71 @@ export default function AdminDashboardPage() {
 
         {/* TAB 2: PRODUCTS */}
         {activeTab === 'products' && (
-          <div className={`rounded-xl p-6 space-y-4 shadow-xl border ${
+          <div className={`rounded-xl p-6 space-y-5 shadow-xl border ${
             isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
           }`}>
-            <div className="overflow-x-auto">
+            {/* Header, Search & Quick Actions Bar */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-[#222]">
+              <div>
+                <h3 className={`text-base font-black uppercase font-heading tracking-wider flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <Package className="w-5 h-5 text-[#BF8647]" /> INVENTORY & PRODUCTS CATALOG
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  Total Catalog Items: <span className="font-bold text-[#BF8647]">{(productsRaw?.data?.total || safeProducts.length).toLocaleString()}</span> | Page {(productsRaw?.data?.current_page || 1)} of {(productsRaw?.data?.last_page || 1)}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                {/* Search Bar Input Form */}
+                <form onSubmit={handleSearchSubmit} className="relative flex-grow md:w-80">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Search SKU, Part #, Name, Brand..."
+                    className={`w-full pl-9 pr-20 py-2 rounded-lg text-xs font-medium focus:outline-none focus:border-[#BF8647] border ${
+                      isDarkMode ? 'bg-[#181818] border-[#333] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'
+                    }`}
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#BF8647] hover:bg-[#D49A50] text-black font-extrabold text-[10px] uppercase px-2.5 py-1 rounded transition-colors cursor-pointer"
+                  >
+                    Search
+                  </button>
+                </form>
+
+                {productSearch && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProductSearch('');
+                      setProductPage(1);
+                      loadAdminProducts(1, '');
+                    }}
+                    className="text-xs text-gray-400 hover:text-white underline cursor-pointer"
+                  >
+                    Clear Search
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setActiveTab('create_product')}
+                  className="bg-[#BF8647] hover:bg-[#D49A50] text-black font-extrabold text-xs uppercase px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4" /> Add Product
+                </button>
+              </div>
+            </div>
+
+            {/* Products Table */}
+            <div className="overflow-x-auto relative">
+              {loadingProducts && (
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-10 flex items-center justify-center text-xs font-bold uppercase text-[#BF8647]">
+                  Loading Page Data...
+                </div>
+              )}
               <table className="w-full text-left text-xs uppercase">
                 <thead className={`font-bold ${isDarkMode ? 'bg-[#181818] text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
                   <tr>
@@ -1329,10 +1423,10 @@ export default function AdminDashboardPage() {
                           onClick={async () => {
                             try {
                               await api.patch(`/admin/products/${p.id}/status`);
-                              loadAllData();
+                              loadAdminProducts(productPage, productSearch);
                             } catch (err) {
                               alert('Status updated!');
-                              loadAllData();
+                              loadAdminProducts(productPage, productSearch);
                             }
                           }}
                           className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
@@ -1366,6 +1460,80 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls Bar */}
+            {(() => {
+              const currentPg = productsRaw?.data?.current_page || 1;
+              const lastPg = productsRaw?.data?.last_page || 1;
+              const totalItems = productsRaw?.data?.total || safeProducts.length;
+              const fromItem = productsRaw?.data?.from || (totalItems > 0 ? (currentPg - 1) * 50 + 1 : 0);
+              const toItem = productsRaw?.data?.to || Math.min(currentPg * 50, totalItems);
+
+              return (
+                <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t ${
+                  isDarkMode ? 'border-[#222]' : 'border-gray-200'
+                }`}>
+                  <div className="text-xs text-gray-400 font-medium">
+                    Showing <span className="font-bold text-white">{fromItem}</span> to{' '}
+                    <span className="font-bold text-white">{toItem}</span> of{' '}
+                    <span className="font-bold text-[#BF8647]">{totalItems.toLocaleString()}</span> products
+                  </div>
+
+                  {lastPg > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        disabled={currentPg <= 1}
+                        onClick={() => handlePageChange(currentPg - 1)}
+                        className={`px-3 py-1.5 rounded text-xs font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                          currentPg <= 1
+                            ? 'opacity-40 cursor-not-allowed bg-[#181818] text-gray-500'
+                            : 'bg-[#222] hover:bg-[#BF8647] text-gray-200 hover:text-black'
+                        }`}
+                      >
+                        <ChevronLeft className="w-4 h-4" /> Prev
+                      </button>
+
+                      {Array.from({ length: Math.min(5, lastPg) }, (_, idx) => {
+                        let pageNum = currentPg - 2 + idx;
+                        if (pageNum < 1) pageNum = idx + 1;
+                        if (pageNum > lastPg) pageNum = lastPg - (4 - idx);
+                        if (pageNum < 1 || pageNum > lastPg) return null;
+
+                        const isCurrent = pageNum === currentPg;
+
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`w-8 h-8 rounded text-xs font-extrabold transition-all cursor-pointer ${
+                              isCurrent
+                                ? 'bg-[#BF8647] text-black font-black shadow-md scale-105'
+                                : isDarkMode
+                                ? 'bg-[#1A1A1A] text-gray-300 hover:bg-[#2A2A2A] hover:text-white border border-[#2B2B2B]'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        disabled={currentPg >= lastPg}
+                        onClick={() => handlePageChange(currentPg + 1)}
+                        className={`px-3 py-1.5 rounded text-xs font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
+                          currentPg >= lastPg
+                            ? 'opacity-40 cursor-not-allowed bg-[#181818] text-gray-500'
+                            : 'bg-[#222] hover:bg-[#BF8647] text-gray-200 hover:text-black'
+                        }`}
+                      >
+                        Next <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
