@@ -4,10 +4,50 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
     use HasFactory;
+
+    protected static function booted()
+    {
+        static::creating(function ($product) {
+            if (empty($product->slug)) {
+                $product->slug = Str::slug($product->name);
+            }
+            $product->slug = static::generateUniqueSlug($product->slug, $product->id);
+        });
+
+        static::updating(function ($product) {
+            if ($product->isDirty('slug') || empty($product->slug)) {
+                $slugToUse = $product->slug ?: $product->name;
+                $product->slug = static::generateUniqueSlug($slugToUse, $product->id);
+            }
+        });
+    }
+
+    public static function generateUniqueSlug($slugInput, $ignoreId = null)
+    {
+        $slug = Str::slug($slugInput);
+        if (empty($slug)) {
+            $slug = 'product-' . strtolower(Str::random(6));
+        }
+
+        $originalSlug = $slug;
+        $count = 1;
+
+        while (static::where('slug', $slug)
+            ->when($ignoreId, function ($query) use ($ignoreId) {
+                return $query->where('id', '!=', $ignoreId);
+            })
+            ->exists()) {
+            $slug = "{$originalSlug}-{$count}";
+            $count++;
+        }
+
+        return $slug;
+    }
 
     protected $fillable = [
         'sku',

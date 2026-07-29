@@ -33,6 +33,11 @@ class AdminProductController extends Controller
         ]);
     }
 
+    private function makeUniqueSlug($slugInput, $ignoreId = null)
+    {
+        return Product::generateUniqueSlug($slugInput, $ignoreId);
+    }
+
     private function downloadAndStoreImage($imageUrl)
     {
         if (empty($imageUrl)) {
@@ -141,12 +146,8 @@ class AdminProductController extends Controller
             array_unshift($galleryImages, $primaryImage);
         }
 
-        $slug = $request->input('slug');
-        if (!empty($slug)) {
-            $slug = Str::slug($slug);
-        } else {
-            $slug = Str::slug($validated['name']) . '-' . strtolower(Str::random(4));
-        }
+        $slugInput = $request->input('slug');
+        $slug = $this->makeUniqueSlug(!empty($slugInput) ? $slugInput : $validated['name']);
 
         $product = Product::create([
             'name' => $validated['name'],
@@ -246,7 +247,7 @@ class AdminProductController extends Controller
         ];
 
         if ($request->has('slug') && !empty($request->input('slug'))) {
-            $updateData['slug'] = Str::slug($request->input('slug'));
+            $updateData['slug'] = $this->makeUniqueSlug($request->input('slug'), $product->id);
         }
         if ($request->has('meta_title')) {
             $updateData['meta_title'] = $request->input('meta_title');
@@ -447,7 +448,9 @@ class AdminProductController extends Controller
                 if (!empty($metaDesc)) $upData['meta_description'] = $metaDesc;
                 if (!empty($metaKw)) $upData['meta_keywords'] = $metaKw;
                 if (!empty($canonicalUrl)) $upData['canonical_url'] = $canonicalUrl;
-                if (!empty($customSlug)) $upData['slug'] = Str::slug($customSlug);
+                if (!empty($customSlug)) {
+                    $upData['slug'] = $this->makeUniqueSlug($customSlug, $existingProduct->id);
+                }
 
                 $existingProduct->update($upData);
                 $product = $existingProduct;
@@ -455,7 +458,7 @@ class AdminProductController extends Controller
             } else {
                 $product = Product::create([
                     'name' => $name,
-                    'slug' => !empty($customSlug) ? Str::slug($customSlug) : (Str::slug($name) . '-' . strtolower(Str::random(4))),
+                    'slug' => $this->makeUniqueSlug(!empty($customSlug) ? $customSlug : $name),
                     'sku' => $sku,
                     'brand' => $brand,
                     'category_id' => $categoryId,
