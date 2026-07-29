@@ -432,8 +432,8 @@ class AdminProductController extends Controller
             $canonicalUrl = $row['Canonical URL'] ?? $row['canonical_url'] ?? null;
             $customSlug = $row['Slug'] ?? $row['slug'] ?? null;
 
-            // Upsert Product by SKU or Name
-            $existingProduct = Product::where('sku', $sku)->orWhere('name', $name)->first();
+            // Upsert Product strictly by unique SKU (Part Number)
+            $existingProduct = Product::where('sku', $sku)->first();
 
             if ($existingProduct) {
                 $upData = [
