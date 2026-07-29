@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Facebook, Instagram, Phone, Mail, MapPin, CheckCircle, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import { api } from '@/lib/api';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ export default function ContactPage() {
     setErrorMsg('');
 
     try {
-      const res = await axios.post('http://127.0.0.1:8000/api/contact', formData);
+      const res = await api.post('/contact', formData);
       if (res.data?.status === 'success') {
         setSuccessMsg(res.data.message || 'Your service inquiry has been submitted! We will contact you shortly.');
         setFormData({ name: '', email: '', phone: '', message: '' });
@@ -39,6 +40,11 @@ export default function ContactPage() {
 
   return (
     <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between">
+      <SeoHead
+        slug="contact"
+        fallbackTitle="Contact BMG CYCLES | Location & Hours"
+        fallbackDescription="Visit BMG CYCLES in Fremont CA or call 408-591-8484 for motorcycle tire installation and repairs."
+      />
       <div>
         <Header />
 

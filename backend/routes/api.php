@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\CustomerAuthController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,11 @@ Route::get('/fitments/options', [ProductController::class, 'getFitmentOptions'])
 Route::post('/orders', [OrderController::class, 'store']);
 Route::get('/orders/lookup/{id}', [OrderController::class, 'show']);
 Route::post('/contact', [ContactController::class, 'store']);
+
+// Customer Auth & Account Endpoints
+Route::post('/customer/register', [CustomerAuthController::class, 'register']);
+Route::post('/customer/login', [CustomerAuthController::class, 'login']);
+Route::get('/customer/orders', [CustomerAuthController::class, 'orders']);
 
 // Reviews Public Endpoints
 Route::get('/products/{productId}/reviews', [ReviewController::class, 'getProductReviews']);

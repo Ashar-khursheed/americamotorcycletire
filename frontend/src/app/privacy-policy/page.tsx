@@ -4,10 +4,16 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ShieldCheck, Lock, Eye, FileText } from 'lucide-react';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function PrivacyPolicyPage() {
   return (
     <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between">
+      <SeoHead
+        slug="privacy-policy"
+        fallbackTitle="Privacy Policy | BMG CYCLES"
+        fallbackDescription="Learn how BMG CYCLES protects your privacy and handles personal data."
+      />
       <div>
         <Header />
 

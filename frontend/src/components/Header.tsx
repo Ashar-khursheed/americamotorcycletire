@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Phone, Menu, X } from 'lucide-react';
+import { ShoppingBag, Phone, Menu, X, User as UserIcon } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { CartDrawer } from './CartDrawer';
 import { fetchSettings } from '@/lib/api';
@@ -11,6 +11,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [customerUser, setCustomerUser] = useState<any>(null);
   const [settings, setSettings] = useState<any>({
     site_name: 'BMG CYCLES',
     contact_phone: '408-591-8484',
@@ -24,6 +25,10 @@ export function Header() {
     fetchSettings().then((data) => {
       if (data) setSettings((prev: any) => ({ ...prev, ...data }));
     });
+    try {
+      const stored = localStorage.getItem('bmg_customer_user');
+      if (stored) setCustomerUser(JSON.parse(stored));
+    } catch (e) {}
   }, []);
 
   return (
@@ -87,6 +92,27 @@ export function Header() {
               <Phone className="w-3.5 h-3.5 fill-black" />
               <span>CALL {settings.contact_phone}</span>
             </a>
+
+            {/* Customer Account Button */}
+            {mounted && customerUser ? (
+              <Link
+                href="/account"
+                className="flex items-center gap-2 bg-[#1A1A1A] border border-[#2B2B2B] hover:border-[#BF8647] text-white text-xs font-bold uppercase px-3 py-1.5 rounded-lg transition-all"
+              >
+                <div className="w-6 h-6 rounded-full bg-[#BF8647] text-black font-extrabold flex items-center justify-center text-[11px]">
+                  {customerUser.name ? customerUser.name.charAt(0).toUpperCase() : 'R'}
+                </div>
+                <span className="hidden sm:inline line-clamp-1">{customerUser.name || 'Account'}</span>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 text-xs text-gray-300 hover:text-[#BF8647] font-bold uppercase py-1.5 px-2.5 rounded hover:bg-[#161616] transition-colors"
+              >
+                <UserIcon className="w-4 h-4 text-[#BF8647]" />
+                <span className="hidden sm:inline">Sign In</span>
+              </Link>
+            )}
 
             {/* Cart Icon */}
             <button

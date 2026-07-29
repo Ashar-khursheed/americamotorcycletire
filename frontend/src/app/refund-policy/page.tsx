@@ -4,10 +4,16 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { RefreshCw, CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function RefundPolicyPage() {
   return (
     <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between">
+      <SeoHead
+        slug="refund-policy"
+        fallbackTitle="Refund & Return Policy | BMG CYCLES"
+        fallbackDescription="Hassle-free 30-day refund and return policy for motorcycle tires and parts at BMG CYCLES."
+      />
       <div>
         <Header />
 

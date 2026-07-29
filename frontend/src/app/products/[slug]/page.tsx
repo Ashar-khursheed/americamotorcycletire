@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { fetchProductBySlug, fetchProducts, fetchSettings } from '@/lib/api';
+import { fetchProductBySlug, fetchProducts, fetchSettings, api } from '@/lib/api';
 import { useCartStore } from '@/store/cartStore';
 import Link from 'next/link';
 import {
@@ -237,7 +237,7 @@ export default function ProductDetailPage() {
 
                   {/* Image Thumbnails */}
                   <div className="grid grid-cols-4 gap-3">
-                    {displayImages.map((imgUrl, idx) => (
+                    {displayImages.map((imgUrl: string, idx: number) => (
                       <button
                         key={idx}
                         onClick={() => setSelectedImage(imgUrl)}
@@ -673,7 +673,7 @@ export default function ProductDetailPage() {
                       const comment = (form.elements.namedItem('reviewComment') as HTMLTextAreaElement).value;
 
                       try {
-                        await axios.post('http://127.0.0.1:8000/api/reviews', {
+                        await api.post('/reviews', {
                           product_id: product.id,
                           user_name: name,
                           rating: 5,

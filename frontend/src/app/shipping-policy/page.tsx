@@ -4,10 +4,16 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Truck, Clock, PackageCheck, MapPin } from 'lucide-react';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function ShippingPolicyPage() {
   return (
     <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between">
+      <SeoHead
+        slug="shipping-policy"
+        fallbackTitle="Shipping Policy | BMG CYCLES"
+        fallbackDescription="Fast, reliable shipping for high-performance motorcycle tires, parts, and accessories."
+      />
       <div>
         <Header />
 

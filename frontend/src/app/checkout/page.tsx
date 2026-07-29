@@ -19,6 +19,18 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [submitting, setSubmitting] = useState(false);
 
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('bmg_customer_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (u.name) setCustomerName(u.name);
+        if (u.email) setCustomerEmail(u.email);
+        if (u.phone) setCustomerPhone(u.phone);
+      }
+    } catch (e) {}
+  }, []);
+
   const subtotal = getSubtotal();
   const shippingCost = subtotal > 99 ? 0 : 15;
   const total = subtotal + shippingCost;

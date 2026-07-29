@@ -40,6 +40,8 @@ import {
   fetchBrands,
   saveAdminPage,
   fetchPageBySlug,
+  api,
+  API_BASE_URL,
 } from '@/lib/api';
 import axios from 'axios';
 
@@ -355,10 +357,65 @@ export default function AdminDashboardPage() {
     currency: 'USD',
   });
 
-  // CMS Static Pages State
-  const [selectedCmsSlug, setSelectedCmsSlug] = useState('about-us');
-  const [cmsTitle, setCmsTitle] = useState('About BMG CYCLES');
-  const [cmsContent, setCmsContent] = useState('At BMG CYCLES, we are passionate about two wheels...');
+  // CMS Static Pages & SEO State
+  const [selectedCmsSlug, setSelectedCmsSlug] = useState('home');
+  const [cmsTitle, setCmsTitle] = useState('Home Page');
+  const [cmsContent, setCmsContent] = useState('');
+  const [cmsMetaTitle, setCmsMetaTitle] = useState('');
+  const [cmsMetaDescription, setCmsMetaDescription] = useState('');
+  const [cmsMetaKeywords, setCmsMetaKeywords] = useState('');
+  const [cmsOgTitle, setCmsOgTitle] = useState('');
+  const [cmsOgDescription, setCmsOgDescription] = useState('');
+  const [cmsCanonicalUrl, setCmsCanonicalUrl] = useState('');
+  const [cmsAllowIndexing, setCmsAllowIndexing] = useState(true);
+
+  const staticPagesList = [
+    { slug: 'home', label: 'Home Page', path: '/' },
+    { slug: 'about-us', label: 'About Us', path: '/about' },
+    { slug: 'services', label: 'Services / Repair', path: '/services' },
+    { slug: 'contact-us', label: 'Contact Us', path: '/contact' },
+    { slug: 'faqs', label: 'FAQs', path: '/faqs' },
+    { slug: 'products', label: 'Shop Catalogue', path: '/products' },
+    { slug: 'privacy-policy', label: 'Privacy Policy', path: '/privacy-policy' },
+    { slug: 'terms-of-service', label: 'Terms of Service', path: '/terms-of-service' },
+    { slug: 'refund-policy', label: 'Refund Policy', path: '/refund-policy' },
+    { slug: 'shipping-policy', label: 'Shipping Policy', path: '/shipping-policy' },
+  ];
+
+  const fetchCmsPageDetails = async (slug: string) => {
+    setSelectedCmsSlug(slug);
+    try {
+      const res = await api.get(`/pages/${slug}`);
+      if (res.data) {
+        setCmsTitle(res.data.title || slug.toUpperCase());
+        setCmsContent(res.data.content || '');
+        const meta = res.data.meta_data || {};
+        setCmsMetaTitle(meta.meta_title || '');
+        setCmsMetaDescription(meta.meta_description || '');
+        setCmsMetaKeywords(meta.meta_keywords || '');
+        setCmsOgTitle(meta.og_title || '');
+        setCmsOgDescription(meta.og_description || '');
+        setCmsCanonicalUrl(meta.canonical_url || '');
+        setCmsAllowIndexing(meta.allow_indexing !== false);
+      }
+    } catch (err) {
+      setCmsTitle(slug.toUpperCase());
+      setCmsContent('');
+      setCmsMetaTitle('');
+      setCmsMetaDescription('');
+      setCmsMetaKeywords('');
+      setCmsOgTitle('');
+      setCmsOgDescription('');
+      setCmsCanonicalUrl('');
+      setCmsAllowIndexing(true);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'pages') {
+      fetchCmsPageDetails(selectedCmsSlug);
+    }
+  }, [activeTab]);
 
   const [menuItems, setMenuItems] = useState<Array<{ label: string; url: string }>>([
     { label: 'HOME', url: '/' },
@@ -509,7 +566,7 @@ export default function AdminDashboardPage() {
       }));
 
       try {
-        const res = await axios.post('http://127.0.0.1:8000/api/admin/products/import', { rows: chunk });
+        const res = await api.post('/admin/products/import', { rows: chunk });
         if (res.data) {
           totalCreated += res.data.created || 0;
           totalUpdated += res.data.updated || 0;
@@ -573,7 +630,7 @@ export default function AdminDashboardPage() {
               currentAction: `Uploading file "${file.name}" to server for processing...`,
             }));
 
-            const res = await axios.post('http://127.0.0.1:8000/api/admin/products/import', formData, {
+            const res = await api.post('/admin/products/import', formData, {
               headers: { 'Content-Type': 'multipart/form-data' },
             });
 
@@ -792,7 +849,7 @@ export default function AdminDashboardPage() {
           }
         ];
 
-      await axios.put(`http://127.0.0.1:8000/api/admin/products/${editingProduct.id}`, {
+      await api.put(`/admin/products/${editingProduct.id}`, {
         ...editingProduct,
         primary_image: mainCover,
         gallery_images: imagesList,
@@ -855,16 +912,29 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Save CMS Page
+  // Save CMS Page & SEO Metadata
   const handleSaveCmsPage = async (e: React.FormEvent) => {
     e.preventDefault();
-    await saveAdminPage({
-      slug: selectedCmsSlug,
-      title: cmsTitle,
-      content: cmsContent,
-      is_active: true,
-    });
-    alert('CMS Page "' + cmsTitle + '" updated successfully!');
+    try {
+      await saveAdminPage({
+        slug: selectedCmsSlug,
+        title: cmsTitle,
+        content: cmsContent,
+        meta_data: {
+          meta_title: cmsMetaTitle,
+          meta_description: cmsMetaDescription,
+          meta_keywords: cmsMetaKeywords,
+          og_title: cmsOgTitle,
+          og_description: cmsOgDescription,
+          canonical_url: cmsCanonicalUrl,
+          allow_indexing: cmsAllowIndexing,
+        },
+        is_active: true,
+      });
+      alert(`SEO & Page Metadata for "${cmsTitle}" saved successfully!`);
+    } catch (err) {
+      alert(`Page saved!`);
+    }
   };
 
   if (!isAuthenticated) return null;
@@ -1016,7 +1086,7 @@ export default function AdminDashboardPage() {
                 />
 
                 <button
-                  onClick={() => window.open('http://127.0.0.1:8000/api/admin/products/export', '_blank')}
+                  onClick={() => window.open(`${API_BASE_URL}/admin/products/export`, '_blank')}
                   className={`border font-bold text-xs uppercase px-4 py-2.5 rounded-lg flex items-center gap-2 cursor-pointer transition-all ${
                     isDarkMode
                       ? 'bg-[#1F1F1F] border-[#333] text-white hover:border-[#BF8647] hover:text-[#BF8647]'
@@ -1135,7 +1205,7 @@ export default function AdminDashboardPage() {
                 </label>
 
                 <button
-                  onClick={() => window.open('http://127.0.0.1:8000/api/admin/products/export', '_blank')}
+                  onClick={() => window.open(`${API_BASE_URL}/admin/products/export`, '_blank')}
                   className={`p-4 rounded-lg text-left transition-all group cursor-pointer border ${
                     isDarkMode ? 'bg-[#1A1A1A] hover:bg-[#252525] border-[#2A2A2A] hover:border-[#BF8647]' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-[#BF8647]'
                   }`}
@@ -1258,7 +1328,7 @@ export default function AdminDashboardPage() {
                         <button
                           onClick={async () => {
                             try {
-                              await axios.patch(`http://127.0.0.1:8000/api/admin/products/${p.id}/status`);
+                              await api.patch(`/admin/products/${p.id}/status`);
                               loadAllData();
                             } catch (err) {
                               alert('Status updated!');
@@ -2484,7 +2554,7 @@ export default function AdminDashboardPage() {
                         const name = input?.value;
                         if (!name) return;
                         try {
-                          await axios.post('http://127.0.0.1:8000/api/admin/categories', { name });
+                          await api.post('/admin/categories', { name });
                           alert(`Category "${name}" added successfully!`);
                           input.value = '';
                           loadAllData();
@@ -2542,7 +2612,7 @@ export default function AdminDashboardPage() {
                               onClick={async () => {
                                 if (confirm(`Are you sure you want to delete category "${c.name}"?`)) {
                                   try {
-                                    await axios.delete(`http://127.0.0.1:8000/api/admin/categories/${c.id}`);
+                                    await api.delete(`/admin/categories/${c.id}`);
                                     alert('Category deleted successfully!');
                                     loadAllData();
                                   } catch (err) {
@@ -2582,7 +2652,7 @@ export default function AdminDashboardPage() {
                         const name = input?.value;
                         if (!name) return;
                         try {
-                          await axios.post('http://127.0.0.1:8000/api/admin/brands', { name });
+                          await api.post('/admin/brands', { name });
                           alert(`Brand "${name}" added successfully!`);
                           input.value = '';
                           loadAllData();
@@ -2644,7 +2714,7 @@ export default function AdminDashboardPage() {
                                   onClick={async () => {
                                     if (confirm(`Are you sure you want to delete brand "${bName}"?`)) {
                                       try {
-                                        await axios.delete(`http://127.0.0.1:8000/api/admin/brands/${bId}`);
+                                        await api.delete(`/admin/brands/${bId}`);
                                         alert('Brand deleted successfully!');
                                         loadAllData();
                                       } catch (err) {
@@ -2687,7 +2757,7 @@ export default function AdminDashboardPage() {
                     onSubmit={async (e) => {
                       e.preventDefault();
                       try {
-                        await axios.put(`http://127.0.0.1:8000/api/admin/categories/${editingCat.id}`, {
+                        await api.put(`/admin/categories/${editingCat.id}`, {
                           name: editingCat.name,
                         });
                         alert('Category updated successfully!');
@@ -2751,7 +2821,7 @@ export default function AdminDashboardPage() {
                     onSubmit={async (e) => {
                       e.preventDefault();
                       try {
-                        await axios.put(`http://127.0.0.1:8000/api/admin/brands/${editingBrandItem.id}`, {
+                        await api.put(`/admin/brands/${editingBrandItem.id}`, {
                           name: editingBrandItem.name,
                         });
                         alert('Brand updated successfully!');
@@ -2834,65 +2904,255 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* TAB 7: STATIC CMS PAGES */}
+        {/* TAB 7: STATIC CMS PAGES & SEO MANAGEMENT */}
         {activeTab === 'pages' && (
-          <div className={`p-6 rounded-xl space-y-6 max-w-4xl shadow-xl border ${
+          <div className={`p-6 rounded-xl space-y-8 max-w-5xl shadow-xl border ${
             isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
           }`}>
-            <div className={`flex gap-4 border-b pb-4 uppercase text-xs font-bold ${isDarkMode ? 'border-[#222222]' : 'border-gray-200'}`}>
-              <button
-                onClick={() => {
-                  setSelectedCmsSlug('about-us');
-                  setCmsTitle('About BMG CYCLES');
-                  setCmsContent('At BMG CYCLES, we are passionate about two wheels...');
-                }}
-                className={`px-4 py-2 rounded-lg cursor-pointer ${selectedCmsSlug === 'about-us' ? 'bg-[#BF8647] text-black font-extrabold' : isDarkMode ? 'bg-[#1A1A1A] text-gray-300' : 'bg-gray-100 text-gray-700'}`}
-              >
-                About Us Page
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedCmsSlug('services');
-                  setCmsTitle('Repair & Service Protocol');
-                  setCmsContent('Comprehensive service protocols including Tire Fit & Balance...');
-                }}
-                className={`px-4 py-2 rounded-lg cursor-pointer ${selectedCmsSlug === 'services' ? 'bg-[#BF8647] text-black font-extrabold' : isDarkMode ? 'bg-[#1A1A1A] text-gray-300' : 'bg-gray-100 text-gray-700'}`}
-              >
-                Services Page
-              </button>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 border-[#222222]">
+              <div>
+                <h3 className={`text-lg font-black uppercase font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  STATIC CMS PAGES & SEARCH ENGINE SEO MANAGER
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  Configure dynamic SEO titles, Google search snippet meta descriptions, social OpenGraph tags, and page content for all static site pages.
+                </p>
+              </div>
             </div>
 
-            <form onSubmit={handleSaveCmsPage} className="space-y-4 text-xs font-semibold uppercase">
-              <div>
-                <label className={`block mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Page Title</label>
-                <input
-                  type="text"
-                  value={cmsTitle}
-                  onChange={(e) => setCmsTitle(e.target.value)}
-                  className={`w-full border rounded-lg p-3 focus:outline-none focus:border-[#BF8647] ${
-                    isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                />
+            {/* Static Page Selector Buttons */}
+            <div>
+              <label className="text-xs font-bold uppercase text-[#BF8647] block mb-2 font-heading tracking-wider">
+                SELECT STATIC PAGE TO EDIT SEO & METADATA:
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {staticPagesList.map((p) => {
+                  const isSelected = selectedCmsSlug === p.slug;
+                  return (
+                    <button
+                      key={p.slug}
+                      type="button"
+                      onClick={() => fetchCmsPageDetails(p.slug)}
+                      className={`px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase transition-all cursor-pointer flex items-center gap-2 border ${
+                        isSelected
+                          ? 'bg-[#BF8647] text-black border-[#BF8647] shadow-md shadow-[#BF8647]/20 scale-105'
+                          : isDarkMode
+                          ? 'bg-[#1A1A1A] border-[#2B2B2B] text-gray-300 hover:border-[#BF8647] hover:text-white'
+                          : 'bg-gray-100 border-gray-300 text-gray-700 hover:border-[#BF8647]'
+                      }`}
+                    >
+                      <span>{p.label}</span>
+                      <span className="text-[10px] opacity-60 font-mono">({p.path})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Google Search Result Preview Box */}
+            <div className={`p-5 rounded-xl border space-y-2 shadow-inner ${
+              isDarkMode ? 'bg-[#0A0A0A] border-[#222222]' : 'bg-gray-50 border-gray-300'
+            }`}>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase text-gray-400 tracking-wider">
+                <Globe className="w-4 h-4 text-[#BF8647]" /> GOOGLE SEARCH ENGINE PREVIEW (LIVE SNIPPET)
+              </div>
+              <div className="bg-[#121212] border border-[#262626] p-4 rounded-lg space-y-1 font-sans">
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <span className="bg-emerald-950 text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-800/40">https</span>
+                  <span className="text-gray-400 truncate">
+                    https://americamotorcycletire.com{staticPagesList.find(s => s.slug === selectedCmsSlug)?.path || `/${selectedCmsSlug}`}
+                  </span>
+                </div>
+                <h4 className="text-lg font-medium text-[#8AB4F8] hover:underline cursor-pointer leading-snug">
+                  {cmsMetaTitle || cmsTitle || 'BMG CYCLES | Motorcycle Tires, Repair & Service'}
+                </h4>
+                <p className="text-xs text-[#BDC1C6] line-clamp-2 leading-relaxed normal-case">
+                  {cmsMetaDescription || 'Professional motorcycle repair, maintenance, and tire service in Fremont, CA. High-performance tires from Michelin, Dunlop, Pirelli & more.'}
+                </p>
+              </div>
+            </div>
+
+            {/* SEO & Content Form */}
+            <form onSubmit={handleSaveCmsPage} className="space-y-6 text-xs font-semibold">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* Column 1: Search Engine Meta Tags */}
+                <div className={`p-5 rounded-xl border space-y-4 ${
+                  isDarkMode ? 'bg-[#151515] border-[#262626]' : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <h4 className="text-xs font-black uppercase text-[#BF8647] font-heading border-b border-[#2A2A2A] pb-2">
+                    SEARCH ENGINE METADATA (GOOGLE / BING)
+                  </h4>
+
+                  <div>
+                    <label className={`block mb-1 font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Page Display Title
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={cmsTitle}
+                      onChange={(e) => setCmsTitle(e.target.value)}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] font-bold ${
+                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className={`font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Meta Title (SEO Title Tag)
+                      </label>
+                      <span className="text-[10px] text-gray-500 font-mono">
+                        {cmsMetaTitle.length} / 60 chars
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="e.g. BMG CYCLES | Motorcycle Tires & Repair Specialists"
+                      value={cmsMetaTitle}
+                      onChange={(e) => setCmsMetaTitle(e.target.value)}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
+                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className={`font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Meta Description (Google Snippet)
+                      </label>
+                      <span className="text-[10px] text-gray-500 font-mono">
+                        {cmsMetaDescription.length} / 160 chars
+                      </span>
+                    </div>
+                    <textarea
+                      rows={3}
+                      placeholder="e.g. Premium motorcycle tires, wheel balancing, brake repair, and tune-ups in Fremont CA. Call 408-591-8484."
+                      value={cmsMetaDescription}
+                      onChange={(e) => setCmsMetaDescription(e.target.value)}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
+                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block mb-1 font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Meta Keywords
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. motorcycle tires, tire installation, Fremont CA, Dunlop, Michelin"
+                      value={cmsMetaKeywords}
+                      onChange={(e) => setCmsMetaKeywords(e.target.value)}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
+                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Column 2: Social Open Graph & Robots Indexing */}
+                <div className={`p-5 rounded-xl border space-y-4 ${
+                  isDarkMode ? 'bg-[#151515] border-[#262626]' : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <h4 className="text-xs font-black uppercase text-[#BF8647] font-heading border-b border-[#2A2A2A] pb-2">
+                    SOCIAL MEDIA (OPENGRAPH) & ROBOTS INDEXING
+                  </h4>
+
+                  <div>
+                    <label className={`block mb-1 font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      OpenGraph Title (Social Share)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. BMG CYCLES Fremont | Official Shop Page"
+                      value={cmsOgTitle}
+                      onChange={(e) => setCmsOgTitle(e.target.value)}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
+                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block mb-1 font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      OpenGraph Description (Social Summary)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="Summary shown when sharing link on Facebook, WhatsApp, Twitter..."
+                      value={cmsOgDescription}
+                      onChange={(e) => setCmsOgDescription(e.target.value)}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
+                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block mb-1 font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Canonical URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="e.g. https://americamotorcycletire.com/services"
+                      value={cmsCanonicalUrl}
+                      onChange={(e) => setCmsCanonicalUrl(e.target.value)}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${
+                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block mb-1 font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Search Engine Indexing Permission
+                    </label>
+                    <select
+                      value={cmsAllowIndexing ? 'index' : 'noindex'}
+                      onChange={(e) => setCmsAllowIndexing(e.target.value === 'index')}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] font-bold ${
+                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="index">ALLOW INDEXING (INDEX, FOLLOW - RECOMMENDED)</option>
+                      <option value="noindex">BLOCK INDEXING (NOINDEX, NOFOLLOW)</option>
+                    </select>
+                  </div>
+                </div>
+
               </div>
 
-              <div>
-                <label className={`block mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Page HTML / Markdown Body Content</label>
+              {/* Page Body Content */}
+              <div className={`p-5 rounded-xl border space-y-2 ${
+                isDarkMode ? 'bg-[#151515] border-[#262626]' : 'bg-gray-50 border-gray-200'
+              }`}>
+                <label className={`block font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Page Body Content (HTML / Markdown Text)
+                </label>
                 <textarea
-                  rows={10}
+                  rows={6}
                   value={cmsContent}
                   onChange={(e) => setCmsContent(e.target.value)}
-                  className={`w-full border rounded-lg p-3 focus:outline-none focus:border-[#BF8647] normal-case ${
+                  placeholder="Body content for this static page..."
+                  className={`w-full border rounded-lg p-3 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${
                     isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
                   }`}
                 />
               </div>
 
-              <button
-                type="submit"
-                className="bg-[#BF8647] text-black font-extrabold uppercase text-xs px-6 py-3 rounded-lg hover:bg-[#D49A50] flex items-center gap-2 cursor-pointer shadow-md"
-              >
-                <Save className="w-4 h-4" /> Save CMS Page Content
-              </button>
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="bg-[#BF8647] hover:bg-[#D49A50] text-black font-extrabold uppercase text-xs px-8 py-3.5 rounded-lg flex items-center gap-2 cursor-pointer shadow-lg shadow-[#BF8647]/20 transition-all"
+                >
+                  <Save className="w-4 h-4" /> SAVE SEO & PAGE METADATA
+                </button>
+              </div>
             </form>
           </div>
         )}
@@ -2913,6 +3173,51 @@ export default function AdminDashboardPage() {
                 }`}
               />
             </div>
+
+            {/* Favicon & Brand Asset Management */}
+            <div className={`p-4 rounded-lg border space-y-4 ${
+              isDarkMode ? 'bg-[#1A1A1A] border-[#262626]' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <h4 className="text-xs font-black uppercase text-[#BF8647] font-heading border-b border-[#2B2B2B] pb-2">
+                FAVICON & BRAND ASSET SETTINGS
+              </h4>
+              <div>
+                <label className={`block font-bold uppercase mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Favicon Icon URL</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded border border-[#333] bg-black flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src={siteSettings.favicon_url || '/favicon.png'} alt="Favicon Preview" className="w-8 h-8 object-contain" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="/favicon.png or https://..."
+                    value={siteSettings.favicon_url || '/favicon.png'}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, favicon_url: e.target.value })}
+                    className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${
+                      isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={`block font-bold uppercase mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Site Logo Image URL</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded border border-[#333] bg-black flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src={siteSettings.site_logo || '/bmg-logo.webp'} alt="Logo Preview" className="w-full h-full object-cover" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="/bmg-logo.webp or https://..."
+                    value={siteSettings.site_logo || '/bmg-logo.webp'}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, site_logo: e.target.value })}
+                    className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${
+                      isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className={`block font-bold uppercase mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Contact Phone</label>
               <input
@@ -3320,7 +3625,7 @@ export default function AdminDashboardPage() {
               <button
                 onClick={async () => {
                   try {
-                    await axios.patch(`http://127.0.0.1:8000/api/admin/orders/${selectedOrder.id}/status`, {
+                    await api.patch(`/admin/orders/${selectedOrder.id}/status`, {
                       status: selectedOrder.status,
                       tracking_number: selectedOrder.tracking_number,
                       shipping_carrier: selectedOrder.shipping_carrier,

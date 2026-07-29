@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { HelpCircle, ChevronDown, Wrench, Truck, ShieldCheck, CreditCard } from 'lucide-react';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function FaqsPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -53,6 +54,11 @@ export default function FaqsPage() {
 
   return (
     <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between">
+      <SeoHead
+        slug="faqs"
+        fallbackTitle="Frequently Asked Questions | BMG CYCLES"
+        fallbackDescription="Answers to common motorcycle tire, maintenance, and service questions."
+      />
       <div>
         <Header />
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, Bike, Filter } from 'lucide-react';
-import axios from 'axios';
+import { api } from '@/lib/api';
 
 export function HeroBanner() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export function HeroBanner() {
   const [selectedModel, setSelectedModel] = useState('');
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/fitments/options')
+    api.get('/fitments/options')
       .then((res) => {
         if (res.data) {
           setYears(res.data.years || []);

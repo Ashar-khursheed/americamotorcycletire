@@ -11,10 +11,16 @@ import { Testimonials } from '@/components/Testimonials';
 import { FacilityGallery } from '@/components/FacilityGallery';
 import { LocationContact } from '@/components/LocationContact';
 import { Footer } from '@/components/Footer';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function HomePage() {
   return (
     <main className="bg-[#0A0A0A] min-h-screen text-white">
+      <SeoHead
+        slug="home"
+        fallbackTitle="BMG CYCLES | Motorcycle Tires, Repair & Service Specialists"
+        fallbackDescription="Professional motorcycle repair, maintenance, and tire service. Quality work for all makes & models."
+      />
       {/* 1. Header */}
       <Header />
 

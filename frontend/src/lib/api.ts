@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -60,6 +60,21 @@ export const fetchOrderById = async (id: string) => {
   return res.data;
 };
 
+export const registerCustomer = async (data: { name: string; email: string; password: string; phone?: string }) => {
+  const res = await api.post('/customer/register', data);
+  return res.data;
+};
+
+export const loginCustomer = async (data: { email: string; password: string }) => {
+  const res = await api.post('/customer/login', data);
+  return res.data;
+};
+
+export const fetchCustomerOrders = async (email: string) => {
+  const res = await api.get('/customer/orders', { params: { email } });
+  return res.data?.orders || res.data || [];
+};
+
 // Admin API
 export const fetchAdminProducts = async () => {
   const res = await api.get('/admin/products');
@@ -95,3 +110,37 @@ export const saveAdminPage = async (pageData: any) => {
   const res = await api.post('/admin/pages', pageData);
   return res.data;
 };
+
+export interface Product {
+  id: number;
+  name: string;
+  slug: string;
+  sku?: string;
+  brand?: string;
+  price: number | string;
+  compare_at_price?: number | string;
+  primary_image?: string;
+  gallery_images?: string[];
+  description?: string;
+  short_description?: string;
+  stock_quantity?: number;
+  is_active?: boolean;
+  fitments?: any[];
+  custom_attributes?: any[];
+  product_attribute_values?: any[];
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
+  canonical_url?: string;
+}
+
+export interface AvailableFilters {
+  brands?: string[];
+  categories?: any[];
+  attributes?: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    values: Array<{ id: number; value: string; label?: string }>;
+  }>;
+}

@@ -4,11 +4,11 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { fetchProducts, fetchCategories, fetchBrands } from '@/lib/api';
+import { fetchProducts, fetchCategories, fetchBrands, api } from '@/lib/api';
 import { useCartStore } from '@/store/cartStore';
 import Link from 'next/link';
 import { Search, Filter, ShoppingBag, Bike, Check, X } from 'lucide-react';
-import axios from 'axios';
+import { SeoHead } from '@/components/SeoHead';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -38,7 +38,7 @@ function ProductsContent() {
 
   useEffect(() => {
     // Read fitments options
-    axios.get('http://127.0.0.1:8000/api/fitments/options')
+    api.get('/fitments/options')
       .then((res) => {
         if (res.data) {
           setYearsList(res.data.years || []);
@@ -103,6 +103,11 @@ function ProductsContent() {
 
   return (
     <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between">
+      <SeoHead
+        slug="products"
+        fallbackTitle="Motorcycle Tires & Parts Catalog | BMG CYCLES"
+        fallbackDescription="Browse high performance street, cruiser, touring, and racing motorcycle tires."
+      />
       <div>
         <Header />
 

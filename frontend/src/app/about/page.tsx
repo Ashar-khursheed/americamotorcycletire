@@ -3,10 +3,16 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function AboutPage() {
   return (
     <main className="bg-[#0D0D0D] min-h-screen text-white flex flex-col justify-between">
+      <SeoHead
+        slug="about"
+        fallbackTitle="About BMG CYCLES | Motorcycle Repair & Tire Specialists"
+        fallbackDescription="Learn about BMG CYCLES in Fremont CA. Over 15 years of industry experience in motorcycle tires and service."
+      />
       <div>
         <Header />
 

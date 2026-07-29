@@ -4,10 +4,16 @@ import React from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { FileText, Shield, Wrench, AlertTriangle } from 'lucide-react';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function TermsOfServicePage() {
   return (
     <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between">
+      <SeoHead
+        slug="terms-of-service"
+        fallbackTitle="Terms of Service | BMG CYCLES"
+        fallbackDescription="Terms of service and shop policies for BMG CYCLES tire purchases and repairs."
+      />
       <div>
         <Header />
 
