@@ -65,26 +65,52 @@ class AdminProductController extends Controller
                 mkdir($folderPath, 0777, true);
             }
 
-            $hash = md5($imageUrl);
-            $filename = 'prod_' . $hash . '.webp';
-            $localFilePath = $folderPath . '/' . $filename;
-            $assetUrl = asset('storage/products/' . $filename);
+            $urlPath = parse_url($imageUrl, PHP_URL_PATH) ?? '';
+            $origExt = strtolower(pathinfo($urlPath, PATHINFO_EXTENSION));
+            if (empty($origExt) || strlen($origExt) > 4) {
+                $origExt = 'jpg';
+            }
 
-            if (file_exists($localFilePath) && filesize($localFilePath) > 0) {
-                return $assetUrl;
+            $hash = md5($imageUrl);
+
+            // Handle SVG Vector images
+            if ($origExt === 'svg' || str_contains(strtolower($imageUrl), '.svg')) {
+                $filename = 'prod_' . $hash . '.svg';
+                $localFilePath = $folderPath . '/' . $filename;
+                $assetUrl = asset('storage/products/' . $filename);
+
+                if (file_exists($localFilePath) && filesize($localFilePath) > 0) {
+                    return $assetUrl;
+                }
+
+                $context = stream_context_create([
+                    'http' => ['timeout' => 3, 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'],
+                    'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
+                ]);
+                $contents = @file_get_contents($imageUrl, false, $context);
+                if ($contents) {
+                    file_put_contents($localFilePath, $contents);
+                    return $assetUrl;
+                }
+                return $imageUrl;
+            }
+
+            // Handle Bitmaps (PNG, JPG, WebP)
+            $webpFilename = 'prod_' . $hash . '.webp';
+            $webpPath = $folderPath . '/' . $webpFilename;
+            $webpAssetUrl = asset('storage/products/' . $webpFilename);
+
+            if (file_exists($webpPath) && filesize($webpPath) > 0) {
+                return $webpAssetUrl;
             }
 
             $rawBinary = null;
-
-            // 1. Handle Base64 Data URI
             if (str_starts_with($imageUrl, 'data:image/')) {
                 $parts = explode(',', $imageUrl, 2);
                 if (count($parts) === 2) {
                     $rawBinary = base64_decode($parts[1]);
                 }
-            }
-            // 2. Handle External Remote Image URL
-            else if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
+            } else if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
                 $context = stream_context_create([
                     'http' => ['timeout' => 3, 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'],
                     'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
@@ -93,24 +119,30 @@ class AdminProductController extends Controller
             }
 
             if (!empty($rawBinary)) {
-                // Try converting raw image binary to WebP via GD
+                // Try converting bitmap to WebP via GD
                 if (function_exists('imagecreatefromstring') && function_exists('imagewebp')) {
                     $imgRes = @imagecreatefromstring($rawBinary);
                     if ($imgRes !== false) {
                         imagealphablending($imgRes, true);
                         imagesavealpha($imgRes, true);
-                        imagewebp($imgRes, $localFilePath, 80);
+                        if (@imagewebp($imgRes, $webpPath, 80)) {
+                            imagedestroy($imgRes);
+                            return $webpAssetUrl;
+                        }
                         imagedestroy($imgRes);
-                        return $assetUrl;
                     }
                 }
 
-                // Fallback: save binary as webp file
-                file_put_contents($localFilePath, $rawBinary);
-                return $assetUrl;
+                // Fallback: save binary with true extension (.jpg / .png / .jpeg)
+                $fallbackFilename = 'prod_' . $hash . '.' . $origExt;
+                $fallbackPath = $folderPath . '/' . $fallbackFilename;
+                $fallbackAssetUrl = asset('storage/products/' . $fallbackFilename);
+
+                file_put_contents($fallbackPath, $rawBinary);
+                return $fallbackAssetUrl;
             }
         } catch (\Throwable $e) {
-            Log::error("Failed to convert image to WebP: " . $e->getMessage());
+            Log::error("Failed to store image: " . $e->getMessage());
         }
 
         return $imageUrl;
