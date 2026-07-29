@@ -54,6 +54,7 @@ Route::prefix('admin')->group(function () {
 
     // Products
     Route::get('/products', [AdminProductController::class, 'index']);
+    Route::get('/products/{id}', [AdminProductController::class, 'show']);
     Route::post('/products', [AdminProductController::class, 'store']);
     Route::put('/products/{id}', [AdminProductController::class, 'update']);
     Route::patch('/products/{id}/status', [AdminProductController::class, 'toggleStatus']);

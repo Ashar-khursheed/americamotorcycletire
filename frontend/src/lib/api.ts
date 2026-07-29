@@ -81,6 +81,11 @@ export const fetchAdminProducts = async (page: number = 1, search: string = '') 
   return res.data;
 };
 
+export const fetchAdminProductById = async (id: number | string) => {
+  const res = await api.get(`/admin/products/${id}`);
+  return res.data;
+};
+
 export const createAdminProduct = async (productData: any) => {
   const res = await api.post('/admin/products', productData);
   return res.data;

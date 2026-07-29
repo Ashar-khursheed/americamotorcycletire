@@ -33,6 +33,16 @@ class AdminProductController extends Controller
         ]);
     }
 
+    public function show($id)
+    {
+        $product = Product::with(['category', 'fitments'])->findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $product,
+        ]);
+    }
+
     private function makeUniqueSlug($slugInput, $ignoreId = null)
     {
         return Product::generateUniqueSlug($slugInput, $ignoreId);

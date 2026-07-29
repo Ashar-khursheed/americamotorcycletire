@@ -324,14 +324,13 @@ export default function ProductDetailPage() {
                       </div>
                     </div>
 
-                    {/* Dynamic Attributes (Wheel Location, Tire Size) */}
+                    {/* Dynamic Attributes */}
                     {(() => {
-                      const effectiveAttributes = (product?.custom_attributes && Array.isArray(product.custom_attributes) && product.custom_attributes.length > 0)
+                      const effectiveAttributes = (product?.custom_attributes && Array.isArray(product.custom_attributes))
                         ? product.custom_attributes
-                        : [
-                            { name: 'Wheel Location', options: ['Front', 'Rear'] },
-                            { name: 'Tire Size', options: ['Front MT90B16 72H TL NWS', '130/90B16 73H TL', '180/65B16 81H TL'] }
-                          ];
+                        : [];
+
+                      if (effectiveAttributes.length === 0) return null;
 
                       return (
                         <div className="space-y-4 my-6 pt-5 border-t border-[#222]">
@@ -608,34 +607,9 @@ export default function ProductDetailPage() {
                           </table>
                         </div>
                       ) : (
-                        <div className="border border-[#262626] rounded overflow-hidden">
-                          <table className="w-full text-left text-xs uppercase">
-                            <thead className="bg-[#1A1A1A] text-[#BF8647] font-bold">
-                              <tr>
-                                <th className="p-3">Year Range</th>
-                                <th className="p-3">Make</th>
-                                <th className="p-3">Model</th>
-                                <th className="p-3">Position</th>
-                                <th className="p-3 text-right">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-[#222] text-gray-300">
-                              <tr className="hover:bg-[#161616]">
-                                <td className="p-3 font-bold text-white">2018 - 2024</td>
-                                <td className="p-3 font-bold text-white">Harley-Davidson</td>
-                                <td className="p-3 text-gray-300">FLHT / FLTRX Road Glide & Street Glide</td>
-                                <td className="p-3 font-bold text-[#BF8647]">Front</td>
-                                <td className="p-3 text-right"><span className="text-emerald-400 font-bold text-[11px]">✓ Verified</span></td>
-                              </tr>
-                              <tr className="hover:bg-[#161616]">
-                                <td className="p-3 font-bold text-white">2019 - 2023</td>
-                                <td className="p-3 font-bold text-white">Indian Motorcycle</td>
-                                <td className="p-3 text-gray-300">Chieftain / Challenger Series</td>
-                                <td className="p-3 font-bold text-[#BF8647]">Front</td>
-                                <td className="p-3 text-right"><span className="text-emerald-400 font-bold text-[11px]">✓ Verified</span></td>
-                              </tr>
-                            </tbody>
-                          </table>
+                        <div className="p-6 text-center text-gray-400 bg-[#1A1A1A] rounded border border-[#262626]">
+                          <p className="text-xs uppercase font-bold text-gray-300 mb-1">Universal / General Fitment</p>
+                          <p className="text-[11px] text-gray-400">No specific vehicle fitment requirements recorded for this product item.</p>
                         </div>
                       )}
 

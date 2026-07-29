@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import {
   fetchAdminProducts,
+  fetchAdminProductById,
   createAdminProduct,
   deleteAdminProduct,
   fetchAdminOrders,
@@ -794,19 +795,40 @@ export default function AdminDashboardPage() {
   const pendingOrdersCount = safeOrders.filter((o) => o.status === 'pending').length;
 
   // Start Product Edit
-  const handleStartEditProduct = (p: any) => {
-    let imagesList: string[] = [];
-    if (Array.isArray(p.gallery_images) && p.gallery_images.length > 0) {
-      imagesList = p.gallery_images;
-    } else if (p.primary_image) {
-      imagesList = [p.primary_image];
+  const handleStartEditProduct = async (p: any) => {
+    try {
+      setLoadingProducts(true);
+      const res = await fetchAdminProductById(p.id);
+      const fullProd = res?.data || res || p;
+      let imagesList: string[] = [];
+      if (Array.isArray(fullProd.gallery_images) && fullProd.gallery_images.length > 0) {
+        imagesList = fullProd.gallery_images;
+      } else if (fullProd.primary_image) {
+        imagesList = [fullProd.primary_image];
+      }
+      setEditingProduct({
+        ...fullProd,
+        images: imagesList,
+        primary_image: fullProd.primary_image || (imagesList[0] || ''),
+      });
+      setActiveTab('edit_product');
+    } catch (err) {
+      console.error('Error fetching single product details:', err);
+      let imagesList: string[] = [];
+      if (Array.isArray(p.gallery_images) && p.gallery_images.length > 0) {
+        imagesList = p.gallery_images;
+      } else if (p.primary_image) {
+        imagesList = [p.primary_image];
+      }
+      setEditingProduct({
+        ...p,
+        images: imagesList,
+        primary_image: p.primary_image || (imagesList[0] || ''),
+      });
+      setActiveTab('edit_product');
+    } finally {
+      setLoadingProducts(false);
     }
-    setEditingProduct({
-      ...p,
-      images: imagesList,
-      primary_image: p.primary_image || (imagesList[0] || ''),
-    });
-    setActiveTab('edit_product');
   };
 
   // Add Product Handler
@@ -998,7 +1020,7 @@ export default function AdminDashboardPage() {
           <nav className="space-y-1 text-xs font-bold uppercase tracking-wider">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-              { id: 'products', label: `Products (${safeProducts.length})`, icon: Package },
+              { id: 'products', label: `Products (${(productsRaw?.data?.total || safeProducts.length).toLocaleString()})`, icon: Package },
               { id: 'global_options', label: 'Global Options', icon: Wrench },
               { id: 'payments', label: 'Payments & Stripe', icon: CreditCard },
               { id: 'orders', label: `Orders (${safeOrders.length})`, icon: ShoppingCart },
