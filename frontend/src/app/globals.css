@@ -100,7 +100,7 @@ label {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(10px);
   }
 
   to {
@@ -143,4 +143,73 @@ label {
 
 .animate-pulse-gold {
   animation: pulseGold 2.5s infinite;
+}
+
+/* Print Media Styles for Professional Invoices */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  header,
+  footer,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-invoice-card {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .print-invoice-card * {
+    color: #000000 !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 15px !important;
+    margin-bottom: 15px !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+  }
+
+  th, td {
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f8fafc !important;
+    font-weight: bold !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
 }

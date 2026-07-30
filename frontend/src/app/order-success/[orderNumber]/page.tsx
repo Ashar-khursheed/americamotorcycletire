@@ -42,62 +42,76 @@ export default function OrderSuccessPage() {
               </Link>
             </div>
           ) : (
-            <div className="bg-[#121212] border border-[#222] rounded-lg p-8 space-y-8">
+            <div className="bg-[#121212] border border-[#222] rounded-lg p-6 sm:p-10 space-y-8 print-invoice-card">
 
-              {/* Success Badge */}
-              <div className="text-center border-b border-[#222] pb-8">
-                <CheckCircle2 className="w-16 h-16 text-[#BF8647] mx-auto mb-4" />
-                <h1 className="text-3xl font-extrabold uppercase text-white mb-2">
-                  ORDER PLACED SUCCESSFULLY!
-                </h1>
-                <p className="text-gray-400 text-xs uppercase tracking-wider">
-                  Order Reference Number: <span className="text-[#BF8647] font-bold">{order.order_number}</span>
-                </p>
-              </div>
+              {/* Header for Screen & Print */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b border-[#222] pb-6">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-black uppercase text-white font-heading tracking-wider">
+                      BMG CYCLES
+                    </h1>
+                    <span className="bg-[#BF8647] text-black text-[10px] font-black uppercase px-2.5 py-1 rounded no-print">
+                      OFFICIAL INVOICE
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-semibold uppercase mt-1">
+                    America Motorcycle Tire & Fremont Workshop Specialist
+                  </p>
+                  <p className="text-xs text-gray-400 font-mono mt-0.5">
+                    39575 Cherry St, Fremont, CA 94538 | Phone: (408) 591-8484 | Email: info@bmgcycle.com
+                  </p>
+                </div>
 
-              {/* Order Info Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs uppercase bg-[#161616] p-6 rounded border border-[#262626]">
-                <div>
-                  <span className="text-gray-400 font-bold block mb-1">Customer Name</span>
-                  <span className="text-white font-bold">{order.customer_name}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 font-bold block mb-1">Email Address</span>
-                  <span className="text-white font-bold">{order.customer_email}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 font-bold block mb-1">Shipping Address</span>
-                  <span className="text-white font-bold">{order.shipping_address}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 font-bold block mb-1">Order Status</span>
-                  <span className="bg-[#BF8647] text-black px-2 py-0.5 rounded font-black text-[10px] uppercase">
-                    {order.status || 'PENDING'}
+                <div className="text-left sm:text-right border-t sm:border-t-0 pt-4 sm:pt-0 border-[#222] w-full sm:w-auto">
+                  <span className="text-xs text-gray-400 font-bold uppercase block">INVOICE NUMBER</span>
+                  <span className="text-2xl font-black text-[#BF8647] font-mono block">{order.order_number}</span>
+                  <span className="text-xs text-gray-400 font-semibold block mt-1">
+                    Date: {new Date(order.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
               </div>
 
-              {/* Items Table */}
+              {/* Customer & Shipping Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs uppercase bg-[#161616] p-6 rounded-lg border border-[#262626]">
+                <div className="space-y-1">
+                  <span className="text-[#BF8647] font-extrabold block text-[11px] tracking-wider mb-2">BILLED & SHIPPED TO</span>
+                  <div><span className="text-gray-400 font-bold">Name: </span><span className="text-white font-bold">{order.customer_name}</span></div>
+                  <div><span className="text-gray-400 font-bold">Email: </span><span className="text-white font-bold">{order.customer_email}</span></div>
+                  {order.customer_phone && <div><span className="text-gray-400 font-bold">Phone: </span><span className="text-white font-bold">{order.customer_phone}</span></div>}
+                  <div className="pt-1"><span className="text-gray-400 font-bold">Address: </span><span className="text-white font-bold">{order.shipping_address}</span></div>
+                </div>
+
+                <div className="space-y-1 sm:border-l sm:border-[#262626] sm:pl-6">
+                  <span className="text-[#BF8647] font-extrabold block text-[11px] tracking-wider mb-2">PAYMENT & TRANSACTION</span>
+                  <div><span className="text-gray-400 font-bold">Payment Method: </span><span className="text-white font-bold">{order.payment_method || 'Credit Card'}</span></div>
+                  <div><span className="text-gray-400 font-bold">Payment Status: </span><span className="text-emerald-400 font-bold">PAID</span></div>
+                  <div><span className="text-gray-400 font-bold">Transaction Ref: </span><span className="text-white font-mono">{order.transaction_id || 'TXN-BMG' + order.id}</span></div>
+                  <div><span className="text-gray-400 font-bold">Fulfillment: </span><span className="text-white font-bold">{order.status || 'PENDING'}</span></div>
+                </div>
+              </div>
+
+              {/* Itemized Table */}
               <div>
-                <h3 className="text-sm font-bold uppercase text-white mb-4">ITEMS ORDERED</h3>
-                <div className="border border-[#222] rounded overflow-hidden">
+                <h3 className="text-xs font-extrabold uppercase text-gray-300 tracking-wider mb-3">ITEMIZED ORDER SUMMARY</h3>
+                <div className="border border-[#222] rounded-lg overflow-hidden">
                   <table className="w-full text-left text-xs uppercase">
-                    <thead className="bg-[#1C1C1C] text-gray-400">
+                    <thead className="bg-[#1C1C1C] text-gray-400 border-b border-[#222]">
                       <tr>
-                        <th className="p-3">Item</th>
-                        <th className="p-3">Qty</th>
-                        <th className="p-3 text-right">Price</th>
-                        <th className="p-3 text-right">Total</th>
+                        <th className="p-3.5">Product Description</th>
+                        <th className="p-3.5 text-center">Qty</th>
+                        <th className="p-3.5 text-right">Unit Price</th>
+                        <th className="p-3.5 text-right">Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#222] text-gray-300">
                       {order.items?.map((item: any) => (
                         <tr key={item.id}>
-                          <td className="p-3 font-bold text-white">{item.product_name}</td>
-                          <td className="p-3">{item.quantity}</td>
-                          <td className="p-3 text-right">${Number(item.price).toFixed(2)}</td>
-                          <td className="p-3 text-right font-bold text-[#BF8647]">
-                            ${Number(item.total).toFixed(2)}
+                          <td className="p-3.5 font-bold text-white">{item.product_name}</td>
+                          <td className="p-3.5 text-center font-mono">{item.quantity}</td>
+                          <td className="p-3.5 text-right font-mono">${Number(item.price).toFixed(2)}</td>
+                          <td className="p-3.5 text-right font-bold text-[#BF8647] font-mono">
+                            ${Number(item.total || (item.price * item.quantity)).toFixed(2)}
                           </td>
                         </tr>
                       ))}
@@ -106,37 +120,43 @@ export default function OrderSuccessPage() {
                 </div>
               </div>
 
-              {/* Totals */}
+              {/* Totals Section */}
               <div className="flex flex-col items-end text-xs uppercase space-y-2 pt-4 border-t border-[#222]">
-                <div className="flex justify-between w-48 text-gray-400">
+                <div className="flex justify-between w-64 text-gray-400">
                   <span>Subtotal:</span>
-                  <span className="text-white font-bold">${Number(order.subtotal).toFixed(2)}</span>
+                  <span className="text-white font-bold font-mono">${Number(order.subtotal).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between w-48 text-gray-400">
-                  <span>Shipping:</span>
-                  <span className="text-[#BF8647] font-bold">
+                <div className="flex justify-between w-64 text-gray-400">
+                  <span>Shipping & Handling:</span>
+                  <span className="text-[#BF8647] font-bold font-mono">
                     ${Number(order.shipping_cost).toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between w-48 text-sm font-bold text-white pt-2 border-t border-[#333]">
-                  <span>Total Paid:</span>
-                  <span className="text-[#BF8647]">${Number(order.total_amount).toFixed(2)}</span>
+                <div className="flex justify-between w-64 text-sm font-black text-white pt-3 border-t border-[#333]">
+                  <span>TOTAL PAID:</span>
+                  <span className="text-[#BF8647] font-mono">${Number(order.total_amount).toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-[#222]">
+              {/* Invoice Footer note */}
+              <div className="pt-6 border-t border-[#222] text-[11px] text-gray-400 space-y-1">
+                <p className="font-bold text-gray-300 uppercase">THANK YOU FOR YOUR BUSINESS WITH BMG CYCLES!</p>
+                <p>For any questions or service scheduling regarding your order, please call (408) 591-8484 or email info@bmgcycle.com.</p>
+              </div>
+
+              {/* Action Buttons (Screen Only) */}
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[#222] no-print">
                 <Link
                   href="/products"
-                  className="bg-[#1C1C1C] border border-[#333] hover:border-[#BF8647] text-white px-6 py-3 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                  className="bg-[#1C1C1C] border border-[#333] hover:border-[#BF8647] text-white px-6 py-3 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all"
                 >
                   <ArrowLeft className="w-4 h-4" /> Continue Shopping
                 </Link>
                 <button
                   onClick={() => window.print()}
-                  className="bg-[#BF8647] text-black px-6 py-3 rounded text-xs font-bold uppercase tracking-wider hover:bg-[#D49A50] flex items-center gap-2"
+                  className="bg-[#BF8647] text-black px-6 py-3 rounded text-xs font-bold uppercase tracking-wider hover:bg-[#D49A50] flex items-center gap-2 transition-all shadow-lg cursor-pointer"
                 >
-                  <Printer className="w-4 h-4" /> Print Invoice
+                  <Printer className="w-4 h-4" /> Print / Download Invoice
                 </button>
               </div>
 

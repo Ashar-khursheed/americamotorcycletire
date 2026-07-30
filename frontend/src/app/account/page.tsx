@@ -19,7 +19,8 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Printer
 } from 'lucide-react';
 import { fetchCustomerOrders } from '@/lib/api';
 
@@ -575,12 +576,18 @@ export default function CustomerAccountPage() {
               <span className="text-xl font-black text-[#BF8647] font-mono">${Number(selectedOrderDetails.total_amount || 0).toFixed(2)}</span>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3 no-print">
+              <button
+                onClick={() => window.print()}
+                className="bg-[#BF8647] text-black font-extrabold text-xs uppercase px-5 py-2.5 rounded hover:bg-[#D49A50] cursor-pointer flex items-center gap-2"
+              >
+                <Printer className="w-3.5 h-3.5" /> Print / Download Invoice
+              </button>
               <button
                 onClick={() => setSelectedOrderDetails(null)}
-                className="bg-[#BF8647] text-black font-extrabold text-xs uppercase px-6 py-2.5 rounded hover:bg-[#D49A50] cursor-pointer"
+                className="bg-[#222] text-gray-300 font-extrabold text-xs uppercase px-5 py-2.5 rounded hover:text-white cursor-pointer"
               >
-                Close Invoice Window
+                Close Window
               </button>
             </div>
           </div>
