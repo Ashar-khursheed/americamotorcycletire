@@ -106,7 +106,7 @@ export default function CustomerLoginPage() {
                 disabled={loading}
                 className="w-full bg-[#BF8647] text-black font-extrabold uppercase py-3.5 rounded hover:bg-[#D49A50] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#BF8647]/20"
               >
-                {loading ? 'Verifying Rider Credentials...' : 'Sign In To Rider Portal'}
+                {loading ? 'Verifying Rider Credentials...' : 'Sign In'}
                 {!loading && <ArrowRight className="w-4 h-4" />}
               </button>
             </form>
@@ -114,7 +114,7 @@ export default function CustomerLoginPage() {
             <div className="text-center pt-4 border-t border-[#1C1C1C] text-xs text-gray-400">
               Don't have an account yet?{' '}
               <Link href="/register" className="text-[#BF8647] font-bold uppercase hover:underline ml-1">
-                Register Rider Account
+                Register Account
               </Link>
             </div>
           </div>
