@@ -108,22 +108,22 @@ function ProductsContent() {
 
     Promise.all([fetchProducts(params), fetchCategories(), fetchBrands()])
       .then(([prodRes, catRes, brandRes]) => {
-        let list: any[] = [];
         if (prodRes) {
-          if (Array.isArray(prodRes.data)) {
-            list = prodRes.data;
-          } else if (Array.isArray(prodRes.data?.data)) {
-            list = prodRes.data.data;
-          } else if (Array.isArray(prodRes)) {
-            list = prodRes;
-          }
+          const itemsList = Array.isArray(prodRes.data)
+            ? prodRes.data
+            : (Array.isArray(prodRes.data?.data) ? prodRes.data.data : (Array.isArray(prodRes) ? prodRes : []));
+          setProducts(itemsList);
 
-          if (prodRes.current_page) setCurrentPage(prodRes.current_page);
-          if (prodRes.last_page) setLastPage(prodRes.last_page);
-          if (prodRes.total !== undefined) setTotalProducts(prodRes.total);
-          if (prodRes.per_page) setPerPage(prodRes.per_page);
+          const curPage = prodRes.current_page ?? prodRes.data?.current_page;
+          const lPage = prodRes.last_page ?? prodRes.data?.last_page;
+          const tot = prodRes.total ?? prodRes.data?.total;
+          const pPage = prodRes.per_page ?? prodRes.data?.per_page;
+
+          if (curPage !== undefined) setCurrentPage(curPage);
+          if (lPage !== undefined) setLastPage(lPage);
+          if (tot !== undefined) setTotalProducts(tot);
+          if (pPage !== undefined) setPerPage(pPage);
         }
-        setProducts(list);
 
         if (catRes) setCategories(Array.isArray(catRes) ? catRes : []);
         if (brandRes && Array.isArray(brandRes)) {

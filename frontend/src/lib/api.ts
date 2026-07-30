@@ -72,9 +72,18 @@ export const sanitizeProduct = (product: any): any => {
 export const fetchProducts = async (params?: Record<string, any>) => {
   const res = await api.get('/products', { params });
   const raw = res.data;
-  if (Array.isArray(raw)) {
-    return raw.map(sanitizeProduct);
+  
+  if (raw && raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)) {
+    return {
+      ...raw.data,
+      data: Array.isArray(raw.data.data) ? raw.data.data.map(sanitizeProduct) : [],
+    };
   }
+
+  if (Array.isArray(raw)) {
+    return { data: raw.map(sanitizeProduct), current_page: 1, last_page: 1, total: raw.length, per_page: raw.length };
+  }
+  
   if (raw && Array.isArray(raw.data)) {
     return {
       ...raw,
