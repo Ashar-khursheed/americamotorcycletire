@@ -65,43 +65,24 @@ class AdminProductController extends Controller
                 mkdir($folderPath, 0777, true);
             }
 
-            $urlPath = parse_url($imageUrl, PHP_URL_PATH) ?? '';
-            $origExt = strtolower(pathinfo($urlPath, PATHINFO_EXTENSION));
-            if (empty($origExt) || strlen($origExt) > 4) {
-                $origExt = 'jpg';
-            }
-
             $hash = md5($imageUrl);
 
-            // Handle SVG Vector images
-            if ($origExt === 'svg' || str_contains(strtolower($imageUrl), '.svg')) {
-                $filename = 'prod_' . $hash . '.svg';
-                $localFilePath = $folderPath . '/' . $filename;
-                $assetUrl = asset('storage/products/' . $filename);
-
-                if (file_exists($localFilePath) && filesize($localFilePath) > 0) {
-                    return $assetUrl;
-                }
-
-                $context = stream_context_create([
-                    'http' => ['timeout' => 3, 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'],
-                    'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
-                ]);
-                $contents = @file_get_contents($imageUrl, false, $context);
-                if ($contents) {
-                    file_put_contents($localFilePath, $contents);
-                    return $assetUrl;
-                }
-                return $imageUrl;
-            }
-
-            // Handle Bitmaps (PNG, JPG, WebP)
+            // Check if WebP file already exists
             $webpFilename = 'prod_' . $hash . '.webp';
             $webpPath = $folderPath . '/' . $webpFilename;
             $webpAssetUrl = asset('storage/products/' . $webpFilename);
 
             if (file_exists($webpPath) && filesize($webpPath) > 0) {
                 return $webpAssetUrl;
+            }
+
+            // Check if JPG file already exists
+            $jpgFilename = 'prod_' . $hash . '.jpg';
+            $jpgPath = $folderPath . '/' . $jpgFilename;
+            $jpgAssetUrl = asset('storage/products/' . $jpgFilename);
+
+            if (file_exists($jpgPath) && filesize($jpgPath) > 0) {
+                return $jpgAssetUrl;
             }
 
             $rawBinary = null;
@@ -112,20 +93,20 @@ class AdminProductController extends Controller
                 }
             } else if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
                 $context = stream_context_create([
-                    'http' => ['timeout' => 3, 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'],
+                    'http' => ['timeout' => 4, 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'],
                     'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
                 ]);
                 $rawBinary = @file_get_contents($imageUrl, false, $context);
             }
 
             if (!empty($rawBinary)) {
-                // Try converting bitmap to WebP via GD
+                // 1. Try converting bitmap to WebP via GD
                 if (function_exists('imagecreatefromstring') && function_exists('imagewebp')) {
                     $imgRes = @imagecreatefromstring($rawBinary);
                     if ($imgRes !== false) {
                         imagealphablending($imgRes, true);
                         imagesavealpha($imgRes, true);
-                        if (@imagewebp($imgRes, $webpPath, 80)) {
+                        if (@imagewebp($imgRes, $webpPath, 85)) {
                             imagedestroy($imgRes);
                             return $webpAssetUrl;
                         }
@@ -133,16 +114,24 @@ class AdminProductController extends Controller
                     }
                 }
 
-                // Fallback: save binary with true extension (.jpg / .png / .jpeg)
-                $fallbackFilename = 'prod_' . $hash . '.' . $origExt;
-                $fallbackPath = $folderPath . '/' . $fallbackFilename;
-                $fallbackAssetUrl = asset('storage/products/' . $fallbackFilename);
+                // 2. Try converting bitmap to JPG via GD
+                if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
+                    $imgRes = @imagecreatefromstring($rawBinary);
+                    if ($imgRes !== false) {
+                        if (@imagejpeg($imgRes, $jpgPath, 90)) {
+                            imagedestroy($imgRes);
+                            return $jpgAssetUrl;
+                        }
+                        imagedestroy($imgRes);
+                    }
+                }
 
-                file_put_contents($fallbackPath, $rawBinary);
-                return $fallbackAssetUrl;
+                // 3. Fallback: Save binary directly as JPG
+                file_put_contents($jpgPath, $rawBinary);
+                return $jpgAssetUrl;
             }
         } catch (\Throwable $e) {
-            Log::error("Failed to store image: " . $e->getMessage());
+            Log::error("Failed to store product image: " . $e->getMessage());
         }
 
         return $imageUrl;
@@ -596,6 +585,34 @@ class AdminProductController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $attributes,
+        ]);
+    }
+
+    public function convertImagesToWebp()
+    {
+        @set_time_limit(600);
+        $products = Product::whereNotNull('primary_image')->get();
+        $updatedCount = 0;
+
+        foreach ($products as $product) {
+            $currentImg = $product->primary_image;
+            if (empty($currentImg)) continue;
+
+            // Process any image that isn't already webp or local webp
+            if (!str_contains($currentImg, '.webp') || str_starts_with($currentImg, 'http://') || str_starts_with($currentImg, 'https://')) {
+                $newImg = $this->downloadAndStoreImage($currentImg);
+                if ($newImg && $newImg !== $currentImg) {
+                    $product->primary_image = $newImg;
+                    $product->save();
+                    $updatedCount++;
+                }
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Successfully processed catalog! Converted {$updatedCount} product images to WebP format.",
+            'updated_count' => $updatedCount
         ]);
     }
 }

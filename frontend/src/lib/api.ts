@@ -96,6 +96,11 @@ export const deleteAdminProduct = async (id: number) => {
   return res.data;
 };
 
+export const convertCatalogImagesToWebp = async () => {
+  const res = await api.post('/admin/products/convert-images-webp');
+  return res.data;
+};
+
 export const fetchAdminOrders = async () => {
   const res = await api.get('/admin/orders');
   return res.data;

@@ -7,7 +7,7 @@ import { Footer } from '@/components/Footer';
 import { fetchProducts, fetchCategories, fetchBrands, api } from '@/lib/api';
 import { useCartStore } from '@/store/cartStore';
 import Link from 'next/link';
-import { Search, Filter, ShoppingBag, Bike, Check, X } from 'lucide-react';
+import { Search, Filter, ShoppingBag, Bike, Check, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { SeoHead } from '@/components/SeoHead';
 
 function ProductsContent() {
@@ -16,6 +16,12 @@ function ProductsContent() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [perPage, setPerPage] = useState(50);
 
   // Filters State
   const [search, setSearch] = useState('');
@@ -70,9 +76,14 @@ function ProductsContent() {
       }).catch(() => { });
   }, [selectedYear, selectedMake, selectedModel, selectedPosition]);
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedBrand, selectedCategory, selectedYear, selectedMake, selectedModel, selectedPosition]);
+
   useEffect(() => {
     setLoading(true);
-    const params: Record<string, any> = {};
+    const params: Record<string, any> = { page: currentPage };
     if (search) params.search = search;
     if (selectedBrand) params.brand = selectedBrand;
     if (selectedCategory) params.category = selectedCategory;
@@ -84,9 +95,20 @@ function ProductsContent() {
     Promise.all([fetchProducts(params), fetchCategories(), fetchBrands()])
       .then(([prodRes, catRes, brandRes]) => {
         let list: any[] = [];
-        if (Array.isArray(prodRes?.data?.data)) list = prodRes.data.data;
-        else if (Array.isArray(prodRes?.data)) list = prodRes.data;
-        else if (Array.isArray(prodRes)) list = prodRes;
+        if (prodRes) {
+          if (Array.isArray(prodRes.data)) {
+            list = prodRes.data;
+          } else if (Array.isArray(prodRes.data?.data)) {
+            list = prodRes.data.data;
+          } else if (Array.isArray(prodRes)) {
+            list = prodRes;
+          }
+
+          if (prodRes.current_page) setCurrentPage(prodRes.current_page);
+          if (prodRes.last_page) setLastPage(prodRes.last_page);
+          if (prodRes.total !== undefined) setTotalProducts(prodRes.total);
+          if (prodRes.per_page) setPerPage(prodRes.per_page);
+        }
         setProducts(list);
 
         if (catRes) setCategories(Array.isArray(catRes) ? catRes : []);
@@ -101,7 +123,7 @@ function ProductsContent() {
         setProducts([]);
       })
       .finally(() => setLoading(false));
-  }, [search, selectedBrand, selectedCategory, selectedYear, selectedMake, selectedModel, selectedPosition]);
+  }, [currentPage, search, selectedBrand, selectedCategory, selectedYear, selectedMake, selectedModel, selectedPosition]);
 
   const resetAllFilters = () => {
     setSearch('');
@@ -111,6 +133,42 @@ function ProductsContent() {
     setSelectedMake('');
     setSelectedModel('');
     setSelectedPosition('');
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= lastPage && newPage !== currentPage) {
+      setCurrentPage(newPage);
+      const catalogElement = document.getElementById('catalog-grid-section');
+      if (catalogElement) {
+        catalogElement.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 250, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 5;
+
+    if (lastPage <= maxVisible + 2) {
+      for (let i = 1; i <= lastPage; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push('...');
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(lastPage - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        if (i > 1 && i < lastPage) pages.push(i);
+      }
+
+      if (currentPage < lastPage - 2) pages.push('...');
+      pages.push(lastPage);
+    }
+    return pages;
   };
 
   const safeProducts = Array.isArray(products) ? products : [];
@@ -272,8 +330,8 @@ function ProductsContent() {
           </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        {/* Products Grid Section */}
+        <div id="catalog-grid-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
           {loading ? (
             <div className="text-center py-20 text-gray-400 uppercase font-bold text-xs">Loading catalogue database...</div>
           ) : sortedProducts.length === 0 ? (
@@ -288,77 +346,151 @@ function ProductsContent() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {sortedProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="bg-[#121212] border border-[#222] rounded-lg overflow-hidden flex flex-col justify-between hover:border-[#BF8647] transition-all group"
-                >
-                  <div className="relative bg-[#1A1A1A] p-6 h-64 flex items-center justify-center">
-                    <img
-                      src={product.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop'}
-                      alt={product.name}
-                      className="max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <span className="absolute top-3 left-3 bg-[#BF8647] text-black text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
-                      {product.brand}
-                    </span>
-                    <span className="absolute top-3 right-3 bg-[#1F1F1F] text-gray-400 text-[10px] font-mono px-2 py-0.5 rounded border border-[#333]">
-                      PART #: {product.sku}
-                    </span>
+            <>
+              {/* Catalogue Summary Header */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 border-b border-[#1F1F1F] pb-4">
+                <div className="text-xs uppercase font-extrabold text-gray-400">
+                  Showing <span className="text-white">{Math.min((currentPage - 1) * perPage + 1, totalProducts || sortedProducts.length)}</span> - <span className="text-white">{Math.min(currentPage * perPage, totalProducts || sortedProducts.length)}</span> of <span className="text-[#BF8647] font-black">{(totalProducts || sortedProducts.length).toLocaleString()}</span> Products
+                  {lastPage > 1 && <span className="ml-2 text-gray-500 font-semibold">(Page {currentPage} of {lastPage})</span>}
+                </div>
+              </div>
+
+              {/* Products Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {sortedProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="bg-[#121212] border border-[#222] rounded-lg overflow-hidden flex flex-col justify-between hover:border-[#BF8647] transition-all group"
+                  >
+                    <Link href={`/products/${product.slug}`} className="relative bg-[#1A1A1A] p-6 h-64 flex items-center justify-center cursor-pointer block group">
+                      <img
+                        src={product.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop'}
+                        alt={product.name}
+                        className="max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <span className="absolute top-3 left-3 bg-[#BF8647] text-black text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
+                        {product.brand}
+                      </span>
+                      <span className="absolute top-3 right-3 bg-[#1F1F1F] text-gray-400 text-[10px] font-mono px-2 py-0.5 rounded border border-[#333]">
+                        PART #: {product.sku}
+                      </span>
+                    </Link>
+
+                    <div className="p-6 flex flex-col flex-grow justify-between">
+                      <div>
+                        <Link href={`/products/${product.slug}`}>
+                          <h3 className="text-base font-bold text-white uppercase line-clamp-2 mb-2 group-hover:text-[#BF8647] transition-colors cursor-pointer">
+                            {product.name}
+                          </h3>
+                        </Link>
+                        <p className="text-gray-400 text-xs line-clamp-2 mb-4">
+                          {product.short_description || product.description}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex items-baseline gap-2 mb-4">
+                          <span className="text-2xl font-bold text-white">
+                            ${Number(product.price).toFixed(2)}
+                          </span>
+                          {product.compare_at_price && (
+                            <span className="text-sm text-gray-500 line-through">
+                              ${Number(product.compare_at_price).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 uppercase text-xs font-bold">
+                          <button
+                            onClick={() => addItem(product, 1)}
+                            className="bg-[#BF8647] text-black py-2.5 rounded hover:bg-[#D49A50] transition-colors"
+                          >
+                            Add To Cart
+                          </button>
+                          <Link
+                            href={`/products/${product.slug}`}
+                            className="border border-[#333] text-white py-2.5 rounded hover:border-[#BF8647] hover:text-[#BF8647] transition-colors text-center flex items-center justify-center"
+                          >
+                            Details
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination Controls Bar */}
+              {lastPage > 1 && (
+                <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#141414] border border-[#222] p-4 rounded-lg">
+                  <div className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                    Showing <span className="text-[#BF8647] font-extrabold">{Math.min((currentPage - 1) * perPage + 1, totalProducts)}</span> to{' '}
+                    <span className="text-[#BF8647] font-extrabold">{Math.min(currentPage * perPage, totalProducts)}</span> of{' '}
+                    <span className="text-white font-extrabold">{totalProducts.toLocaleString()}</span> products
                   </div>
 
-                  <div className="p-6 flex flex-col flex-grow justify-between">
-                    <div>
-                      <h3 className="text-base font-bold text-white uppercase line-clamp-2 mb-2 group-hover:text-[#BF8647] transition-colors">
-                        {product.name}
-                      </h3>
-                      <p className="text-gray-400 text-xs line-clamp-2 mb-4">
-                        {product.short_description || product.description}
-                      </p>
+                  <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                    {/* First Page */}
+                    <button
+                      onClick={() => handlePageChange(1)}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded bg-[#1A1A1A] border border-[#333] text-gray-300 hover:text-[#BF8647] hover:border-[#BF8647] disabled:opacity-30 disabled:hover:text-gray-300 disabled:hover:border-[#333] transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      title="First Page"
+                    >
+                      <ChevronsLeft className="w-4 h-4" />
+                    </button>
 
-                      {/* Display Fitment Badges if available */}
-                      {product.fitments && product.fitments.length > 0 && (
-                        <div className="mb-4 bg-[#181818] border border-[#262626] p-2.5 rounded text-[11px] text-gray-300 space-y-1">
-                          <div className="text-[10px] text-[#BF8647] font-bold uppercase tracking-wider">CONFIRMED FITMENT:</div>
-                          <div className="font-semibold line-clamp-1">
-                            {product.fitments[0].year} {product.fitments[0].make} {product.fitments[0].model} ({product.fitments[0].position || 'Front/Rear'})
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    {/* Prev Page */}
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded bg-[#1A1A1A] border border-[#333] text-gray-300 hover:text-[#BF8647] hover:border-[#BF8647] disabled:opacity-30 disabled:hover:text-gray-300 disabled:hover:border-[#333] transition-colors flex items-center gap-1 text-xs font-bold uppercase px-3 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" /> Prev
+                    </button>
 
-                    <div>
-                      <div className="flex items-baseline gap-2 mb-4">
-                        <span className="text-2xl font-bold text-white">
-                          ${Number(product.price).toFixed(2)}
-                        </span>
-                        {product.compare_at_price && (
-                          <span className="text-sm text-gray-500 line-through">
-                            ${Number(product.compare_at_price).toFixed(2)}
-                          </span>
+                    {/* Page Numbers */}
+                    {getPageNumbers().map((num, idx) => (
+                      <React.Fragment key={idx}>
+                        {num === '...' ? (
+                          <span className="px-2 py-1 text-gray-500 text-xs font-bold">...</span>
+                        ) : (
+                          <button
+                            onClick={() => handlePageChange(num as number)}
+                            className={`min-w-[36px] h-[36px] px-3 py-1.5 rounded text-xs font-black uppercase transition-all cursor-pointer ${
+                              currentPage === num
+                                ? 'bg-[#BF8647] text-black shadow-lg scale-105 font-black'
+                                : 'bg-[#1A1A1A] border border-[#333] text-gray-300 hover:text-[#BF8647] hover:border-[#BF8647]'
+                            }`}
+                          >
+                            {num}
+                          </button>
                         )}
-                      </div>
+                      </React.Fragment>
+                    ))}
 
-                      <div className="grid grid-cols-2 gap-3 uppercase text-xs font-bold">
-                        <button
-                          onClick={() => addItem(product, 1)}
-                          className="bg-[#BF8647] text-black py-2.5 rounded hover:bg-[#D49A50] transition-colors"
-                        >
-                          Add To Cart
-                        </button>
-                        <Link
-                          href={`/products/${product.slug}`}
-                          className="border border-[#333] text-white py-2.5 rounded hover:border-[#BF8647] hover:text-[#BF8647] transition-colors text-center flex items-center justify-center"
-                        >
-                          Details
-                        </Link>
-                      </div>
-                    </div>
+                    {/* Next Page */}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === lastPage}
+                      className="p-2 rounded bg-[#1A1A1A] border border-[#333] text-gray-300 hover:text-[#BF8647] hover:border-[#BF8647] disabled:opacity-30 disabled:hover:text-gray-300 disabled:hover:border-[#333] transition-colors flex items-center gap-1 text-xs font-bold uppercase px-3 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      Next <ChevronRight className="w-4 h-4" />
+                    </button>
+
+                    {/* Last Page */}
+                    <button
+                      onClick={() => handlePageChange(lastPage)}
+                      disabled={currentPage === lastPage}
+                      className="p-2 rounded bg-[#1A1A1A] border border-[#333] text-gray-300 hover:text-[#BF8647] hover:border-[#BF8647] disabled:opacity-30 disabled:hover:text-gray-300 disabled:hover:border-[#333] transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      title="Last Page"
+                    >
+                      <ChevronsRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>

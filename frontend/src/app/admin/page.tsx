@@ -36,6 +36,7 @@ import {
   fetchAdminProductById,
   createAdminProduct,
   deleteAdminProduct,
+  convertCatalogImagesToWebp,
   fetchAdminOrders,
   updateOrderStatus,
   fetchSettings,
@@ -1520,30 +1521,36 @@ export default function AdminDashboardPage() {
                         <ChevronLeft className="w-4 h-4" /> Prev
                       </button>
 
-                      {Array.from({ length: Math.min(5, lastPg) }, (_, idx) => {
-                        let pageNum = currentPg - 2 + idx;
-                        if (pageNum < 1) pageNum = idx + 1;
-                        if (pageNum > lastPg) pageNum = lastPg - (4 - idx);
-                        if (pageNum < 1 || pageNum > lastPg) return null;
-
-                        const isCurrent = pageNum === currentPg;
-
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageChange(pageNum)}
-                            className={`w-8 h-8 rounded text-xs font-extrabold transition-all cursor-pointer ${
-                              isCurrent
-                                ? 'bg-[#BF8647] text-black font-black shadow-md scale-105'
-                                : isDarkMode
-                                ? 'bg-[#1A1A1A] text-gray-300 hover:bg-[#2A2A2A] hover:text-white border border-[#2B2B2B]'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
+                      {(() => {
+                        const pages: number[] = [];
+                        const maxVisible = 5;
+                        let start = Math.max(1, currentPg - 2);
+                        let end = Math.min(lastPg, start + maxVisible - 1);
+                        if (end - start + 1 < maxVisible) {
+                          start = Math.max(1, end - maxVisible + 1);
+                        }
+                        for (let i = start; i <= end; i++) {
+                          pages.push(i);
+                        }
+                        return pages.map((pageNum) => {
+                          const isCurrent = pageNum === currentPg;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => handlePageChange(pageNum)}
+                              className={`w-8 h-8 rounded text-xs font-extrabold transition-all cursor-pointer ${
+                                isCurrent
+                                  ? 'bg-[#BF8647] text-black font-black shadow-md scale-105'
+                                  : isDarkMode
+                                  ? 'bg-[#1A1A1A] text-gray-300 hover:bg-[#2A2A2A] hover:text-white border border-[#2B2B2B]'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        });
+                      })()}
 
                       <button
                         disabled={currentPg >= lastPg}
@@ -2621,6 +2628,26 @@ export default function AdminDashboardPage() {
                 >
                   SELECT CSV / EXCEL FILE TO UPLOAD
                 </label>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm('Convert all 3,561 existing database product images to WebP format now?')) return;
+                    try {
+                      setLoading(true);
+                      const res = await convertCatalogImagesToWebp();
+                      alert(res?.message || 'Catalog images successfully converted to WebP!');
+                      loadAllData();
+                    } catch (err: any) {
+                      alert('Failed to convert catalog images: ' + (err.response?.data?.message || err.message));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold uppercase text-xs px-6 py-3.5 rounded-lg transition-colors cursor-pointer shadow-md flex items-center gap-2"
+                >
+                  <Wrench className="w-4 h-4" /> CONVERT CATALOG IMAGES TO WEBP
+                </button>
 
                 <button
                   type="button"

@@ -61,6 +61,7 @@ Route::prefix('admin')->group(function () {
     Route::delete('/products/{id}', [AdminProductController::class, 'destroy']);
     Route::post('/products/import', [AdminProductController::class, 'import']);
     Route::get('/products/export', [AdminProductController::class, 'export']);
+    Route::post('/products/convert-images-webp', [AdminProductController::class, 'convertImagesToWebp']);
 
     // Contact Inquiries
     Route::get('/contact-inquiries', [ContactController::class, 'index']);

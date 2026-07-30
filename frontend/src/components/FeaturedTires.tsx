@@ -85,7 +85,7 @@ export function FeaturedTires() {
                 className="bg-[#121212] border border-[#222222] rounded-lg overflow-hidden flex flex-col justify-between hover:border-[#BF8647] transition-all group"
               >
                 {/* Image */}
-                <div className="relative bg-[#1A1A1A] p-6 h-64 flex items-center justify-center overflow-hidden">
+                <Link href={`/products/${product.slug}`} className="relative bg-[#1A1A1A] p-6 h-64 flex items-center justify-center overflow-hidden block cursor-pointer group">
                   <img
                     src={product.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop'}
                     alt={product.name}
@@ -94,14 +94,16 @@ export function FeaturedTires() {
                   <span className="absolute top-3 left-3 bg-[#BF8647] text-black text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
                     {product.brand}
                   </span>
-                </div>
+                </Link>
 
                 {/* Content */}
                 <div className="p-6 flex flex-col flex-grow justify-between">
                   <div>
-                    <h3 className="text-lg font-bold text-white uppercase line-clamp-2 mb-2 group-hover:text-[#BF8647] transition-colors">
-                      {product.name}
-                    </h3>
+                    <Link href={`/products/${product.slug}`}>
+                      <h3 className="text-lg font-bold text-white uppercase line-clamp-2 mb-2 group-hover:text-[#BF8647] transition-colors cursor-pointer">
+                        {product.name}
+                      </h3>
+                    </Link>
                     <p className="text-gray-400 text-xs line-clamp-2 mb-4">
                       {product.short_description || product.description}
                     </p>
