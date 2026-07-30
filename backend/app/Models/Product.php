@@ -125,6 +125,41 @@ class Product extends Model
         return static::sanitizeText($value);
     }
 
+    public static function formatImageUrl(?string $value): ?string
+    {
+        if (empty($value)) return null;
+
+        $baseUrl = rtrim(config('app.url', 'https://americaapi.kaafifoods.com'), '/');
+
+        // Replace local dev host URL if present
+        if (str_contains($value, '127.0.0.1:8000') || str_contains($value, 'localhost:8000')) {
+            $value = preg_replace('#http://(127\.0\.0\.1|localhost):8000#i', $baseUrl, $value);
+        }
+
+        // Handle relative storage paths e.g. storage/products/xxx.webp or /storage/products/xxx.webp
+        if (!str_starts_with($value, 'http://') && !str_starts_with($value, 'https://')) {
+            $path = ltrim($value, '/');
+            if (!str_starts_with($path, 'storage/')) {
+                $path = 'storage/' . $path;
+            }
+            return $baseUrl . '/' . $path;
+        }
+
+        return $value;
+    }
+
+    public function getPrimaryImageAttribute($value)
+    {
+        return static::formatImageUrl($value);
+    }
+
+    public function getGalleryImagesAttribute($value)
+    {
+        $images = is_string($value) ? json_decode($value, true) : $value;
+        if (!is_array($images)) return [];
+        return array_map(fn($img) => static::formatImageUrl($img), $images);
+    }
+
     public function reviews()
     {
         return $this->hasMany(ProductReview::class);

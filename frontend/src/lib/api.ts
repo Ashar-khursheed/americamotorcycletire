@@ -34,6 +34,30 @@ export const cleanString = (str?: string | null): string => {
     .trim();
 };
 
+export const getImageUrl = (url?: string | null): string => {
+  if (!url) return 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop';
+  
+  // Extract base domain from API_BASE_URL (e.g. https://americaapi.kaafifoods.com)
+  const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, '');
+  let cleanUrl = url.trim();
+
+  // If localhost URL was stored, replace with production API origin
+  if (cleanUrl.includes('127.0.0.1:8000') || cleanUrl.includes('localhost:8000')) {
+    cleanUrl = cleanUrl.replace(/^http:\/\/(127\.0\.0\.1|localhost):8000/, apiOrigin);
+  }
+
+  // If relative storage path (e.g., storage/products/... or /storage/products/... or products/...)
+  if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+    const relativePath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
+    if (!relativePath.startsWith('/storage/')) {
+      return `${apiOrigin}/storage${relativePath}`;
+    }
+    return `${apiOrigin}${relativePath}`;
+  }
+
+  return cleanUrl;
+};
+
 export const sanitizeProduct = (product: any): any => {
   if (!product || typeof product !== 'object') return product;
   return {
@@ -41,6 +65,10 @@ export const sanitizeProduct = (product: any): any => {
     name: cleanString(product.name),
     short_description: cleanString(product.short_description),
     description: cleanString(product.description),
+    primary_image: getImageUrl(product.primary_image),
+    gallery_images: Array.isArray(product.gallery_images)
+      ? product.gallery_images.map((img: string) => getImageUrl(img))
+      : product.gallery_images,
   };
 };
 
