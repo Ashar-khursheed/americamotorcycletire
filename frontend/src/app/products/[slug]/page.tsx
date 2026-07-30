@@ -206,7 +206,31 @@ export default function ProductDetailPage() {
         {/* PDP Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {loading ? (
-            <div className="text-center py-20 text-gray-400 font-bold uppercase">Loading product details...</div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-[#121212] border border-[#222] p-8 rounded-lg animate-pulse">
+              <div className="lg:col-span-6 space-y-4">
+                <div className="bg-[#1A1A1A] rounded-lg h-[420px] w-full" />
+                <div className="grid grid-cols-4 gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="bg-[#1A1A1A] h-20 rounded" />
+                  ))}
+                </div>
+              </div>
+              <div className="lg:col-span-6 space-y-6">
+                <div className="h-4 bg-[#262626] rounded w-1/4" />
+                <div className="h-10 bg-[#262626] rounded w-3/4" />
+                <div className="h-6 bg-[#262626] rounded w-1/3" />
+                <div className="h-20 bg-[#1F1F1F] rounded w-full" />
+                <div className="space-y-2">
+                  <div className="h-4 bg-[#262626] rounded w-full" />
+                  <div className="h-4 bg-[#262626] rounded w-5/6" />
+                  <div className="h-4 bg-[#262626] rounded w-4/6" />
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-6">
+                  <div className="h-14 bg-[#262626] rounded" />
+                  <div className="h-14 bg-[#262626] rounded" />
+                </div>
+              </div>
+            </div>
           ) : !product ? (
             <div className="text-center py-20 bg-[#121212] rounded-lg border border-[#222]">
               <h2 className="text-xl font-bold uppercase mb-2">Product Not Found</h2>
@@ -224,7 +248,7 @@ export default function ProductDetailPage() {
                 <div className="lg:col-span-6 space-y-4">
 
                   {/* Main Large Image */}
-                  <div className="bg-[#1A1A1A] border border-[#262626] rounded-lg h-[420px] p-8 flex items-center justify-center relative overflow-hidden group">
+                  <div className="bg-[#ffffff] border border-[#262626] rounded-lg h-[420px] p-8 flex items-center justify-center relative overflow-hidden group">
                     <img
                       src={selectedImage || product.primary_image || displayImages[0]}
                       alt={product.name}
@@ -241,7 +265,7 @@ export default function ProductDetailPage() {
                       <button
                         key={idx}
                         onClick={() => setSelectedImage(imgUrl)}
-                        className={`bg-[#1A1A1A] border rounded p-2 h-20 flex items-center justify-center transition-all ${ (selectedImage ? selectedImage === imgUrl : idx === 0) ? 'border-[#BF8647] ring-1 ring-[#BF8647]' : 'border-[#262626] hover:border-gray-500'
+                        className={`bg-[#1A1A1A] border rounded p-2 h-20 flex items-center justify-center transition-all ${(selectedImage ? selectedImage === imgUrl : idx === 0) ? 'border-[#BF8647] ring-1 ring-[#BF8647]' : 'border-[#262626] hover:border-gray-500'
                           }`}
                       >
                         <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="max-h-full object-contain" />
@@ -411,16 +435,14 @@ export default function ProductDetailPage() {
                                 <label
                                   key={choice.id || choice.label}
                                   onClick={() => setSelectedGlobalOptions({ ...selectedGlobalOptions, [gKey]: choice })}
-                                  className={`flex items-center justify-between p-3.5 rounded-lg border cursor-pointer transition-all ${
-                                    isSelected
+                                  className={`flex items-center justify-between p-3.5 rounded-lg border cursor-pointer transition-all ${isSelected
                                       ? 'bg-[#1F1912] border-[#BF8647] text-white ring-1 ring-[#BF8647]'
                                       : 'bg-[#121212] border-[#2B2B2B] text-gray-300 hover:border-gray-500'
-                                  }`}
+                                    }`}
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                                      isSelected ? 'border-[#BF8647] bg-[#BF8647]' : 'border-gray-500'
-                                    }`}>
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#BF8647] bg-[#BF8647]' : 'border-gray-500'
+                                      }`}>
                                       {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
                                     </div>
                                     <span className="text-xs font-bold uppercase">

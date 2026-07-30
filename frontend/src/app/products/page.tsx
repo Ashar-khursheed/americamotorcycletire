@@ -8,7 +8,7 @@ import { fetchProducts, fetchCategories, fetchBrands, api } from '@/lib/api';
 import { useCartStore } from '@/store/cartStore';
 import Link from 'next/link';
 import { Search, Filter, ShoppingBag, Bike, Check, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { SeoHead } from '@/components/SeoHead';
+import { ProductCardSkeleton } from '@/components/ProductCardSkeleton';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -333,7 +333,11 @@ function ProductsContent() {
         {/* Products Grid Section */}
         <div id="catalog-grid-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
           {loading ? (
-            <div className="text-center py-20 text-gray-400 uppercase font-bold text-xs">Loading catalogue database...</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <ProductCardSkeleton key={idx} />
+              ))}
+            </div>
           ) : sortedProducts.length === 0 ? (
             <div className="text-center py-20 text-gray-500 bg-[#121212] rounded-lg border border-[#222]">
               <p className="text-lg font-bold uppercase text-white mb-2">No products match your filter criteria.</p>

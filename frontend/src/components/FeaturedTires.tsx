@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { fetchProducts } from '@/lib/api';
 import { useCartStore } from '@/store/cartStore';
+import { ProductCardSkeleton } from '@/components/ProductCardSkeleton';
 
 export function FeaturedTires() {
   const [products, setProducts] = useState<any[]>([]);
@@ -72,7 +73,11 @@ export function FeaturedTires() {
 
         {/* Loading State */}
         {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading tires catalogue...</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <ProductCardSkeleton key={idx} />
+            ))}
+          </div>
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-12 text-gray-500 bg-[#121212] rounded-lg border border-[#222]">
             No tires found in this brand.
