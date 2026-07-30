@@ -18,7 +18,7 @@ class OrderController extends Controller
             'customer_phone' => 'nullable|string',
             'shipping_address' => 'required|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => 'required|numeric',
             'items.*.product_name' => 'required|string',
             'items.*.price' => 'required|numeric|min:0',
             'items.*.quantity' => 'required|integer|min:1',

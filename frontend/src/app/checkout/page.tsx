@@ -54,11 +54,11 @@ export default function CheckoutPage() {
         customer_phone: customerPhone,
         shipping_address: shippingAddress,
         payment_method: paymentMethod,
-        items: items.map((i) => ({
-          product_id: i.product_id,
-          product_name: i.name,
-          price: i.price,
-          quantity: i.quantity,
+        items: items.map((i: any) => ({
+          product_id: Number(i.product_id || i.product?.id || i.id || 1),
+          product_name: String(i.name || i.product_name || i.product?.name || 'Motorcycle Product'),
+          price: Number(i.price) || 0,
+          quantity: Number(i.quantity) || 1,
         })),
       };
 
