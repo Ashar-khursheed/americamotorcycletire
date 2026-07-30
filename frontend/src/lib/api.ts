@@ -37,22 +37,19 @@ export const cleanString = (str?: string | null): string => {
 export const getImageUrl = (url?: string | null): string => {
   if (!url) return 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop';
   
-  // Extract base domain from API_BASE_URL (e.g. https://americaapi.kaafifoods.com)
-  const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, '');
   let cleanUrl = url.trim();
 
-  // If localhost URL was stored, replace with production API origin
-  if (cleanUrl.includes('127.0.0.1:8000') || cleanUrl.includes('localhost:8000')) {
-    cleanUrl = cleanUrl.replace(/^http:\/\/(127\.0\.0\.1|localhost):8000/, apiOrigin);
-  }
+  // Strip local dev host or direct backend domain to route requests through Next.js proxy
+  cleanUrl = cleanUrl
+    .replace(/^http:\/\/(127\.0\.0\.1|localhost):8000/, '')
+    .replace(/^https?:\/\/americaapi\.kaafifoods\.com/, '');
 
-  // If relative storage path (e.g., storage/products/... or /storage/products/... or products/...)
   if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
     const relativePath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
     if (!relativePath.startsWith('/storage/')) {
-      return `${apiOrigin}/storage${relativePath}`;
+      return `/storage${relativePath}`;
     }
-    return `${apiOrigin}${relativePath}`;
+    return relativePath;
   }
 
   return cleanUrl;
