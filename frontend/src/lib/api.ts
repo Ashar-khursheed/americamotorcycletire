@@ -25,14 +25,44 @@ export const fetchSettings = async () => {
   }
 };
 
+export const cleanString = (str?: string | null): string => {
+  if (!str) return '';
+  return str
+    .replace(/[\uFFFD\u00A0]/g, '')
+    .replace(/\uFFFD/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+export const sanitizeProduct = (product: any): any => {
+  if (!product || typeof product !== 'object') return product;
+  return {
+    ...product,
+    name: cleanString(product.name),
+    short_description: cleanString(product.short_description),
+    description: cleanString(product.description),
+  };
+};
+
 export const fetchProducts = async (params?: Record<string, any>) => {
   const res = await api.get('/products', { params });
-  return res.data?.data || res.data;
+  const raw = res.data;
+  if (Array.isArray(raw)) {
+    return raw.map(sanitizeProduct);
+  }
+  if (raw && Array.isArray(raw.data)) {
+    return {
+      ...raw,
+      data: raw.data.map(sanitizeProduct),
+    };
+  }
+  return raw;
 };
 
 export const fetchProductBySlug = async (slug: string) => {
   const res = await api.get(`/products/${slug}`);
-  return res.data?.data || res.data;
+  const data = res.data?.data || res.data;
+  return sanitizeProduct(data);
 };
 
 export const fetchCategories = async () => {

@@ -101,6 +101,30 @@ class Product extends Model
         return $this->hasMany(ProductFitment::class);
     }
 
+    public static function sanitizeText(?string $text): ?string
+    {
+        if ($text === null) return null;
+        // Strip replacement characters (\uFFFD / \xEF\xBF\xBD) and non-breaking spaces
+        $clean = preg_replace('/[\x{FFFD}\x{00A0}]/u', '', $text);
+        $clean = str_replace(["\xEF\xBF\xBD", "\u{FFFD}", ''], '', $clean);
+        return trim(preg_replace('/\s+/', ' ', $clean));
+    }
+
+    public function getNameAttribute($value)
+    {
+        return static::sanitizeText($value);
+    }
+
+    public function getShortDescriptionAttribute($value)
+    {
+        return static::sanitizeText($value);
+    }
+
+    public function getDescriptionAttribute($value)
+    {
+        return static::sanitizeText($value);
+    }
+
     public function reviews()
     {
         return $this->hasMany(ProductReview::class);
