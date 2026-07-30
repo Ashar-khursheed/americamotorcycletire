@@ -350,9 +350,21 @@ export default function ProductDetailPage() {
 
                     {/* Dynamic Attributes */}
                     {(() => {
-                      const effectiveAttributes = (product?.custom_attributes && Array.isArray(product.custom_attributes))
-                        ? product.custom_attributes
-                        : [];
+                      let rawAttrs = product?.custom_attributes;
+                      if (typeof rawAttrs === 'string') {
+                        try {
+                          rawAttrs = JSON.parse(rawAttrs);
+                        } catch (e) {
+                          rawAttrs = [];
+                        }
+                      }
+
+                      const effectiveAttributes = (Array.isArray(rawAttrs) && rawAttrs.length > 0)
+                        ? rawAttrs
+                        : [
+                            { name: 'Wheel Location', options: 'Front, Rear' },
+                            { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL, 180/65B16 81H TL' }
+                          ];
 
                       if (effectiveAttributes.length === 0) return null;
 

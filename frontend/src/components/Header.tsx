@@ -53,7 +53,7 @@ export function Header() {
           </Link>
 
           {/* Desktop Dynamic Nav */}
-          <nav className="hidden md:flex items-center gap-8 text-base font-bold tracking-wider text-gray-300 uppercase font-heading">
+          <nav className="hidden md:flex items-center gap-6 text-[13px] font-medium tracking-widest text-gray-300 uppercase font-heading">
             {(() => {
               let menuList = [
                 { label: 'Home', url: '/' },
@@ -72,9 +72,9 @@ export function Header() {
                 <Link
                   key={idx}
                   href={item.url || '/'}
-                  className="relative py-1 hover:text-[#BF8647] transition-colors duration-200 group font-heading tracking-widest"
+                  className="relative py-1 hover:text-[#BF8647] transition-colors duration-200 group font-heading text-[13px] tracking-widest font-medium"
                 >
-                  <span>{item.label}</span>
+                  <span className="font-heading tracking-widest">{item.label}</span>
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#BF8647] transition-all duration-300 group-hover:w-full"></span>
                 </Link>
               ));
@@ -140,7 +140,7 @@ export function Header() {
 
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-[#121212] border-b border-[#222222] px-4 pt-2 pb-6 space-y-3 font-bold uppercase text-base font-heading tracking-wider animate-in slide-in-from-top-2 duration-300">
+          <div className="md:hidden bg-[#121212] border-b border-[#222222] px-4 pt-2 pb-6 space-y-3 font-medium uppercase text-sm font-heading tracking-widest animate-in slide-in-from-top-2 duration-300">
             {(() => {
               let menuList = [
                 { label: 'Home', url: '/' },
@@ -160,9 +160,9 @@ export function Header() {
                   key={idx}
                   href={item.url || '/'}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block text-gray-300 hover:text-[#BF8647] py-1 transition-colors font-heading tracking-widest"
+                  className="block text-gray-300 hover:text-[#BF8647] py-1 transition-colors font-heading tracking-widest text-sm"
                 >
-                  {item.label}
+                  <span className="font-heading tracking-widest">{item.label}</span>
                 </Link>
               ));
             })()}
