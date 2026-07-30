@@ -40,10 +40,15 @@ function ProductsContent() {
       const make = searchParams.get('make');
       const model = searchParams.get('model');
       const pos = searchParams.get('position');
+      const p = searchParams.get('page');
+
       if (year) setSelectedYear(year);
       if (make) setSelectedMake(make);
       if (model) setSelectedModel(model);
       if (pos) setSelectedPosition(pos);
+      if (p && !isNaN(Number(p)) && Number(p) > 0) {
+        setCurrentPage(Number(p));
+      }
     }
   }, [searchParams]);
 
@@ -90,9 +95,19 @@ function ProductsContent() {
       }).catch(() => { });
   }, [selectedYear, selectedMake, selectedModel, selectedPosition]);
 
-  // Reset page to 1 when filters change
+  // Reset page to 1 when filters change (ignoring initial mount)
+  const isFilterMounted = React.useRef(false);
   useEffect(() => {
+    if (!isFilterMounted.current) {
+      isFilterMounted.current = true;
+      return;
+    }
     setCurrentPage(1);
+    if (typeof window !== 'undefined') {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('page');
+      window.history.pushState({}, '', newUrl.toString());
+    }
   }, [search, selectedBrand, selectedCategory, selectedYear, selectedMake, selectedModel, selectedPosition]);
 
   useEffect(() => {
@@ -148,11 +163,23 @@ function ProductsContent() {
     setSelectedModel('');
     setSelectedPosition('');
     setCurrentPage(1);
+    if (typeof window !== 'undefined') {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('page');
+      window.history.pushState({}, '', newUrl.toString());
+    }
   };
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= lastPage && newPage !== currentPage) {
       setCurrentPage(newPage);
+      
+      if (typeof window !== 'undefined') {
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('page', newPage.toString());
+        window.history.pushState({}, '', newUrl.toString());
+      }
+
       const catalogElement = document.getElementById('catalog-grid-section');
       if (catalogElement) {
         catalogElement.scrollIntoView({ behavior: 'smooth' });

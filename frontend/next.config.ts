@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const BACKEND_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || "https://americaapi.kaafifoods.com";
+const STORAGE_URL = process.env.STORAGE_BASE_URL || "https://americaapi.kaafifoods.com";
 
 const nextConfig: NextConfig = {
   eslint: {
@@ -17,7 +18,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/storage/:path*",
-        destination: `${BACKEND_URL}/storage/:path*`,
+        destination: `${STORAGE_URL}/storage/:path*`,
       },
     ];
   },

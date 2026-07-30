@@ -39,17 +39,16 @@ export const getImageUrl = (url?: string | null): string => {
   
   let cleanUrl = url.trim();
 
-  // Strip local dev host or direct backend domain to route requests through Next.js proxy
-  cleanUrl = cleanUrl
-    .replace(/^http:\/\/(127\.0\.0\.1|localhost):8000/, '')
-    .replace(/^https?:\/\/americaapi\.kaafifoods\.com/, '');
+  if (cleanUrl.startsWith('http://127.0.0.1:8000') || cleanUrl.startsWith('http://localhost:8000')) {
+    cleanUrl = cleanUrl.replace(/^http:\/\/(127\.0\.0\.1|localhost):8000/, 'https://americaapi.kaafifoods.com');
+  }
 
   if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
     const relativePath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
     if (!relativePath.startsWith('/storage/')) {
-      return `/storage${relativePath}`;
+      return `https://americaapi.kaafifoods.com/storage${relativePath}`;
     }
-    return relativePath;
+    return `https://americaapi.kaafifoods.com${relativePath}`;
   }
 
   return cleanUrl;
