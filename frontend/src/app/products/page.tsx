@@ -9,6 +9,7 @@ import { useCartStore } from '@/store/cartStore';
 import Link from 'next/link';
 import { Search, Filter, ShoppingBag, Bike, Check, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { ProductCardSkeleton } from '@/components/ProductCardSkeleton';
+import { SeoHead } from '@/components/SeoHead';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -27,11 +28,24 @@ function ProductsContent() {
   const [search, setSearch] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedYear, setSelectedYear] = useState(searchParams.get('year') || '');
-  const [selectedMake, setSelectedMake] = useState(searchParams.get('make') || '');
-  const [selectedModel, setSelectedModel] = useState(searchParams.get('model') || '');
-  const [selectedPosition, setSelectedPosition] = useState(searchParams.get('position') || '');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedMake, setSelectedMake] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedPosition, setSelectedPosition] = useState('');
   const [sort, setSort] = useState('newest');
+
+  useEffect(() => {
+    if (searchParams) {
+      const year = searchParams.get('year');
+      const make = searchParams.get('make');
+      const model = searchParams.get('model');
+      const pos = searchParams.get('position');
+      if (year) setSelectedYear(year);
+      if (make) setSelectedMake(make);
+      if (model) setSelectedModel(model);
+      if (pos) setSelectedPosition(pos);
+    }
+  }, [searchParams]);
 
   // Options State
   const [yearsList, setYearsList] = useState<string[]>([]);
@@ -395,11 +409,11 @@ function ProductsContent() {
                       <div>
                         <div className="flex items-baseline gap-2 mb-4">
                           <span className="text-2xl font-bold text-white">
-                            ${Number(product.price).toFixed(2)}
+                            ${(Number(product.price) || 0).toFixed(2)}
                           </span>
                           {product.compare_at_price && (
                             <span className="text-sm text-gray-500 line-through">
-                              ${Number(product.compare_at_price).toFixed(2)}
+                              ${(Number(product.compare_at_price) || 0).toFixed(2)}
                             </span>
                           )}
                         </div>
@@ -461,11 +475,10 @@ function ProductsContent() {
                         ) : (
                           <button
                             onClick={() => handlePageChange(num as number)}
-                            className={`min-w-[36px] h-[36px] px-3 py-1.5 rounded text-xs font-black uppercase transition-all cursor-pointer ${
-                              currentPage === num
+                            className={`min-w-[36px] h-[36px] px-3 py-1.5 rounded text-xs font-black uppercase transition-all cursor-pointer ${currentPage === num
                                 ? 'bg-[#BF8647] text-black shadow-lg scale-105 font-black'
                                 : 'bg-[#1A1A1A] border border-[#333] text-gray-300 hover:text-[#BF8647] hover:border-[#BF8647]'
-                            }`}
+                              }`}
                           >
                             {num}
                           </button>
