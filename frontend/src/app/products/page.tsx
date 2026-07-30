@@ -380,7 +380,7 @@ function ProductsContent() {
                     key={product.id}
                     className="bg-[#121212] border border-[#222] rounded-lg overflow-hidden flex flex-col justify-between hover:border-[#BF8647] transition-all group"
                   >
-                    <Link href={`/products/${product.slug}`} className="relative bg-[#1A1A1A] p-6 h-64 flex items-center justify-center cursor-pointer block group">
+                    <Link href={`/products/${product.slug}`} className="relative bg-[#ffffff] p-6 h-64 flex items-center justify-center cursor-pointer block group">
                       <img
                         src={product.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop'}
                         alt={product.name}
@@ -476,8 +476,8 @@ function ProductsContent() {
                           <button
                             onClick={() => handlePageChange(num as number)}
                             className={`min-w-[36px] h-[36px] px-3 py-1.5 rounded text-xs font-black uppercase transition-all cursor-pointer ${currentPage === num
-                                ? 'bg-[#BF8647] text-black shadow-lg scale-105 font-black'
-                                : 'bg-[#1A1A1A] border border-[#333] text-gray-300 hover:text-[#BF8647] hover:border-[#BF8647]'
+                              ? 'bg-[#BF8647] text-black shadow-lg scale-105 font-black'
+                              : 'bg-[#1A1A1A] border border-[#333] text-gray-300 hover:text-[#BF8647] hover:border-[#BF8647]'
                               }`}
                           >
                             {num}
