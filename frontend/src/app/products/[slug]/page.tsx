@@ -577,6 +577,64 @@ export default function ProductDetailPage() {
                   </div>
                 );
 
+                const groupedFitments = (() => {
+                  if (!product?.fitments || !Array.isArray(product.fitments) || product.fitments.length === 0) {
+                    return [];
+                  }
+
+                  const map = new Map<string, { make: string; model: string; position: string; years: number[] }>();
+
+                  product.fitments.forEach((fit: any) => {
+                    const make = (fit.make || 'HARLEY-DAVIDSON').trim().toUpperCase();
+                    const model = (fit.model || 'UNKNOWN MODEL').trim().toUpperCase();
+                    const position = (fit.position || '-').trim();
+                    const yearNum = parseInt(fit.year, 10);
+
+                    const key = `${make}___${model}___${position}`;
+
+                    if (!map.has(key)) {
+                      map.set(key, { make, model, position, years: [] });
+                    }
+
+                    const group = map.get(key)!;
+                    if (!isNaN(yearNum) && !group.years.includes(yearNum)) {
+                      group.years.push(yearNum);
+                    }
+                  });
+
+                  const result: { yearDisplay: string; make: string; model: string; position: string }[] = [];
+
+                  map.forEach((group) => {
+                    group.years.sort((a, b) => a - b);
+
+                    let yearDisplay = '';
+                    if (group.years.length === 0) {
+                      yearDisplay = 'ALL YEARS';
+                    } else if (group.years.length === 1) {
+                      yearDisplay = String(group.years[0]);
+                    } else {
+                      const min = group.years[0];
+                      const max = group.years[group.years.length - 1];
+                      const isContiguous = (max - min + 1 === group.years.length) && group.years.length >= 3;
+
+                      if (isContiguous) {
+                        yearDisplay = `${min} - ${max}`;
+                      } else {
+                        yearDisplay = group.years.join(', ');
+                      }
+                    }
+
+                    result.push({
+                      yearDisplay,
+                      make: group.make,
+                      model: group.model,
+                      position: group.position,
+                    });
+                  });
+
+                  return result;
+                })();
+
                 const fitmentContent = (
                   <div className="space-y-4 text-xs leading-relaxed py-2">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-[#1A1A1A] p-4 rounded border border-[#2B2B2B]">
@@ -589,12 +647,12 @@ export default function ProductDetailPage() {
                       </span>
                     </div>
 
-                    {product.fitments && Array.isArray(product.fitments) && product.fitments.length > 0 ? (
+                    {groupedFitments.length > 0 ? (
                       <div className="border border-[#262626] rounded overflow-hidden">
                         <table className="w-full text-left text-xs uppercase">
                           <thead className="bg-[#1A1A1A] text-[#BF8647] font-bold">
                             <tr>
-                              <th className="p-3">Year</th>
+                              <th className="p-3">Year(s)</th>
                               <th className="p-3">Make</th>
                               <th className="p-3">Model</th>
                               <th className="p-3 hidden sm:table-cell">Position</th>
@@ -602,12 +660,12 @@ export default function ProductDetailPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#222] text-gray-300">
-                            {product.fitments.map((fit: any, idx: number) => (
+                            {groupedFitments.map((fit: any, idx: number) => (
                               <tr key={idx} className="hover:bg-[#161616]">
-                                <td className="p-3 font-bold text-white">{fit.year || '2023'}</td>
-                                <td className="p-3 font-bold text-white">{fit.make || 'Harley-Davidson'}</td>
-                                <td className="p-3 text-gray-300">{fit.model || 'FLHT Road Glide'}</td>
-                                <td className="p-3 font-bold text-[#BF8647] hidden sm:table-cell">{fit.position || 'Front'}</td>
+                                <td className="p-3 font-bold text-white whitespace-nowrap">{fit.yearDisplay}</td>
+                                <td className="p-3 font-bold text-white">{fit.make}</td>
+                                <td className="p-3 text-gray-300">{fit.model}</td>
+                                <td className="p-3 font-bold text-[#BF8647] hidden sm:table-cell">{fit.position}</td>
                                 <td className="p-3 text-right hidden sm:table-cell">
                                   <span className="text-emerald-400 font-bold text-[11px]">✓ Direct Fit</span>
                                 </td>
