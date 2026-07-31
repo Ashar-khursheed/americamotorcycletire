@@ -44,8 +44,8 @@ class ProductFilterService
             $query->whereIn('brand', $brands);
         }
 
-        // 4. Motorcycle Fitment Filter (Year, Make, Model, Position)
-        if ($request->filled('year') || $request->filled('make') || $request->filled('model') || $request->filled('position')) {
+        // 4. Motorcycle Fitment Filter (Year, Make, Model)
+        if ($request->filled('year') || $request->filled('make') || $request->filled('model')) {
             $query->whereHas('fitments', function ($fitQ) use ($request) {
                 if ($request->filled('year')) {
                     $fitQ->where('year', $request->input('year'));
@@ -55,9 +55,6 @@ class ProductFilterService
                 }
                 if ($request->filled('model')) {
                     $fitQ->where('model', $request->input('model'));
-                }
-                if ($request->filled('position')) {
-                    $fitQ->where('position', $request->input('position'));
                 }
             });
         }

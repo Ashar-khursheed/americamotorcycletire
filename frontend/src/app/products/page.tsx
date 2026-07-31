@@ -26,12 +26,10 @@ function ProductsContent() {
 
   // Filters State
   const [search, setSearch] = useState('');
-  const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedMake, setSelectedMake] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
-  const [selectedPosition, setSelectedPosition] = useState('');
   const [sort, setSort] = useState('newest');
 
   useEffect(() => {
@@ -39,13 +37,11 @@ function ProductsContent() {
       const year = searchParams.get('year');
       const make = searchParams.get('make');
       const model = searchParams.get('model');
-      const pos = searchParams.get('position');
       const p = searchParams.get('page');
 
       if (year) setSelectedYear(year);
       if (make) setSelectedMake(make);
       if (model) setSelectedModel(model);
-      if (pos) setSelectedPosition(pos);
       if (p && !isNaN(Number(p)) && Number(p) > 0) {
         setCurrentPage(Number(p));
       }
@@ -56,8 +52,6 @@ function ProductsContent() {
   const [yearsList, setYearsList] = useState<string[]>([]);
   const [makesList, setMakesList] = useState<string[]>([]);
   const [modelsList, setModelsList] = useState<string[]>([]);
-  const [positionsList, setPositionsList] = useState<string[]>([]);
-  const [brandsList, setBrandsList] = useState<string[]>([]);
 
   const addItem = useCartStore((state) => state.addItem);
 
@@ -67,7 +61,6 @@ function ProductsContent() {
     if (selectedYear) params.year = selectedYear;
     if (selectedMake) params.make = selectedMake;
     if (selectedModel) params.model = selectedModel;
-    if (selectedPosition) params.position = selectedPosition;
 
     api.get('/fitments/options', { params })
       .then((res) => {
@@ -75,12 +68,10 @@ function ProductsContent() {
           const newYears = res.data.years || [];
           const newMakes = res.data.makes || [];
           const newModels = res.data.models || [];
-          const newPositions = res.data.positions || [];
 
           setYearsList(newYears);
           setMakesList(newMakes);
           setModelsList(newModels);
-          setPositionsList(newPositions);
 
           if (selectedMake && !newMakes.includes(selectedMake)) {
             setSelectedMake('');
@@ -88,12 +79,9 @@ function ProductsContent() {
           if (selectedModel && !newModels.includes(selectedModel)) {
             setSelectedModel('');
           }
-          if (selectedPosition && !newPositions.includes(selectedPosition)) {
-            setSelectedPosition('');
-          }
         }
       }).catch(() => { });
-  }, [selectedYear, selectedMake, selectedModel, selectedPosition]);
+  }, [selectedYear, selectedMake, selectedModel]);
 
   // Reset page to 1 when filters change (ignoring initial mount)
   const isFilterMounted = React.useRef(false);
@@ -108,21 +96,19 @@ function ProductsContent() {
       newUrl.searchParams.delete('page');
       window.history.pushState({}, '', newUrl.toString());
     }
-  }, [search, selectedBrand, selectedCategory, selectedYear, selectedMake, selectedModel, selectedPosition]);
+  }, [search, selectedCategory, selectedYear, selectedMake, selectedModel]);
 
   useEffect(() => {
     setLoading(true);
     const params: Record<string, any> = { page: currentPage };
     if (search) params.search = search;
-    if (selectedBrand) params.brand = selectedBrand;
     if (selectedCategory) params.category = selectedCategory;
     if (selectedYear) params.year = selectedYear;
     if (selectedMake) params.make = selectedMake;
     if (selectedModel) params.model = selectedModel;
-    if (selectedPosition) params.position = selectedPosition;
 
-    Promise.all([fetchProducts(params), fetchCategories(), fetchBrands()])
-      .then(([prodRes, catRes, brandRes]) => {
+    Promise.all([fetchProducts(params), fetchCategories()])
+      .then(([prodRes, catRes]) => {
         if (prodRes) {
           const itemsList = Array.isArray(prodRes.data)
             ? prodRes.data
@@ -141,27 +127,20 @@ function ProductsContent() {
         }
 
         if (catRes) setCategories(Array.isArray(catRes) ? catRes : []);
-        if (brandRes && Array.isArray(brandRes)) {
-          setBrandsList(brandRes.map((b: any) => b.name || b));
-        } else {
-          setBrandsList(['Dunlop', 'Michelin', 'Pirelli', 'Bridgestone', 'Metzeler', 'Shoei', 'PERFORMANCE MACHINE']);
-        }
       })
       .catch((err) => {
         console.error(err);
         setProducts([]);
       })
       .finally(() => setLoading(false));
-  }, [currentPage, search, selectedBrand, selectedCategory, selectedYear, selectedMake, selectedModel, selectedPosition]);
+  }, [currentPage, search, selectedCategory, selectedYear, selectedMake, selectedModel]);
 
   const resetAllFilters = () => {
     setSearch('');
-    setSelectedBrand('');
     setSelectedCategory('');
     setSelectedYear('');
     setSelectedMake('');
     setSelectedModel('');
-    setSelectedPosition('');
     setCurrentPage(1);
     if (typeof window !== 'undefined') {
       const newUrl = new URL(window.location.href);
@@ -219,7 +198,7 @@ function ProductsContent() {
     return b.id - a.id;
   });
 
-  const activeFilterCount = [selectedBrand, selectedCategory, selectedYear, selectedMake, selectedModel, selectedPosition, search].filter(Boolean).length;
+  const activeFilterCount = [selectedCategory, selectedYear, selectedMake, selectedModel, search].filter(Boolean).length;
 
   return (
     <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between">
@@ -250,7 +229,7 @@ function ProductsContent() {
           <div className="bg-[#141414] border border-[#BF8647]/40 p-5 rounded-lg">
             <div className="flex items-center justify-between mb-3 border-b border-[#222] pb-2">
               <div className="flex items-center gap-2 text-xs font-extrabold text-[#BF8647] uppercase tracking-wider">
-                <Bike className="w-4 h-4" /> MOTORCYCLE FITMENT FILTER (YEAR / MAKE / MODEL / POSITION)
+                <Bike className="w-4 h-4" /> MOTORCYCLE FITMENT FILTER (YEAR / MAKE / MODEL)
               </div>
               {activeFilterCount > 0 && (
                 <button
@@ -262,7 +241,7 @@ function ProductsContent() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs uppercase font-semibold">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs uppercase font-semibold">
               {/* Year */}
               <div>
                 <label className="text-[10px] text-gray-400 font-bold block mb-1">YEAR</label>
@@ -304,35 +283,6 @@ function ProductsContent() {
                   <option value="">ALL MODELS</option>
                   {modelsList.map((mod) => (
                     <option key={mod} value={mod}>{mod}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Position */}
-              <div>
-                <label className="text-[10px] text-gray-400 font-bold block mb-1">POSITION</label>
-                <select
-                  value={selectedPosition}
-                  onChange={(e) => setSelectedPosition(e.target.value)}
-                  className="w-full bg-[#1A1A1A] border border-[#333] rounded px-3 py-2 text-white focus:border-[#BF8647] focus:outline-none"
-                >
-                  <option value="">FRONT & REAR</option>
-                  <option value="Front">Front</option>
-                  <option value="Rear">Rear</option>
-                </select>
-              </div>
-
-              {/* Brand */}
-              <div>
-                <label className="text-[10px] text-gray-400 font-bold block mb-1">BRAND</label>
-                <select
-                  value={selectedBrand}
-                  onChange={(e) => setSelectedBrand(e.target.value)}
-                  className="w-full bg-[#1A1A1A] border border-[#333] rounded px-3 py-2 text-white focus:border-[#BF8647] focus:outline-none"
-                >
-                  <option value="">ALL BRANDS</option>
-                  {brandsList.map((b) => (
-                    <option key={b} value={b}>{b}</option>
                   ))}
                 </select>
               </div>
