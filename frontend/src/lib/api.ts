@@ -19,7 +19,7 @@ export const fetchSettings = async () => {
       site_name: 'BMG CYCLES',
       contact_phone: '408-591-8484',
       contact_email: 'INFO@BMGCYCLE.COM',
-      contact_address: '39575 CHERRY ST, FREMONT, CA 94538',
+      contact_address: '3541 YALE WAY FREMONT, FREMONT, CA 94538',
       announcement_bar: 'FREE SHIPPING ON ORDERS OVER $99 | REPAIR & SERVICE SPECIALISTS',
     };
   }
@@ -36,7 +36,7 @@ export const cleanString = (str?: string | null): string => {
 
 export const getImageUrl = (url?: string | null): string => {
   if (!url) return 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop';
-  
+
   let cleanUrl = url.trim();
 
   if (cleanUrl.startsWith('http://127.0.0.1:8000') || cleanUrl.startsWith('http://localhost:8000')) {
@@ -71,7 +71,7 @@ export const sanitizeProduct = (product: any): any => {
 export const fetchProducts = async (params?: Record<string, any>) => {
   const res = await api.get('/products', { params });
   const raw = res.data;
-  
+
   if (raw && raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)) {
     return {
       ...raw.data,
@@ -82,7 +82,7 @@ export const fetchProducts = async (params?: Record<string, any>) => {
   if (Array.isArray(raw)) {
     return { data: raw.map(sanitizeProduct), current_page: 1, last_page: 1, total: raw.length, per_page: raw.length };
   }
-  
+
   if (raw && Array.isArray(raw.data)) {
     return {
       ...raw,

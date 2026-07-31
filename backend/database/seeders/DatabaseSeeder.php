@@ -67,7 +67,7 @@ class DatabaseSeeder extends Seeder
             ['slug' => 'contact-us'],
             [
                 'title' => 'Location & Contact',
-                'content' => 'Visit our shop at 39575 CHERRY ST, FREMONT, CA 94538 or call us at 408-591-8484.',
+                'content' => 'Visit our shop at 3541 YALE WAY FREMONT, FREMONT, CA 94538 or call us at 408-591-8484.',
                 'is_active' => true
             ]
         );

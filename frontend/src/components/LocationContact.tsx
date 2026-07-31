@@ -6,7 +6,7 @@ import { fetchSettings } from '@/lib/api';
 
 export function LocationContact() {
   const [settings, setSettings] = useState<any>({
-    contact_address: '39575 CHERRY ST, FREMONT, CA 94538',
+    contact_address: '3541 YALE WAY FREMONT, FREMONT, CA 94538',
     contact_phone: '408-591-8484',
     contact_email: 'INFO@BMGCYCLE.COM',
   });
