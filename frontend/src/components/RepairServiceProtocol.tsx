@@ -33,7 +33,7 @@ export function RepairServiceProtocol() {
     <section className="bg-[#B87B35] text-black py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          
+
           {/* Left Column: Content & Accordion */}
           <div>
             <span className="text-black/80 font-bold text-xs uppercase tracking-widest block mb-2">
@@ -51,36 +51,39 @@ export function RepairServiceProtocol() {
               {services.map((item, idx) => (
                 <div
                   key={idx}
-                  className="border-b border-black/20 pb-3"
+                  className="border-b border-black/20 pb-1"
                 >
                   <button
+                    type="button"
                     onClick={() => setOpenIndex(openIndex === idx ? -1 : idx)}
-                    className="w-full flex items-center justify-between text-left font-bold text-base uppercase tracking-wider text-black py-2 hover:opacity-80 transition-opacity"
+                    className="w-full flex items-center justify-between text-left font-extrabold text-sm sm:text-base uppercase tracking-wider text-black py-3 hover:opacity-80 transition-opacity"
                   >
                     <span>{item.title}</span>
-                    {openIndex === idx ? (
-                      <ChevronUp className="w-5 h-5 text-black" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-black" />
-                    )}
+                    <ChevronDown
+                      className={`w-5 h-5 text-black transition-transform duration-300 ${openIndex === idx ? 'rotate-180' : 'rotate-0'
+                        }`}
+                    />
                   </button>
 
-                  {openIndex === idx && (
-                    <div className="pt-2 pb-1 text-black/90 text-sm font-normal leading-relaxed">
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${openIndex === idx ? 'grid-rows-[1fr] opacity-100 pb-3' : 'grid-rows-[0fr] opacity-0'
+                      }`}
+                  >
+                    <div className="overflow-hidden text-black/90 text-xs sm:text-sm font-medium leading-relaxed">
                       {item.description}
                     </div>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Right Column: Image */}
-          <div className="relative rounded-lg overflow-hidden shadow-2xl border-4 border-black/20">
+          <div className="relative rounded-lg overflow-hidden shadow-2xl border-4 border-black/20 group">
             <img
-              src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=800&auto=format&fit=crop"
-              alt="Motorcycle Tire Repair Machine"
-              className="w-full h-[450px] object-cover"
+              src="/images/cnt.webp"
+              alt="Motorcycle Service & Repair Specialist"
+              className="w-full h-[450px] object-cover group-hover:scale-105 transition-transform duration-500"
             />
           </div>
 

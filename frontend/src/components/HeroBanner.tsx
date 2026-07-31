@@ -61,9 +61,9 @@ export function HeroBanner() {
 
       {/* Background Image */}
       <div
-        className="absolute inset-0 bg-cover bg-center z-0 opacity-40 mix-blend-luminosity"
+        className="absolute inset-0 bg-cover bg-center z-0 opacity-60 mix-blend-luminosity"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=1600&auto=format&fit=crop')`,
+          backgroundImage: `url('/images/hero-motorcycle.png')`,
         }}
       />
 

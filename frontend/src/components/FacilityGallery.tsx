@@ -5,28 +5,28 @@ import React from 'react';
 export function FacilityGallery() {
   const images = [
     {
-      src: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop',
-      alt: 'Dirt Bike & Workshop',
+      src: '/images/gallery-1.png',
+      alt: 'Motocross Akrapovic Exhaust & Dunlop Tire',
       class: 'col-span-1 md:col-span-2 row-span-2 h-[380px]',
     },
     {
-      src: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=800&auto=format&fit=crop',
-      alt: 'Tire Tread Detail',
+      src: '/images/gallery-2.png',
+      alt: 'BMW Sport Touring Performance',
       class: 'col-span-1 h-[180px]',
     },
     {
-      src: 'https://images.unsplash.com/photo-1558980664-3a031cf67ea8?w=800&auto=format&fit=crop',
-      alt: 'Sportbike Fitment',
+      src: '/images/gallery-3.png',
+      alt: 'Off-Road Tire Traction & Rim',
       class: 'col-span-1 h-[180px]',
     },
     {
-      src: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop',
-      alt: 'Cruiser Bay',
+      src: '/images/gallery-4.png',
+      alt: 'BMW R1200GS Adventure Off-Road',
       class: 'col-span-1 h-[180px]',
     },
     {
-      src: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=800&auto=format&fit=crop',
-      alt: 'Mechanic at Work',
+      src: '/images/gallery-5.png',
+      alt: 'Honda Goldwing Highway Cruiser',
       class: 'col-span-1 h-[180px]',
     },
   ];
