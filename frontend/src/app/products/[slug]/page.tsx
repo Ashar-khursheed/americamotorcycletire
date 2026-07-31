@@ -16,6 +16,7 @@ import {
   Star,
   Wrench,
   ChevronRight,
+  ChevronDown,
   PhoneCall,
   CheckCircle2,
 } from 'lucide-react';
@@ -30,7 +31,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'fitment'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'fitment' | null>('overview');
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [selectedAttributes, setSelectedAttributes] = useState<{ [key: string]: string }>({});
   const [globalOptions, setGlobalOptions] = useState<any[]>([]);
@@ -541,119 +542,193 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Tabs Section (Specifications, Vehicle Fitment, Services) */}
-              <div className="bg-[#121212] border border-[#222] rounded-lg p-8">
-                <div className="flex border-b border-[#222] gap-8 mb-6 text-xs font-bold uppercase">
-                  <button
-                    onClick={() => setActiveTab('overview')}
-                    className={`pb-3 border-b-2 tracking-wider ${activeTab === 'overview' ? 'border-[#BF8647] text-[#BF8647]' : 'border-transparent text-gray-400 hover:text-white'
-                      }`}
-                  >
-                    OVERVIEW & FEATURES
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('specs')}
-                    className={`pb-3 border-b-2 tracking-wider ${activeTab === 'specs' ? 'border-[#BF8647] text-[#BF8647]' : 'border-transparent text-gray-400 hover:text-white'
-                      }`}
-                  >
-                    TECH SPECIFICATIONS
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('fitment')}
-                    className={`pb-3 border-b-2 tracking-wider ${activeTab === 'fitment' ? 'border-[#BF8647] text-[#BF8647]' : 'border-transparent text-gray-400 hover:text-white'
-                      }`}
-                  >
-                    WORKSHOP FITMENT GUARANTEE
-                  </button>
-                </div>
+              {(() => {
+                const overviewContent = (
+                  <div className="space-y-4 text-gray-300 text-xs leading-relaxed py-2">
+                    <p>{product.description || product.short_description}</p>
+                    <p>
+                      Engineered specifically to handle intense braking loads and rapid acceleration. The advanced compound distribution ensures consistent performance from center tread through full lean angle.
+                    </p>
+                  </div>
+                );
 
-                <div className="text-gray-300 text-xs leading-relaxed">
-                  {activeTab === 'overview' && (
-                    <div className="space-y-4">
-                      <p>{product.description || product.short_description}</p>
-                      <p>
-                        Engineered specifically to handle intense braking loads and rapid acceleration. The advanced compound distribution ensures consistent performance from center tread through full lean angle.
-                      </p>
+                const specsContent = (
+                  <div className="border border-[#262626] rounded overflow-hidden my-2">
+                    <table className="w-full text-left text-xs uppercase">
+                      <tbody className="divide-y divide-[#222]">
+                        <tr>
+                          <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400 w-1/3">Brand</td>
+                          <td className="p-3 font-bold text-white">{product.brand}</td>
+                        </tr>
+                        <tr>
+                          <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Construction</td>
+                          <td className="p-3 font-bold text-white">Radial Tubeless (TL)</td>
+                        </tr>
+                        <tr>
+                          <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Speed Rating</td>
+                          <td className="p-3 font-bold text-white">(W) 168+ MPH</td>
+                        </tr>
+                        <tr>
+                          <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Approved Rim Width</td>
+                          <td className="p-3 font-bold text-white">3.50 - 6.00 Inch</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                );
+
+                const fitmentContent = (
+                  <div className="space-y-4 text-xs leading-relaxed py-2">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-[#1A1A1A] p-4 rounded border border-[#2B2B2B]">
+                      <div>
+                        <h4 className="font-extrabold text-[#BF8647] uppercase text-xs sm:text-sm">GUARANTEED VEHICLE COMPATIBILITY & FITMENT</h4>
+                        <p className="text-[11px] text-gray-400">Verified compatibility list for {product.name}</p>
+                      </div>
+                      <span className="bg-emerald-950 text-emerald-400 border border-emerald-800/40 text-[10px] uppercase font-bold px-3 py-1 rounded shrink-0">
+                        ✓ BMG Fitment Guaranteed
+                      </span>
                     </div>
-                  )}
 
-                  {activeTab === 'specs' && (
-                    <div className="border border-[#262626] rounded overflow-hidden">
-                      <table className="w-full text-left text-xs uppercase">
-                        <tbody className="divide-y divide-[#222]">
-                          <tr>
-                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400 w-1/3">Brand</td>
-                            <td className="p-3 font-bold text-white">{product.brand}</td>
-                          </tr>
-                          <tr>
-                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Construction</td>
-                            <td className="p-3 font-bold text-white">Radial Tubeless (TL)</td>
-                          </tr>
-                          <tr>
-                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Speed Rating</td>
-                            <td className="p-3 font-bold text-white">(W) 168+ MPH</td>
-                          </tr>
-                          <tr>
-                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Approved Rim Width</td>
-                            <td className="p-3 font-bold text-white">3.50 - 6.00 Inch</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                    {product.fitments && Array.isArray(product.fitments) && product.fitments.length > 0 ? (
+                      <div className="border border-[#262626] rounded overflow-x-auto">
+                        <table className="w-full text-left text-xs uppercase min-w-[500px]">
+                          <thead className="bg-[#1A1A1A] text-[#BF8647] font-bold">
+                            <tr>
+                              <th className="p-3">Year</th>
+                              <th className="p-3">Make</th>
+                              <th className="p-3">Model</th>
+                              <th className="p-3">Position</th>
+                              <th className="p-3 text-right">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#222] text-gray-300">
+                            {product.fitments.map((fit: any, idx: number) => (
+                              <tr key={idx} className="hover:bg-[#161616]">
+                                <td className="p-3 font-bold text-white">{fit.year || '2023'}</td>
+                                <td className="p-3 font-bold text-white">{fit.make || 'Harley-Davidson'}</td>
+                                <td className="p-3 text-gray-300">{fit.model || 'FLHT Road Glide'}</td>
+                                <td className="p-3 font-bold text-[#BF8647]">{fit.position || 'Front'}</td>
+                                <td className="p-3 text-right">
+                                  <span className="text-emerald-400 font-bold text-[11px]">✓ Direct Fit</span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center text-gray-400 bg-[#1A1A1A] rounded border border-[#262626]">
+                        <p className="text-xs uppercase font-bold text-gray-300 mb-1">Universal / General Fitment</p>
+                        <p className="text-[11px] text-gray-400">No specific vehicle fitment requirements recorded for this product item.</p>
+                      </div>
+                    )}
 
-                  {activeTab === 'fitment' && (
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center bg-[#1A1A1A] p-4 rounded border border-[#2B2B2B]">
-                        <div>
-                          <h4 className="font-extrabold text-white uppercase text-sm text-[#BF8647]">GUARANTEED VEHICLE COMPATIBILITY & FITMENT</h4>
-                          <p className="text-[11px] text-gray-400">Verified compatibility list for {product.name}</p>
-                        </div>
-                        <span className="bg-emerald-950 text-emerald-400 border border-emerald-800/40 text-[10px] uppercase font-bold px-3 py-1 rounded">
-                          ✓ BMG Fitment Guaranteed
-                        </span>
+                    <p className="text-[11px] text-gray-500 italic">
+                      * All tires purchased at BMG CYCLES include optional in-house mounting and computer spin balancing at our Fremont facility.
+                    </p>
+                  </div>
+                );
+
+                return (
+                  <>
+                    {/* Mobile Vertical Accordion View */}
+                    <div className="md:hidden space-y-3">
+                      {/* Tab 1: Overview */}
+                      <div className="border border-[#222] rounded-lg overflow-hidden bg-[#141414]">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab(activeTab === 'overview' ? null : 'overview')}
+                          className={`w-full p-4 flex items-center justify-between font-extrabold text-xs uppercase tracking-wider transition-colors ${
+                            activeTab === 'overview' ? 'bg-[#1F1912] text-[#BF8647] border-b border-[#BF8647]/30' : 'text-gray-300 hover:text-white'
+                          }`}
+                        >
+                          <span>OVERVIEW & FEATURES</span>
+                          <ChevronDown className={`w-4 h-4 text-[#BF8647] transition-transform duration-200 ${activeTab === 'overview' ? 'rotate-180' : ''}`} />
+                        </button>
+                        {activeTab === 'overview' && (
+                          <div className="p-4 bg-[#121212]">
+                            {overviewContent}
+                          </div>
+                        )}
                       </div>
 
-                      {product.fitments && Array.isArray(product.fitments) && product.fitments.length > 0 ? (
-                        <div className="border border-[#262626] rounded overflow-hidden">
-                          <table className="w-full text-left text-xs uppercase">
-                            <thead className="bg-[#1A1A1A] text-[#BF8647] font-bold">
-                              <tr>
-                                <th className="p-3">Year</th>
-                                <th className="p-3">Make</th>
-                                <th className="p-3">Model</th>
-                                <th className="p-3">Position</th>
-                                <th className="p-3 text-right">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-[#222] text-gray-300">
-                              {product.fitments.map((fit: any, idx: number) => (
-                                <tr key={idx} className="hover:bg-[#161616]">
-                                  <td className="p-3 font-bold text-white">{fit.year || '2023'}</td>
-                                  <td className="p-3 font-bold text-white">{fit.make || 'Harley-Davidson'}</td>
-                                  <td className="p-3 text-gray-300">{fit.model || 'FLHT Road Glide'}</td>
-                                  <td className="p-3 font-bold text-[#BF8647]">{fit.position || 'Front'}</td>
-                                  <td className="p-3 text-right">
-                                    <span className="text-emerald-400 font-bold text-[11px]">✓ Direct Fit</span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <div className="p-6 text-center text-gray-400 bg-[#1A1A1A] rounded border border-[#262626]">
-                          <p className="text-xs uppercase font-bold text-gray-300 mb-1">Universal / General Fitment</p>
-                          <p className="text-[11px] text-gray-400">No specific vehicle fitment requirements recorded for this product item.</p>
-                        </div>
-                      )}
+                      {/* Tab 2: Specs */}
+                      <div className="border border-[#222] rounded-lg overflow-hidden bg-[#141414]">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab(activeTab === 'specs' ? null : 'specs')}
+                          className={`w-full p-4 flex items-center justify-between font-extrabold text-xs uppercase tracking-wider transition-colors ${
+                            activeTab === 'specs' ? 'bg-[#1F1912] text-[#BF8647] border-b border-[#BF8647]/30' : 'text-gray-300 hover:text-white'
+                          }`}
+                        >
+                          <span>TECH SPECIFICATIONS</span>
+                          <ChevronDown className={`w-4 h-4 text-[#BF8647] transition-transform duration-200 ${activeTab === 'specs' ? 'rotate-180' : ''}`} />
+                        </button>
+                        {activeTab === 'specs' && (
+                          <div className="p-4 bg-[#121212]">
+                            {specsContent}
+                          </div>
+                        )}
+                      </div>
 
-                      <p className="text-[11px] text-gray-500 italic">
-                        * All tires purchased at BMG CYCLES include optional in-house mounting and computer spin balancing at our Fremont facility.
-                      </p>
+                      {/* Tab 3: Fitment */}
+                      <div className="border border-[#222] rounded-lg overflow-hidden bg-[#141414]">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab(activeTab === 'fitment' ? null : 'fitment')}
+                          className={`w-full p-4 flex items-center justify-between font-extrabold text-xs uppercase tracking-wider transition-colors ${
+                            activeTab === 'fitment' ? 'bg-[#1F1912] text-[#BF8647] border-b border-[#BF8647]/30' : 'text-gray-300 hover:text-white'
+                          }`}
+                        >
+                          <span>WORKSHOP FITMENT GUARANTEE</span>
+                          <ChevronDown className={`w-4 h-4 text-[#BF8647] transition-transform duration-200 ${activeTab === 'fitment' ? 'rotate-180' : ''}`} />
+                        </button>
+                        {activeTab === 'fitment' && (
+                          <div className="p-4 bg-[#121212]">
+                            {fitmentContent}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+
+                    {/* Desktop Horizontal Tabs View */}
+                    <div className="hidden md:block bg-[#121212] border border-[#222] rounded-lg p-8">
+                      <div className="flex border-b border-[#222] gap-8 mb-6 text-xs font-bold uppercase">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('overview')}
+                          className={`pb-3 border-b-2 tracking-wider ${activeTab === 'overview' ? 'border-[#BF8647] text-[#BF8647]' : 'border-transparent text-gray-400 hover:text-white'
+                            }`}
+                        >
+                          OVERVIEW & FEATURES
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('specs')}
+                          className={`pb-3 border-b-2 tracking-wider ${activeTab === 'specs' ? 'border-[#BF8647] text-[#BF8647]' : 'border-transparent text-gray-400 hover:text-white'
+                            }`}
+                        >
+                          TECH SPECIFICATIONS
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('fitment')}
+                          className={`pb-3 border-b-2 tracking-wider ${activeTab === 'fitment' ? 'border-[#BF8647] text-[#BF8647]' : 'border-transparent text-gray-400 hover:text-white'
+                            }`}
+                        >
+                          WORKSHOP FITMENT GUARANTEE
+                        </button>
+                      </div>
+
+                      <div className="text-gray-300 text-xs leading-relaxed">
+                        {activeTab === 'overview' && overviewContent}
+                        {activeTab === 'specs' && specsContent}
+                        {activeTab === 'fitment' && fitmentContent}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Product Customer Reviews & Rating Form */}
               <div className="bg-[#121212] border border-[#222] rounded-lg p-8 space-y-8">
