@@ -363,9 +363,9 @@ export default function ProductDetailPage() {
                       const effectiveAttributes = (Array.isArray(rawAttrs) && rawAttrs.length > 0)
                         ? rawAttrs
                         : [
-                            { name: 'Wheel Location', options: 'Front, Rear' },
-                            { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL, 180/65B16 81H TL' }
-                          ];
+                          { name: 'Wheel Location', options: 'Front, Rear' },
+                          { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL, 180/65B16 81H TL' }
+                        ];
 
                       if (effectiveAttributes.length === 0) return null;
 
@@ -449,8 +449,8 @@ export default function ProductDetailPage() {
                                   key={choice.id || choice.label}
                                   onClick={() => setSelectedGlobalOptions({ ...selectedGlobalOptions, [gKey]: choice })}
                                   className={`flex items-center justify-between p-3.5 rounded-lg border cursor-pointer transition-all ${isSelected
-                                      ? 'bg-[#1F1912] border-[#BF8647] text-white ring-1 ring-[#BF8647]'
-                                      : 'bg-[#121212] border-[#2B2B2B] text-gray-300 hover:border-gray-500'
+                                    ? 'bg-[#1F1912] border-[#BF8647] text-white ring-1 ring-[#BF8647]'
+                                    : 'bg-[#121212] border-[#2B2B2B] text-gray-300 hover:border-gray-500'
                                     }`}
                                 >
                                   <div className="flex items-center gap-3">
@@ -638,9 +638,8 @@ export default function ProductDetailPage() {
                         <button
                           type="button"
                           onClick={() => setActiveTab(activeTab === 'overview' ? null : 'overview')}
-                          className={`w-full p-4 flex items-center justify-between font-extrabold text-xs uppercase tracking-wider transition-colors ${
-                            activeTab === 'overview' ? 'bg-[#1F1912] text-[#BF8647] border-b border-[#BF8647]/30' : 'text-gray-300 hover:text-white'
-                          }`}
+                          className={`w-full p-4 flex items-center justify-between font-extrabold text-xs uppercase tracking-wider transition-colors ${activeTab === 'overview' ? 'bg-[#1F1912] text-[#BF8647] border-b border-[#BF8647]/30' : 'text-gray-300 hover:text-white'
+                            }`}
                         >
                           <span>OVERVIEW & FEATURES</span>
                           <ChevronDown className={`w-4 h-4 text-[#BF8647] transition-transform duration-200 ${activeTab === 'overview' ? 'rotate-180' : ''}`} />
@@ -657,9 +656,8 @@ export default function ProductDetailPage() {
                         <button
                           type="button"
                           onClick={() => setActiveTab(activeTab === 'specs' ? null : 'specs')}
-                          className={`w-full p-4 flex items-center justify-between font-extrabold text-xs uppercase tracking-wider transition-colors ${
-                            activeTab === 'specs' ? 'bg-[#1F1912] text-[#BF8647] border-b border-[#BF8647]/30' : 'text-gray-300 hover:text-white'
-                          }`}
+                          className={`w-full p-4 flex items-center justify-between font-extrabold text-xs uppercase tracking-wider transition-colors ${activeTab === 'specs' ? 'bg-[#1F1912] text-[#BF8647] border-b border-[#BF8647]/30' : 'text-gray-300 hover:text-white'
+                            }`}
                         >
                           <span>TECH SPECIFICATIONS</span>
                           <ChevronDown className={`w-4 h-4 text-[#BF8647] transition-transform duration-200 ${activeTab === 'specs' ? 'rotate-180' : ''}`} />
@@ -676,9 +674,8 @@ export default function ProductDetailPage() {
                         <button
                           type="button"
                           onClick={() => setActiveTab(activeTab === 'fitment' ? null : 'fitment')}
-                          className={`w-full p-4 flex items-center justify-between font-extrabold text-xs uppercase tracking-wider transition-colors ${
-                            activeTab === 'fitment' ? 'bg-[#1F1912] text-[#BF8647] border-b border-[#BF8647]/30' : 'text-gray-300 hover:text-white'
-                          }`}
+                          className={`w-full p-4 flex items-center justify-between font-extrabold text-xs uppercase tracking-wider transition-colors ${activeTab === 'fitment' ? 'bg-[#1F1912] text-[#BF8647] border-b border-[#BF8647]/30' : 'text-gray-300 hover:text-white'
+                            }`}
                         >
                           <span>WORKSHOP FITMENT GUARANTEE</span>
                           <ChevronDown className={`w-4 h-4 text-[#BF8647] transition-transform duration-200 ${activeTab === 'fitment' ? 'rotate-180' : ''}`} />
@@ -848,7 +845,7 @@ export default function ProductDetailPage() {
                         key={relP.id}
                         className="bg-[#121212] border border-[#222] rounded-lg p-5 flex flex-col justify-between hover:border-[#BF8647] transition-all group"
                       >
-                        <div className="bg-[#1A1A1A] p-4 h-48 rounded flex items-center justify-center mb-4">
+                        <div className="bg-[#ffffff] p-4 h-48 rounded flex items-center justify-center mb-4">
                           <img
                             src={relP.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400'}
                             alt={relP.name}

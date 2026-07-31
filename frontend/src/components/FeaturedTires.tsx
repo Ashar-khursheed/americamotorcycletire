@@ -13,8 +13,6 @@ export function FeaturedTires() {
 
   const addItem = useCartStore((state) => state.addItem);
 
-  const brands = ['ALL', 'DUNLOP', 'MICHELIN', 'PIRELLI', 'BRIDGESTONE', 'METZELER'];
-
   useEffect(() => {
     setLoading(true);
     fetchProducts()
@@ -37,9 +35,24 @@ export function FeaturedTires() {
   }, []);
 
   const safeProducts = Array.isArray(products) ? products : [];
+
+  // Extract unique brands dynamically from active products
+  const brands = React.useMemo(() => {
+    const brandSet = new Set<string>();
+    safeProducts.forEach((p) => {
+      if (p.brand && typeof p.brand === 'string') {
+        const trimmed = p.brand.trim();
+        if (trimmed) {
+          brandSet.add(trimmed);
+        }
+      }
+    });
+    return ['ALL', ...Array.from(brandSet)];
+  }, [safeProducts]);
+
   const filteredProducts = selectedBrand === 'ALL'
     ? safeProducts
-    : safeProducts.filter((p) => p.brand?.toUpperCase() === selectedBrand);
+    : safeProducts.filter((p) => p.brand?.trim().toUpperCase() === selectedBrand.trim().toUpperCase());
 
   return (
     <section className="bg-[#0A0A0A] py-16 lg:py-24 border-b border-[#1E1E1E]">
@@ -51,7 +64,7 @@ export function FeaturedTires() {
             <button
               key={b}
               onClick={() => setSelectedBrand(b)}
-              className={`px-5 py-2 rounded text-xs font-bold uppercase tracking-wider transition-all ${selectedBrand === b
+              className={`px-5 py-2 rounded text-xs font-bold uppercase tracking-wider transition-all ${selectedBrand.toUpperCase() === b.toUpperCase()
                 ? 'bg-[#BF8647] text-black shadow-lg'
                 : 'bg-[#141414] text-gray-400 border border-[#262626] hover:text-white hover:border-gray-500'
                 }`}
