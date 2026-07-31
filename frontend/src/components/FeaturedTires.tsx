@@ -52,8 +52,8 @@ export function FeaturedTires() {
               key={b}
               onClick={() => setSelectedBrand(b)}
               className={`px-5 py-2 rounded text-xs font-bold uppercase tracking-wider transition-all ${selectedBrand === b
-                  ? 'bg-[#BF8647] text-black shadow-lg'
-                  : 'bg-[#141414] text-gray-400 border border-[#262626] hover:text-white hover:border-gray-500'
+                ? 'bg-[#BF8647] text-black shadow-lg'
+                : 'bg-[#141414] text-gray-400 border border-[#262626] hover:text-white hover:border-gray-500'
                 }`}
             >
               {b}
@@ -90,7 +90,7 @@ export function FeaturedTires() {
                 className="bg-[#121212] border border-[#222222] rounded-lg overflow-hidden flex flex-col justify-between hover:border-[#BF8647] transition-all group"
               >
                 {/* Image */}
-                <Link href={`/products/${product.slug}`} className="relative bg-[#1A1A1A] p-6 h-64 flex items-center justify-center overflow-hidden block cursor-pointer group">
+                <Link href={`/products/${product.slug}`} className="relative bg-[#ffffff] p-6 h-64 flex items-center justify-center overflow-hidden block cursor-pointer group">
                   <img
                     src={product.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop'}
                     alt={product.name}

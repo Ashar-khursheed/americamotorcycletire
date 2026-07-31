@@ -590,15 +590,15 @@ export default function ProductDetailPage() {
                     </div>
 
                     {product.fitments && Array.isArray(product.fitments) && product.fitments.length > 0 ? (
-                      <div className="border border-[#262626] rounded overflow-x-auto">
-                        <table className="w-full text-left text-xs uppercase min-w-[500px]">
+                      <div className="border border-[#262626] rounded overflow-hidden">
+                        <table className="w-full text-left text-xs uppercase">
                           <thead className="bg-[#1A1A1A] text-[#BF8647] font-bold">
                             <tr>
                               <th className="p-3">Year</th>
                               <th className="p-3">Make</th>
                               <th className="p-3">Model</th>
-                              <th className="p-3">Position</th>
-                              <th className="p-3 text-right">Status</th>
+                              <th className="p-3 hidden sm:table-cell">Position</th>
+                              <th className="p-3 text-right hidden sm:table-cell">Status</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#222] text-gray-300">
@@ -607,8 +607,8 @@ export default function ProductDetailPage() {
                                 <td className="p-3 font-bold text-white">{fit.year || '2023'}</td>
                                 <td className="p-3 font-bold text-white">{fit.make || 'Harley-Davidson'}</td>
                                 <td className="p-3 text-gray-300">{fit.model || 'FLHT Road Glide'}</td>
-                                <td className="p-3 font-bold text-[#BF8647]">{fit.position || 'Front'}</td>
-                                <td className="p-3 text-right">
+                                <td className="p-3 font-bold text-[#BF8647] hidden sm:table-cell">{fit.position || 'Front'}</td>
+                                <td className="p-3 text-right hidden sm:table-cell">
                                   <span className="text-emerald-400 font-bold text-[11px]">✓ Direct Fit</span>
                                 </td>
                               </tr>
