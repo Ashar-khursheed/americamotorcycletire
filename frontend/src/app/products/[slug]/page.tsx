@@ -607,22 +607,8 @@ export default function ProductDetailPage() {
                   map.forEach((group) => {
                     group.years.sort((a, b) => a - b);
 
-                    let yearDisplay = '';
-                    if (group.years.length === 0) {
-                      yearDisplay = 'ALL YEARS';
-                    } else if (group.years.length === 1) {
-                      yearDisplay = String(group.years[0]);
-                    } else {
-                      const min = group.years[0];
-                      const max = group.years[group.years.length - 1];
-                      const isContiguous = (max - min + 1 === group.years.length) && group.years.length >= 3;
-
-                      if (isContiguous) {
-                        yearDisplay = `${min} - ${max}`;
-                      } else {
-                        yearDisplay = group.years.join(', ');
-                      }
-                    }
+                    // Strictly comma separated years list as requested by user
+                    const yearDisplay = group.years.length > 0 ? group.years.join(', ') : 'ALL YEARS';
 
                     result.push({
                       yearDisplay,
@@ -648,32 +634,65 @@ export default function ProductDetailPage() {
                     </div>
 
                     {groupedFitments.length > 0 ? (
-                      <div className="border border-[#262626] rounded overflow-hidden">
-                        <table className="w-full text-left text-xs uppercase">
-                          <thead className="bg-[#1A1A1A] text-[#BF8647] font-bold">
-                            <tr>
-                              <th className="p-3">Year(s)</th>
-                              <th className="p-3">Make</th>
-                              <th className="p-3">Model</th>
-                              <th className="p-3 hidden sm:table-cell">Position</th>
-                              <th className="p-3 text-right hidden sm:table-cell">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#222] text-gray-300">
-                            {groupedFitments.map((fit: any, idx: number) => (
-                              <tr key={idx} className="hover:bg-[#161616]">
-                                <td className="p-3 font-bold text-white whitespace-nowrap">{fit.yearDisplay}</td>
-                                <td className="p-3 font-bold text-white">{fit.make}</td>
-                                <td className="p-3 text-gray-300">{fit.model}</td>
-                                <td className="p-3 font-bold text-[#BF8647] hidden sm:table-cell">{fit.position}</td>
-                                <td className="p-3 text-right hidden sm:table-cell">
-                                  <span className="text-emerald-400 font-bold text-[11px]">✓ Direct Fit</span>
-                                </td>
+                      <>
+                        {/* Mobile Native Card View (sm:hidden) */}
+                        <div className="sm:hidden space-y-3">
+                          {groupedFitments.map((fit: any, idx: number) => (
+                            <div key={idx} className="bg-[#141414] border border-[#262626] rounded-lg p-3.5 space-y-2.5 shadow-sm">
+                              <div className="flex items-start justify-between gap-2 border-b border-[#222] pb-2">
+                                <div>
+                                  <span className="text-[#BF8647] font-extrabold text-[10px] uppercase tracking-wider block">
+                                    {fit.make}
+                                  </span>
+                                  <h5 className="text-white font-bold text-xs uppercase leading-snug">
+                                    {fit.model}
+                                  </h5>
+                                </div>
+                                <span className="bg-emerald-950/90 text-emerald-400 border border-emerald-800/40 text-[9px] font-bold uppercase px-2 py-0.5 rounded shrink-0">
+                                  ✓ Direct Fit
+                                </span>
+                              </div>
+
+                              <div>
+                                <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider block mb-1">
+                                  Compatible Years:
+                                </span>
+                                <p className="text-gray-200 text-[11px] font-mono font-medium leading-relaxed bg-[#1A1A1A] p-2.5 rounded border border-[#222] break-words">
+                                  {fit.yearDisplay}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Desktop Table View (hidden sm:block) */}
+                        <div className="hidden sm:block border border-[#262626] rounded overflow-hidden">
+                          <table className="w-full text-left text-xs uppercase">
+                            <thead className="bg-[#1A1A1A] text-[#BF8647] font-bold">
+                              <tr>
+                                <th className="p-3 w-1/3">Year(s)</th>
+                                <th className="p-3">Make</th>
+                                <th className="p-3">Model</th>
+                                <th className="p-3">Position</th>
+                                <th className="p-3 text-right">Status</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody className="divide-y divide-[#222] text-gray-300">
+                              {groupedFitments.map((fit: any, idx: number) => (
+                                <tr key={idx} className="hover:bg-[#161616]">
+                                  <td className="p-3 font-bold text-white leading-relaxed">{fit.yearDisplay}</td>
+                                  <td className="p-3 font-bold text-white">{fit.make}</td>
+                                  <td className="p-3 text-gray-300">{fit.model}</td>
+                                  <td className="p-3 font-bold text-[#BF8647]">{fit.position}</td>
+                                  <td className="p-3 text-right">
+                                    <span className="text-emerald-400 font-bold text-[11px]">✓ Direct Fit</span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
                     ) : (
                       <div className="p-6 text-center text-gray-400 bg-[#1A1A1A] rounded border border-[#262626]">
                         <p className="text-xs uppercase font-bold text-gray-300 mb-1">Universal / General Fitment</p>
