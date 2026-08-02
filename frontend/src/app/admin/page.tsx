@@ -345,6 +345,7 @@ export default function AdminDashboardPage() {
 
   // Products Search & Pagination State
   const [productSearch, setProductSearch] = useState('');
+  const [productSort, setProductSort] = useState('latest');
   const [productPage, setProductPage] = useState(1);
   const [loadingProducts, setLoadingProducts] = useState(false);
 
@@ -734,10 +735,10 @@ export default function AdminDashboardPage() {
   const safeBrands = extractArray(brandsRaw);
 
   // Load All Data from Laravel APIs
-  const loadAdminProducts = async (page: number = productPage, search: string = productSearch) => {
+  const loadAdminProducts = async (page: number = productPage, search: string = productSearch, sort: string = productSort) => {
     setLoadingProducts(true);
     try {
-      const data = await fetchAdminProducts(page, search);
+      const data = await fetchAdminProducts(page, search, sort);
       setProductsRaw(data);
     } catch (err) {
       console.error('Error loading admin products:', err);
@@ -749,21 +750,21 @@ export default function AdminDashboardPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setProductPage(1);
-    loadAdminProducts(1, productSearch);
+    loadAdminProducts(1, productSearch, productSort);
   };
 
   const handlePageChange = (newPage: number) => {
     const lastPage = productsRaw?.data?.last_page || 1;
     if (newPage < 1 || newPage > lastPage) return;
     setProductPage(newPage);
-    loadAdminProducts(newPage, productSearch);
+    loadAdminProducts(newPage, productSearch, productSort);
   };
 
   const loadAllData = async () => {
     setLoading(true);
     try {
       const [prodData, orderData, catData, brandData, setData] = await Promise.all([
-        fetchAdminProducts(productPage, productSearch),
+        fetchAdminProducts(productPage, productSearch, productSort),
         fetchAdminOrders(),
         fetchCategories(),
         fetchBrands(),
@@ -1389,6 +1390,30 @@ export default function AdminDashboardPage() {
                     Search
                   </button>
                 </form>
+
+                {/* Sort Selector Dropdown */}
+                <select
+                  value={productSort}
+                  onChange={(e) => {
+                    const newSort = e.target.value;
+                    setProductSort(newSort);
+                    setProductPage(1);
+                    loadAdminProducts(1, productSearch, newSort);
+                  }}
+                  className={`py-2 px-3 rounded-lg text-xs font-extrabold uppercase focus:outline-none focus:border-[#BF8647] border cursor-pointer ${
+                    isDarkMode ? 'bg-[#181818] border-[#333] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'
+                  }`}
+                  title="Sort Catalog Items"
+                >
+                  <option value="latest">★ Latest Updated / Imported First</option>
+                  <option value="created_desc">Latest Created First</option>
+                  <option value="id_desc">ID (High to Low)</option>
+                  <option value="id_asc">ID (Low to High)</option>
+                  <option value="name_asc">Name (A - Z)</option>
+                  <option value="name_desc">Name (Z - A)</option>
+                  <option value="price_desc">Price (High to Low)</option>
+                  <option value="price_asc">Price (Low to High)</option>
+                </select>
 
                 {productSearch && (
                   <button

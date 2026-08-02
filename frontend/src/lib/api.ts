@@ -139,8 +139,8 @@ export const fetchCustomerOrders = async (email: string) => {
 };
 
 // Admin API
-export const fetchAdminProducts = async (page: number = 1, search: string = '') => {
-  const res = await api.get('/admin/products', { params: { page, search } });
+export const fetchAdminProducts = async (page: number = 1, search: string = '', sort: string = 'latest') => {
+  const res = await api.get('/admin/products', { params: { page, search, sort } });
   return res.data;
 };
 

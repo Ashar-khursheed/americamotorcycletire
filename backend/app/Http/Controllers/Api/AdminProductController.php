@@ -20,12 +20,48 @@ class AdminProductController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where('name', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('sku', 'like', "%{$search}%")
                   ->orWhere('brand', 'like', "%{$search}%");
+            });
         }
 
-        $products = $query->orderBy('id', 'desc')->paginate(50);
+        $sort = $request->input('sort', 'latest');
+        switch ($sort) {
+            case 'id_desc':
+                $query->orderBy('id', 'desc');
+                break;
+            case 'id_asc':
+                $query->orderBy('id', 'asc');
+                break;
+            case 'created_desc':
+                $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+                break;
+            case 'created_asc':
+                $query->orderBy('created_at', 'asc')->orderBy('id', 'asc');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'latest':
+            case 'updated_desc':
+            default:
+                $query->orderBy('updated_at', 'desc')->orderBy('id', 'desc');
+                break;
+        }
+
+        $perPage = (int) $request->input('per_page', 50);
+        $products = $query->paginate($perPage);
 
         return response()->json([
             'status' => 'success',
