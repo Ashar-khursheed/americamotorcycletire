@@ -1438,75 +1438,119 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Products Table */}
-            <div className="overflow-x-auto relative">
+            {/* Products Table Container */}
+            <div className={`overflow-x-auto relative rounded-xl border ${
+              isDarkMode ? 'border-[#222222] bg-[#0D0D0D]' : 'border-gray-200 bg-white shadow-sm'
+            }`}>
               {loadingProducts && (
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-10 flex items-center justify-center text-xs font-bold uppercase text-[#BF8647]">
-                  Loading Page Data...
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex items-center justify-center text-xs font-black uppercase text-[#BF8647] tracking-widest animate-pulse">
+                  Loading Products Catalog...
                 </div>
               )}
-              <table className="w-full text-left text-xs uppercase">
-                <thead className={`font-bold ${isDarkMode ? 'bg-[#181818] text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
+              <table className="w-full text-left text-xs uppercase border-collapse">
+                <thead className={`font-black tracking-wider text-[11px] ${
+                  isDarkMode ? 'bg-[#161616] text-gray-400 border-b border-[#222]' : 'bg-gray-100 text-gray-700 border-b border-gray-200'
+                }`}>
                   <tr>
-                    <th className="p-3">Image</th>
-                    <th className="p-3">Part # / SKU</th>
-                    <th className="p-3">Product Name</th>
-                    <th className="p-3">Brand</th>
-                    <th className="p-3">Price</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3 text-right">Actions</th>
+                    <th className="py-3.5 px-4 w-16 text-center">Image</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap font-heading">Part # / SKU</th>
+                    <th className="py-3.5 px-4 min-w-[220px] font-heading">Product Name</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap font-heading">Brand</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap font-heading">Price</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap text-center font-heading">Status</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap text-right font-heading w-28">Actions</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y ${isDarkMode ? 'divide-[#222222] text-gray-300' : 'divide-gray-200 text-gray-800'}`}>
+                <tbody className={`divide-y ${isDarkMode ? 'divide-[#1A1A1A] text-gray-300' : 'divide-gray-100 text-gray-800'}`}>
                   {safeProducts.map((p) => (
-                    <tr key={p.id} className={isDarkMode ? 'hover:bg-[#141414]' : 'hover:bg-gray-50'}>
-                      <td className="p-3">
-                        <img
-                          src={p.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=200'}
-                          alt={p.name}
-                          className="w-12 h-12 object-contain bg-[#1A1A1A] border border-[#262626] rounded p-1"
-                        />
+                    <tr key={p.id} className={`transition-colors ${
+                      isDarkMode ? 'hover:bg-[#141414]' : 'hover:bg-amber-500/5'
+                    }`}>
+                      {/* Image */}
+                      <td className="py-3 px-4 text-center">
+                        <div className="w-12 h-12 rounded-lg bg-[#161616] border border-[#2A2A2A] overflow-hidden p-1 flex items-center justify-center mx-auto shadow-inner">
+                          <img
+                            src={p.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=200'}
+                            alt={p.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
                       </td>
-                      <td className="p-3 font-mono text-gray-400 font-bold">{p.sku}</td>
-                      <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{p.name}</td>
-                      <td className="p-3 text-[#BF8647] font-bold">{p.brand}</td>
-                      <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>${Number(p.price).toFixed(2)}</td>
-                      <td className="p-3">
+
+                      {/* SKU */}
+                      <td className="py-3 px-4 font-mono text-[11px] font-bold text-gray-400 whitespace-nowrap">
+                        {p.sku || `ID-${p.id}`}
+                      </td>
+
+                      {/* Name */}
+                      <td className="py-3 px-4 max-w-md">
+                        <div
+                          className={`font-bold text-xs line-clamp-2 leading-relaxed ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+                          title={p.name}
+                        >
+                          {p.name}
+                        </div>
+                      </td>
+
+                      {/* Brand */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="inline-block font-extrabold text-[11px] text-[#BF8647] bg-[#BF8647]/10 border border-[#BF8647]/20 px-2.5 py-0.5 rounded uppercase tracking-wider">
+                          {p.brand || 'BMG'}
+                        </span>
+                      </td>
+
+                      {/* Price */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className={`font-mono text-xs font-black ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          ${Number(p.price || 0).toFixed(2)}
+                        </span>
+                      </td>
+
+                      {/* Status Toggle */}
+                      <td className="py-3 px-4 text-center whitespace-nowrap">
                         <button
+                          type="button"
                           onClick={async () => {
                             try {
                               await api.patch(`/admin/products/${p.id}/status`);
-                              loadAdminProducts(productPage, productSearch);
+                              loadAdminProducts(productPage, productSearch, productSort);
                             } catch (err) {
                               alert('Status updated!');
-                              loadAdminProducts(productPage, productSearch);
+                              loadAdminProducts(productPage, productSearch, productSort);
                             }
                           }}
-                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border ${
                             p.is_active !== false
-                              ? 'bg-emerald-950/80 border border-emerald-600 text-emerald-400 hover:bg-emerald-900'
-                              : 'bg-zinc-800 border border-zinc-600 text-zinc-300 hover:bg-zinc-700'
+                              ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/20 shadow-sm'
+                              : 'bg-amber-500/10 border-amber-500/40 text-amber-400 hover:bg-amber-500/20 shadow-sm'
                           }`}
                           title="Click to toggle Published / Draft state"
                         >
-                          {p.is_active !== false ? '● PUBLISHED' : '○ DRAFT'}
+                          <span className={`w-1.5 h-1.5 rounded-full ${p.is_active !== false ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                          {p.is_active !== false ? 'PUBLISHED' : 'DRAFT'}
                         </button>
                       </td>
-                      <td className="p-3 text-right space-x-2">
-                        <button
-                          onClick={() => handleStartEditProduct(p)}
-                          className="p-1.5 text-gray-400 hover:text-[#BF8647] bg-[#1C1C1C] rounded border border-[#2B2B2B] hover:border-[#BF8647] transition-all cursor-pointer"
-                          title="Edit Product"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(p.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-400 bg-[#1C1C1C] rounded border border-[#2B2B2B] hover:border-red-500 transition-all cursor-pointer"
-                          title="Delete Product"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+
+                      {/* Actions Buttons (Fix: Side-by-side Flex layout) */}
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditProduct(p)}
+                            className="p-2 text-gray-400 hover:text-[#BF8647] bg-[#1A1A1A] hover:bg-[#252525] rounded-lg border border-[#2B2B2B] hover:border-[#BF8647]/50 transition-all cursor-pointer shadow-sm active:scale-95"
+                            title="Edit Product Details & Gallery"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProduct(p.id)}
+                            className="p-2 text-gray-400 hover:text-red-400 bg-[#1A1A1A] hover:bg-red-950/40 rounded-lg border border-[#2B2B2B] hover:border-red-500/50 transition-all cursor-pointer shadow-sm active:scale-95"
+                            title="Delete Product"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
