@@ -3188,7 +3188,7 @@ export default function AdminDashboardPage() {
                 isDarkMode ? 'bg-[#1A1A1A] border-[#262626]' : 'bg-gray-50 border-gray-200'
               }`}>
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="font-bold text-[#BF8647]">Alex M.</span>
                     <span className="text-gray-500">· 5 Stars</span>
                     <span className="bg-emerald-950 text-emerald-400 border border-emerald-800/40 text-[9px] font-bold px-2 py-0.5 rounded">APPROVED</span>

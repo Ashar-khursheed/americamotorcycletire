@@ -805,21 +805,21 @@ export default function ProductDetailPage() {
               })()}
 
               {/* Product Customer Reviews & Rating Form */}
-              <div className="bg-[#121212] border border-[#222] rounded-lg p-8 space-y-8">
+              <div className="bg-[#121212] border border-[#222] rounded-lg p-4 sm:p-8 space-y-6 sm:space-y-8 min-w-0">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-[#222] pb-6">
                   <div>
-                    <h3 className="text-xl font-bold uppercase text-white">CUSTOMER REVIEWS & RIDER RATING</h3>
-                    <p className="text-xs text-gray-400">Real feedback from verified riders and motorcycle enthusiasts</p>
+                    <h3 className="text-lg sm:text-xl font-bold uppercase text-white leading-tight">CUSTOMER REVIEWS & RIDER RATING</h3>
+                    <p className="text-xs text-gray-400 mt-1">Real feedback from verified riders and motorcycle enthusiasts</p>
                   </div>
-                  <div className="flex items-center gap-2 bg-[#1A1A1A] border border-[#333] px-4 py-2 rounded">
-                    <Star className="w-5 h-5 fill-[#BF8647] text-[#BF8647]" />
+                  <div className="flex flex-wrap items-center gap-2 bg-[#1A1A1A] border border-[#333] px-3.5 py-2 rounded w-fit shrink-0">
+                    <Star className="w-5 h-5 fill-[#BF8647] text-[#BF8647] shrink-0" />
                     <span className="text-lg font-extrabold text-white">5.0</span>
                     <span className="text-xs text-gray-400 uppercase font-bold">/ 5.0 (VERIFIED FITMENT)</span>
                   </div>
                 </div>
 
                 {/* Review Form */}
-                <div className="bg-[#1A1A1A] border border-[#262626] p-6 rounded-lg space-y-4">
+                <div className="bg-[#1A1A1A] border border-[#262626] p-4 sm:p-6 rounded-lg space-y-4 min-w-0">
                   <h4 className="text-sm font-bold uppercase text-[#BF8647]">WRITE A PRODUCT REVIEW</h4>
                   <form
                     onSubmit={async (e) => {
@@ -854,7 +854,7 @@ export default function ProductDetailPage() {
                           name="reviewerName"
                           required
                           placeholder="e.g. Mike R."
-                          className="w-full bg-[#121212] border border-[#333] rounded px-4 py-2.5 text-white focus:outline-none focus:border-[#BF8647]"
+                          className="w-full min-w-0 bg-[#121212] border border-[#333] rounded px-3.5 py-2.5 text-white focus:outline-none focus:border-[#BF8647]"
                         />
                       </div>
                       <div>
@@ -864,7 +864,7 @@ export default function ProductDetailPage() {
                           name="reviewTitle"
                           required
                           placeholder="e.g. Incredible Wet Cornering Grip!"
-                          className="w-full bg-[#121212] border border-[#333] rounded px-4 py-2.5 text-white focus:outline-none focus:border-[#BF8647]"
+                          className="w-full min-w-0 bg-[#121212] border border-[#333] rounded px-3.5 py-2.5 text-white focus:outline-none focus:border-[#BF8647]"
                         />
                       </div>
                     </div>
@@ -875,12 +875,12 @@ export default function ProductDetailPage() {
                         required
                         rows={3}
                         placeholder="Share your riding performance, mileage, and tire feedback..."
-                        className="w-full bg-[#121212] border border-[#333] rounded px-4 py-2.5 text-white focus:outline-none focus:border-[#BF8647] normal-case"
+                        className="w-full min-w-0 bg-[#121212] border border-[#333] rounded px-3.5 py-2.5 text-white focus:outline-none focus:border-[#BF8647] normal-case"
                       />
                     </div>
                     <button
                       type="submit"
-                      className="bg-[#BF8647] text-black font-extrabold uppercase text-xs px-6 py-3 rounded hover:bg-[#D49A50]"
+                      className="bg-[#BF8647] text-black font-extrabold uppercase text-xs px-6 py-3 rounded hover:bg-[#D49A50] w-full sm:w-auto"
                     >
                       SUBMIT REVIEW
                     </button>
@@ -889,17 +889,21 @@ export default function ProductDetailPage() {
 
                 {/* Sample Verified Reviews List */}
                 <div className="space-y-4">
-                  <div className="bg-[#1A1A1A] border border-[#222] p-5 rounded-lg space-y-2">
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="flex text-[#BF8647]">
+                  <div className="bg-[#1A1A1A] border border-[#222] p-4 sm:p-5 rounded-lg space-y-3 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-b border-[#262626] pb-2.5 sm:border-0 sm:pb-0">
+                      <div className="flex flex-wrap items-center gap-2 min-w-0">
+                        <div className="flex text-[#BF8647] shrink-0">
                           {[...Array(5)].map((_, i) => (
                             <Star key={i} className="w-3.5 h-3.5 fill-[#BF8647]" />
                           ))}
                         </div>
-                        <span className="font-bold text-white uppercase">Outstanding High-Speed Stability</span>
+                        <span className="font-bold text-white uppercase break-words min-w-0 leading-snug">
+                          Outstanding High-Speed Stability
+                        </span>
                       </div>
-                      <span className="text-gray-500 text-[10px]">Verified Buyer - 2 days ago</span>
+                      <span className="text-gray-500 text-[10px] shrink-0 font-medium">
+                        Verified Buyer - 2 days ago
+                      </span>
                     </div>
                     <p className="text-xs text-gray-300 normal-case leading-relaxed">
                       Installed on my Harley Road Glide. Excellent damp traction, zero tread squirm on highway grooves, and BMG Cycles fit them same day in shop. Highly recommended!
