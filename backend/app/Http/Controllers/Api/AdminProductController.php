@@ -221,12 +221,25 @@ class AdminProductController extends Controller
             'slug' => $slug,
             'sku' => $sku,
             'price' => $validated['price'],
+            'was_price' => $request->input('was_price', $validated['price']),
+            'compare_at_price' => $request->input('was_price', $validated['price']),
             'category_id' => $validated['category_id'] ?? null,
             'brand' => $validated['brand'] ?? 'BMG',
             'stock_quantity' => $validated['stock_quantity'] ?? 25,
             'description' => $validated['description'] ?? null,
             'primary_image' => $primaryImage,
             'gallery_images' => $galleryImages,
+            'vehicle_type' => $request->input('vehicle_type'),
+            'product_type' => $request->input('product_type'),
+            'item_number' => $request->input('item_number'),
+            'compatible_makes' => $request->input('compatible_makes'),
+            'compatible_models' => $request->input('compatible_models'),
+            'fitment_year_range' => $request->input('fitment_year_range'),
+            'specs_and_features' => $request->input('specs_and_features'),
+            'front_tire_fitment' => $request->input('front_tire_fitment'),
+            'rear_tire_fitment' => $request->input('rear_tire_fitment'),
+            'wheel_locations' => $request->input('wheel_locations'),
+            'available_sizes' => $request->input('available_sizes'),
             'custom_attributes' => $request->input('custom_attributes', []),
             'meta_title' => $request->input('meta_title'),
             'meta_description' => $request->input('meta_description'),
@@ -312,6 +325,12 @@ class AdminProductController extends Controller
             'gallery_images' => $galleryImages,
             'custom_attributes' => $request->has('custom_attributes') ? $request->input('custom_attributes') : $product->custom_attributes,
         ];
+
+        foreach (['vehicle_type', 'product_type', 'item_number', 'compatible_makes', 'compatible_models', 'fitment_year_range', 'specs_and_features', 'was_price', 'front_tire_fitment', 'rear_tire_fitment', 'wheel_locations', 'available_sizes'] as $f) {
+            if ($request->has($f)) {
+                $updateData[$f] = $request->input($f);
+            }
+        }
 
         if ($request->has('slug') && !empty($request->input('slug'))) {
             $updateData['slug'] = $this->makeUniqueSlug($request->input('slug'), $product->id);

@@ -1453,9 +1453,10 @@ export default function AdminDashboardPage() {
                 }`}>
                   <tr>
                     <th className="py-3.5 px-4 w-16 text-center">Image</th>
-                    <th className="py-3.5 px-4 whitespace-nowrap font-heading">Part # / SKU</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap font-heading">Part # / Item #</th>
                     <th className="py-3.5 px-4 min-w-[220px] font-heading">Product Name</th>
                     <th className="py-3.5 px-4 whitespace-nowrap font-heading">Brand</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap font-heading">Vehicle / Product Type</th>
                     <th className="py-3.5 px-4 whitespace-nowrap font-heading">Price</th>
                     <th className="py-3.5 px-4 whitespace-nowrap text-center font-heading">Status</th>
                     <th className="py-3.5 px-4 whitespace-nowrap text-right font-heading w-28">Actions</th>
@@ -1477,9 +1478,9 @@ export default function AdminDashboardPage() {
                         </div>
                       </td>
 
-                      {/* SKU */}
+                      {/* SKU / Item # */}
                       <td className="py-3 px-4 font-mono text-[11px] font-bold text-gray-400 whitespace-nowrap">
-                        {p.sku || `ID-${p.id}`}
+                        {p.item_number || p.sku || `ID-${p.id}`}
                       </td>
 
                       {/* Name */}
@@ -1497,6 +1498,27 @@ export default function AdminDashboardPage() {
                         <span className="inline-block font-extrabold text-[11px] text-[#BF8647] bg-[#BF8647]/10 border border-[#BF8647]/20 px-2.5 py-0.5 rounded uppercase tracking-wider">
                           {p.brand || 'BMG'}
                         </span>
+                      </td>
+
+                      {/* Vehicle / Product Type */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1 items-start">
+                          {p.vehicle_type && (
+                            <span className="bg-[#BF8647]/20 text-[#BF8647] text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-[#BF8647]/30">
+                              {p.vehicle_type}
+                            </span>
+                          )}
+                          {p.product_type && (
+                            <span className="text-[10px] text-gray-400 font-semibold uppercase">
+                              {p.product_type}
+                            </span>
+                          )}
+                          {!p.vehicle_type && !p.product_type && (
+                            <span className="text-[10px] text-gray-600 font-semibold uppercase">
+                              N/A
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Price */}
@@ -2216,11 +2238,118 @@ export default function AdminDashboardPage() {
                   <div>
                     <label className="text-xs font-bold uppercase text-gray-400 block mb-1">Description & Overview</label>
                     <textarea
-                      rows={4}
+                      rows={3}
                       value={editingProduct.description || ''}
                       onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
                       className={`w-full rounded px-3 py-2.5 text-xs font-medium focus:outline-none focus:border-[#BF8647] ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-gray-50 border border-gray-300 text-gray-900'}`}
                     />
+                  </div>
+
+                  {/* ADVANCED MOTORCYCLE FITMENT & SCRAPED METADATA */}
+                  <div className={`p-4 rounded-xl space-y-3 border ${isDarkMode ? 'bg-[#141414] border-[#2A2A2A]' : 'bg-amber-50 border-amber-200'}`}>
+                    <h4 className="text-xs font-black uppercase text-[#BF8647] tracking-wider flex items-center gap-1.5">
+                      <Wrench className="w-4 h-4" /> SCRAPED VEHICLE & FITMENT METADATA
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Vehicle Type</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Street Bike / Cruiser / Off-Road"
+                          value={editingProduct.vehicle_type || ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, vehicle_type: e.target.value })}
+                          className={`w-full rounded px-2.5 py-2 text-xs font-semibold ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Product Type</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Cruiser Tires / Street Tires"
+                          value={editingProduct.product_type || ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, product_type: e.target.value })}
+                          className={`w-full rounded px-2.5 py-2 text-xs font-semibold ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Item # / Part #</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 0201-2382"
+                          value={editingProduct.item_number || editingProduct.sku || ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, item_number: e.target.value })}
+                          className={`w-full rounded px-2.5 py-2 text-xs font-semibold ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Compatible Year Range</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 1984 - 2024"
+                          value={editingProduct.fitment_year_range || ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, fitment_year_range: e.target.value })}
+                          className={`w-full rounded px-2.5 py-2 text-xs font-semibold ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Front Tire Specs</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. MT90B16 72H TL NWS"
+                          value={editingProduct.front_tire_fitment || ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, front_tire_fitment: e.target.value })}
+                          className={`w-full rounded px-2.5 py-2 text-xs font-semibold ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Rear Tire Specs</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 180/65B16 81H TL"
+                          value={editingProduct.rear_tire_fitment || ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, rear_tire_fitment: e.target.value })}
+                          className={`w-full rounded px-2.5 py-2 text-xs font-semibold ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Compatible Makes List</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Harley-Davidson, Honda, Beta, Yamaha"
+                          value={editingProduct.compatible_makes || ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, compatible_makes: e.target.value })}
+                          className={`w-full rounded px-2.5 py-2 text-xs font-semibold ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Compatible Models List</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Road Glide, Street Glide, CBR500R"
+                          value={editingProduct.compatible_models || ''}
+                          onChange={(e) => setEditingProduct({ ...editingProduct, compatible_models: e.target.value })}
+                          className={`w-full rounded px-2.5 py-2 text-xs font-semibold ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Technical Specs & Scraped Bullet Features</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Bullet points, specifications, and scraped features..."
+                        value={editingProduct.specs_and_features || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, specs_and_features: e.target.value })}
+                        className={`w-full rounded px-2.5 py-2 text-xs font-medium focus:outline-none focus:border-[#BF8647] ${isDarkMode ? 'bg-[#1C1C1C] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                      />
+                    </div>
                   </div>
                 </div>
 
