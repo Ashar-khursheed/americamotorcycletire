@@ -95,16 +95,24 @@ class ProductFilterService
         }
 
         // 6. Motorcycle Fitment Filter (Year, Make, Model)
-        $year = $request->input('year');
-        $make = $request->input('make');
-        $model = $request->input('model');
+        $year = trim($request->input('year') ?? '');
+        $make = trim($request->input('make') ?? '');
+        $model = trim($request->input('model') ?? '');
 
         if (!empty($year) || !empty($make) || !empty($model)) {
             $query->where(function ($q) use ($year, $make, $model) {
                 // Primary: check structured fitments table
                 $q->whereHas('fitments', function ($fitQ) use ($year, $make, $model) {
                     if (!empty($year)) {
-                        $fitQ->where('year', $year);
+                        $yInt = (int)$year;
+                        $fitQ->where(function ($subQ) use ($year, $yInt) {
+                            $subQ->where('year', 'like', "%{$year}%")
+                                 ->orWhereNull('year')
+                                 ->orWhere('year', '');
+                            if ($yInt > 0) {
+                                $subQ->orWhereRaw("CAST(SUBSTRING_INDEX(year, '-', 1) AS UNSIGNED) <= ? AND CAST(SUBSTRING_INDEX(year, '-', -1) AS UNSIGNED) >= ?", [$yInt, $yInt]);
+                            }
+                        });
                     }
                     if (!empty($make)) {
                         $fitQ->where('make', 'like', "%{$make}%");

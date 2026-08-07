@@ -48,10 +48,11 @@ class ProductController extends Controller
     public function getFitmentOptions(Request $request)
     {
         $type = $request->input('type') ?: $request->input('vehicle_type');
-        $year = $request->input('year');
-        $make = $request->input('make');
-        $model = $request->input('model');
+        $year = trim($request->input('year') ?? '');
+        $make = trim($request->input('make') ?? '');
+        $model = trim($request->input('model') ?? '');
 
+        // Base query filtering fitments by vehicle_type / product_type if provided
         $baseQuery = ProductFitment::query()
             ->whereHas('product', function ($q) use ($type) {
                 $q->where('is_active', true);
@@ -63,23 +64,100 @@ class ProductController extends Controller
                 }
             });
 
-        // 1. Years list
+        // 1. Extract and expand Years list
         $yearsQuery = (clone $baseQuery)->whereNotNull('year')->where('year', '!=', '');
         if (!empty($make)) $yearsQuery->where('make', 'like', "%{$make}%");
         if (!empty($model)) $yearsQuery->where('model', 'like', "%{$model}%");
-        $years = $yearsQuery->distinct()->pluck('year')->sortDesc()->values();
+        $rawYears = $yearsQuery->distinct()->pluck('year')->filter()->values();
+
+        // Also fallback to product fitment_year_range if fitments table rawYears is thin
+        if ($rawYears->isEmpty()) {
+            $prodYearQuery = Product::where('is_active', true)->whereNotNull('fitment_year_range');
+            if (!empty($type)) {
+                $prodYearQuery->where(function ($tQ) use ($type) {
+                    $tQ->where('vehicle_type', 'like', "%{$type}%")
+                       ->orWhere('product_type', 'like', "%{$type}%");
+                });
+            }
+            $rawYears = $prodYearQuery->distinct()->pluck('fitment_year_range')->filter()->values();
+        }
+
+        $expandedYearsMap = [];
+        foreach ($rawYears as $ry) {
+            if (preg_match('/(\d{4})\s*-\s*(\d{4})/', $ry, $matches)) {
+                $start = (int)$matches[1];
+                $end = (int)$matches[2];
+                for ($y = $end; $y >= $start; $y--) {
+                    $expandedYearsMap[$y] = true;
+                }
+            } else if (preg_match_all('/\b(19\d\d|20\d\d)\b/', $ry, $m)) {
+                foreach ($m[1] as $yStr) {
+                    $expandedYearsMap[(int)$yStr] = true;
+                }
+            }
+        }
+
+        // If no specific fitment years found, generate default standard motorcycle years (2026 down to 1980)
+        if (empty($expandedYearsMap)) {
+            for ($y = 2026; $y >= 1980; $y--) {
+                $expandedYearsMap[$y] = true;
+            }
+        }
+
+        krsort($expandedYearsMap);
+        $years = array_map('strval', array_keys($expandedYearsMap));
+
+        // Helper closure to match selected year against single year or range "1998 - 2025"
+        $applyYearMatch = function ($q) use ($year) {
+            if (empty($year)) return;
+            $yInt = (int)$year;
+            $q->where(function ($subQ) use ($year, $yInt) {
+                $subQ->where('year', 'like', "%{$year}%")
+                     ->orWhereNull('year')
+                     ->orWhere('year', '');
+                if ($yInt > 0) {
+                    $subQ->orWhereRaw("CAST(SUBSTRING_INDEX(year, '-', 1) AS UNSIGNED) <= ? AND CAST(SUBSTRING_INDEX(year, '-', -1) AS UNSIGNED) >= ?", [$yInt, $yInt]);
+                }
+            });
+        };
 
         // 2. Makes list
         $makesQuery = (clone $baseQuery)->whereNotNull('make')->where('make', '!=', '');
-        if (!empty($year)) $makesQuery->where('year', $year);
+        $applyYearMatch($makesQuery);
         if (!empty($model)) $makesQuery->where('model', 'like', "%{$model}%");
-        $makes = $makesQuery->distinct()->pluck('make')->sort()->values();
+        
+        $rawMakes = $makesQuery->distinct()->pluck('make')->filter()->values();
+        $cleanMakes = [];
+        foreach ($rawMakes as $rm) {
+            foreach (explode('/', $rm) as $p1) {
+                foreach (explode(',', $p1) as $p2) {
+                    $trimmed = trim($p2);
+                    if ($trimmed && !in_array($trimmed, $cleanMakes)) {
+                        $cleanMakes[] = $trimmed;
+                    }
+                }
+            }
+        }
+        sort($cleanMakes);
 
         // 3. Models list
         $modelsQuery = (clone $baseQuery)->whereNotNull('model')->where('model', '!=', '');
-        if (!empty($year)) $modelsQuery->where('year', $year);
+        $applyYearMatch($modelsQuery);
         if (!empty($make)) $modelsQuery->where('make', 'like', "%{$make}%");
-        $models = $modelsQuery->distinct()->pluck('model')->sort()->values();
+
+        $rawModels = $modelsQuery->distinct()->pluck('model')->filter()->values();
+        $cleanModels = [];
+        foreach ($rawModels as $rm) {
+            foreach (explode('/', $rm) as $p1) {
+                foreach (explode(',', $p1) as $p2) {
+                    $trimmed = trim($p2);
+                    if ($trimmed && !in_array($trimmed, $cleanModels)) {
+                        $cleanModels[] = $trimmed;
+                    }
+                }
+            }
+        }
+        sort($cleanModels);
 
         // 4. Vehicle Types & Product Types combined list
         $rawVehicleTypes = Product::where('is_active', true)->whereNotNull('vehicle_type')->pluck('vehicle_type');
@@ -106,8 +184,8 @@ class ProductController extends Controller
 
         return response()->json([
             'years' => $years,
-            'makes' => $makes,
-            'models' => $models,
+            'makes' => $cleanMakes,
+            'models' => $cleanModels,
             'types' => $typesSet,
         ]);
     }

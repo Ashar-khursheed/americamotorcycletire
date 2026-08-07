@@ -90,9 +90,10 @@ function ProductsContent() {
     }
   }, [searchParams]);
 
-  // Fetch dynamic fitment options from backend when Year/Make/Model change
+  // Fetch dynamic fitment options from backend when Type/Year/Make/Model change
   useEffect(() => {
     const params: Record<string, string> = {};
+    if (selectedType) params.type = selectedType;
     if (selectedYear) params.year = selectedYear;
     if (selectedMake) params.make = selectedMake;
     if (selectedModel) params.model = selectedModel;
@@ -108,7 +109,7 @@ function ProductsContent() {
         }
       })
       .catch(() => {});
-  }, [selectedYear, selectedMake, selectedModel]);
+  }, [selectedType, selectedYear, selectedMake, selectedModel]);
 
   // Reset pagination on filter changes
   const isFilterMounted = React.useRef(false);
