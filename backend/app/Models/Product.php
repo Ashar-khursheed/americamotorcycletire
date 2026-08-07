@@ -150,11 +150,21 @@ class Product extends Model
         return static::sanitizeText($value);
     }
 
+    public function getCompatibleModelsAttribute($value)
+    {
+        return static::sanitizeText($value);
+    }
+
+    public function getCompatibleMakesAttribute($value)
+    {
+        return static::sanitizeText($value);
+    }
+
     public static function formatImageUrl(?string $value): ?string
     {
         if (empty($value)) return null;
 
-        $value = trim($value, " \t\n\r\0\x0B\"'");
+        $value = stripslashes(trim($value, " \t\n\r\0\x0B\"'[]"));
         if (empty($value)) return null;
 
         $baseUrl = rtrim(config('app.url', 'https://americaapi.kaafifoods.com'), '/');
@@ -185,13 +195,25 @@ class Product extends Model
     {
         $images = [];
         if (is_string($value) && !empty($value)) {
-            $decoded = json_decode($value, true);
+            $clean = stripslashes(trim($value, " \t\n\r\0\x0B"));
+            $decoded = json_decode($clean, true);
             if (is_array($decoded)) {
                 $images = $decoded;
-            } elseif (str_contains($value, ';')) {
-                $images = array_map(fn($item) => trim($item, " \t\n\r\0\x0B\"'"), explode(';', $value));
             } else {
-                $images = [trim($value, " \t\n\r\0\x0B\"'")];
+                $normalized = str_replace("'", '"', $clean);
+                $decoded = json_decode($normalized, true);
+                if (is_array($decoded)) {
+                    $images = $decoded;
+                } else {
+                    preg_match_all('#(https?://[^\s,\'\"\[\]]+|storage/[^\s,\'\"\[\]]+)#i', $clean, $matches);
+                    if (!empty($matches[0])) {
+                        $images = $matches[0];
+                    } elseif (str_contains($clean, ';')) {
+                        $images = array_map(fn($item) => trim($item, " \t\n\r\0\x0B\"'[]"), explode(';', $clean));
+                    } else {
+                        $images = [trim($clean, " \t\n\r\0\x0B\"'[]")];
+                    }
+                }
             }
         } elseif (is_array($value)) {
             $images = $value;

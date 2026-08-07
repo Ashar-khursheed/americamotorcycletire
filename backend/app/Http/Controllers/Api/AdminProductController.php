@@ -548,8 +548,8 @@ class AdminProductController extends Controller
             $canonicalUrl = $row['Canonical URL'] ?? $row['canonical_url'] ?? null;
             $customSlug = $row['Slug'] ?? $row['slug'] ?? null;
 
-            // Upsert Product strictly by unique SKU (Part Number) or Name
-            $existingProduct = Product::where('sku', $sku)->orWhere('name', $name)->first();
+            // Upsert Product strictly by unique SKU (Part Number)
+            $existingProduct = !empty($sku) ? Product::where('sku', $sku)->first() : null;
 
             $prodData = [
                 'name' => $name,
@@ -574,6 +574,8 @@ class AdminProductController extends Controller
                 'available_sizes' => $availSizes,
                 'total_part_numbers' => $totalParts,
                 'primary_image' => !empty($localImage) ? $localImage : asset('storage/products/default.jpg'),
+                'gallery_images' => $row['gallery_images'] ?? $row['Gallery Images'] ?? $row['All Image URLs'] ?? null,
+                'custom_attributes' => $row['custom_attributes'] ?? $row['Custom Attributes'] ?? null,
                 'description' => $desc,
                 'specs_and_features' => $specs,
                 'fitment_vehicle' => $fitVehicle,
