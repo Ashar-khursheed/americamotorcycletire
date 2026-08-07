@@ -159,7 +159,10 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
     onClose();
 
     const queryParams = new URLSearchParams();
-    if (vType) queryParams.set('vehicle_type', vType);
+    if (vType) {
+      queryParams.set('type', vType);
+      queryParams.set('vehicle_type', vType);
+    }
     queryParams.set('year', yr);
     queryParams.set('make', mk);
     queryParams.set('model', md);

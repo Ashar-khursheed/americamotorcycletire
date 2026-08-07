@@ -103,7 +103,10 @@ export function HeroBanner() {
     if (!selectedType || !selectedYear || !selectedMake || !selectedModel) return;
 
     const query = new URLSearchParams();
-    if (selectedType) query.set('vehicle_type', selectedType);
+    if (selectedType) {
+      query.set('type', selectedType);
+      query.set('vehicle_type', selectedType);
+    }
     query.set('year', selectedYear);
     query.set('make', selectedMake);
     query.set('model', selectedModel);

@@ -71,8 +71,8 @@ function ProductsContent() {
       const year = searchParams.get('year');
       const make = searchParams.get('make');
       const model = searchParams.get('model');
-      const type = searchParams.get('type') || searchParams.get('product_type');
-      const vType = searchParams.get('vehicle_type');
+      const type = searchParams.get('type') || searchParams.get('vehicle_type') || searchParams.get('product_type');
+      const vType = searchParams.get('vehicle_type') || searchParams.get('type');
       const brand = searchParams.get('brand');
       const q = searchParams.get('search');
       const p = searchParams.get('page');

@@ -112,10 +112,14 @@ class ProductController extends Controller
         // Helper for year matching on Product
         $applyYearMatchProduct = function ($q) use ($year) {
             if (empty($year)) return;
-            $q->where(function ($subQ) use ($year) {
+            $yInt = (int)$year;
+            $q->where(function ($subQ) use ($year, $yInt) {
                 $subQ->where('fitment_year_range', 'like', "%{$year}%")
                      ->orWhereNull('fitment_year_range')
                      ->orWhere('fitment_year_range', '');
+                if ($yInt > 0) {
+                    $subQ->orWhereRaw("CAST(SUBSTRING_INDEX(fitment_year_range, '-', 1) AS UNSIGNED) <= ? AND CAST(SUBSTRING_INDEX(fitment_year_range, '-', -1) AS UNSIGNED) >= ?", [$yInt, $yInt]);
+                }
             });
         };
 
