@@ -137,6 +137,13 @@ class AdminProductController extends Controller
 
             $rawBinary = null;
 
+            if (str_starts_with($imageUrl, '//')) {
+                $imageUrl = 'https:' . $imageUrl;
+            }
+
+            $parsedHost = parse_url($imageUrl, PHP_URL_HOST);
+            $referer = !empty($parsedHost) ? (str_starts_with($imageUrl, 'https') ? 'https://' : 'http://') . $parsedHost . '/' : 'https://www.cyclegear.com/';
+
             if (str_starts_with($imageUrl, 'data:image/')) {
                 $parts = explode(',', $imageUrl, 2);
                 if (count($parts) === 2) {
@@ -149,15 +156,17 @@ class AdminProductController extends Controller
                         CURLOPT_URL => $imageUrl,
                         CURLOPT_RETURNTRANSFER => true,
                         CURLOPT_FOLLOWLOCATION => true,
-                        CURLOPT_MAXREDIRS => 3,
-                        CURLOPT_CONNECTTIMEOUT => 2,
-                        CURLOPT_TIMEOUT => 5,
+                        CURLOPT_MAXREDIRS => 5,
+                        CURLOPT_CONNECTTIMEOUT => 3,
+                        CURLOPT_TIMEOUT => 8,
                         CURLOPT_SSL_VERIFYPEER => false,
                         CURLOPT_SSL_VERIFYHOST => false,
+                        CURLOPT_REFERER => $referer,
                         CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                         CURLOPT_HTTPHEADER => [
                             'Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
                             'Accept-Language: en-US,en;q=0.9',
+                            'Cache-Control: no-cache',
                         ],
                     ]);
                     $rawBinary = curl_exec($ch);
@@ -172,9 +181,9 @@ class AdminProductController extends Controller
                 if (empty($rawBinary)) {
                     $context = stream_context_create([
                         'http' => [
-                            'timeout' => 3,
+                            'timeout' => 4,
                             'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                            'header' => "Accept: image/webp,image/*\r\n"
+                            'header' => "Accept: image/webp,image/*\r\nReferer: {$referer}\r\n"
                         ],
                         'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
                     ]);
