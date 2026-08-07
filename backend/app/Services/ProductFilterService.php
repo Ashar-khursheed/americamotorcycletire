@@ -249,17 +249,59 @@ class ProductFilterService
         }
         sort($productTypesSet);
 
-        $ignoredMakes = [
-            'universal', 'all models', 'n/a', 'none', 'all makes', 'all', 'null',
-            'bridgestone', 'dunlop', 'maxxis', 'metzeler', 'michelin', 'ams', 'cst',
-            'irc', 'itp', 'shinko', 'continental', 'avon', 'kenda', 'heidenau', 'mitas',
-            'sedona', 'vee rubber', 'motoz', 'sunf', 'gbc', 'carlisle', 'performance machine',
-            'bmg', 'generic'
+        $validOemMakesMap = [
+            'harley' => 'Harley-Davidson',
+            'harley-davidson' => 'Harley-Davidson',
+            'honda' => 'Honda',
+            'yamaha' => 'Yamaha',
+            'kawasaki' => 'Kawasaki',
+            'suzuki' => 'Suzuki',
+            'bmw' => 'BMW',
+            'ktm' => 'KTM',
+            'ducati' => 'Ducati',
+            'triumph' => 'Triumph',
+            'indian' => 'Indian',
+            'husqvarna' => 'Husqvarna',
+            'can-am' => 'Can-Am',
+            'canam' => 'Can-Am',
+            'polaris' => 'Polaris',
+            'victory' => 'Victory',
+            'aprilia' => 'Aprilia',
+            'moto guzzi' => 'Moto Guzzi',
+            'royal enfield' => 'Royal Enfield',
+            'gasgas' => 'GasGas',
+            'gas gas' => 'GasGas',
+            'beta' => 'Beta',
+            'zero' => 'Zero',
+            'husaberg' => 'Husaberg',
+            'cobra' => 'Cobra',
+            'buell' => 'Buell',
+            'mv agusta' => 'MV Agusta',
+            'benelli' => 'Benelli',
+            'kymco' => 'Kymco',
+            'sym' => 'Sym',
+            'brp' => 'BRP',
+            'arctic cat' => 'Arctic Cat',
+            'ski-doo' => 'Ski-Doo',
+            'sea-doo' => 'Sea-Doo',
+            'vanderhall' => 'Vanderhall'
         ];
+
         $rawMakesList = ProductFitment::distinct()->whereNotNull('make')->where('make', '!=', '')->pluck('make');
-        $makes = $rawMakesList->filter(function($m) use ($ignoredMakes) {
-            return !in_array(strtolower(trim($m)), $ignoredMakes);
-        })->sort()->values();
+        $cleanMakesSet = [];
+        foreach ($rawMakesList as $m) {
+            $lower = strtolower(trim($m));
+            foreach ($validOemMakesMap as $key => $canonicalName) {
+                if (str_contains($lower, $key) || $lower === $key) {
+                    if (!in_array($canonicalName, $cleanMakesSet)) {
+                        $cleanMakesSet[] = $canonicalName;
+                    }
+                    break;
+                }
+            }
+        }
+        sort($cleanMakesSet);
+        $makes = collect($cleanMakesSet);
 
         $models = ProductFitment::distinct()->whereNotNull('model')->where('model', '!=', '')->pluck('model')->sort()->values();
         $years = ProductFitment::distinct()->whereNotNull('year')->where('year', '!=', '')->pluck('year')->sortDesc()->values();

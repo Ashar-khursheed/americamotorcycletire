@@ -50,13 +50,42 @@ import {
 } from '@/lib/api';
 import axios from 'axios';
 
+const safeParseArray = (val: any): any[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const clean = val.replace(/'/g, '"');
+      const parsed = JSON.parse(clean);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && typeof parsed === 'object') {
+        return Object.entries(parsed).map(([k, v]) => ({
+          name: k,
+          options: Array.isArray(v) ? v.join(', ') : String(v)
+        }));
+      }
+      return [val];
+    } catch (e) {
+      return [val];
+    }
+  }
+  if (typeof val === 'object') {
+    return Object.entries(val).map(([k, v]) => ({
+      name: k,
+      options: Array.isArray(v) ? v.join(', ') : String(v)
+    }));
+  }
+  return [];
+};
+
 interface ProductImageGalleryManagerProps {
-  images: string[];
+  images: any;
   onChange: (newImages: string[]) => void;
   isDarkMode: boolean;
 }
 
 function ProductImageGalleryManager({ images = [], onChange, isDarkMode }: ProductImageGalleryManagerProps) {
+  const safeImages = safeParseArray(images);
   const [urlInput, setUrlInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
 
@@ -77,33 +106,33 @@ function ProductImageGalleryManager({ images = [], onChange, isDarkMode }: Produ
     });
 
     Promise.all(readPromises).then((newBase64Images) => {
-      onChange([...images, ...newBase64Images]);
+      onChange([...safeImages, ...newBase64Images]);
     });
   };
 
   const handleAddUrl = () => {
     if (urlInput.trim()) {
-      onChange([...images, urlInput.trim()]);
+      onChange([...safeImages, urlInput.trim()]);
       setUrlInput('');
     }
   };
 
   const handleRemove = (index: number) => {
-    const updated = images.filter((_, i) => i !== index);
+    const updated = safeImages.filter((_, i) => i !== index);
     onChange(updated);
   };
 
   const handleSetPrimary = (index: number) => {
     if (index === 0) return;
-    const target = images[index];
-    const rest = images.filter((_, i) => i !== index);
+    const target = safeImages[index];
+    const rest = safeImages.filter((_, i) => i !== index);
     onChange([target, ...rest]);
   };
 
   const handleMove = (index: number, direction: 'left' | 'right') => {
     const targetIndex = direction === 'left' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= images.length) return;
-    const updated = [...images];
+    if (targetIndex < 0 || targetIndex >= safeImages.length) return;
+    const updated = [...safeImages];
     const temp = updated[index];
     updated[index] = updated[targetIndex];
     updated[targetIndex] = temp;
@@ -111,9 +140,8 @@ function ProductImageGalleryManager({ images = [], onChange, isDarkMode }: Produ
   };
 
   return (
-    <div className={`p-6 rounded-xl border space-y-5 ${
-      isDarkMode ? 'bg-[#101010] border-[#222]' : 'bg-white border-gray-200 shadow-sm'
-    }`}>
+    <div className={`p-6 rounded-xl border space-y-5 ${isDarkMode ? 'bg-[#101010] border-[#222]' : 'bg-white border-gray-200 shadow-sm'
+      }`}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3 border-[#262626]">
         <div>
           <h4 className="text-sm font-extrabold uppercase text-[#BF8647] font-heading flex items-center gap-2">
@@ -140,13 +168,12 @@ function ProductImageGalleryManager({ images = [], onChange, isDarkMode }: Produ
           setIsDragging(false);
           handleFiles(e.dataTransfer.files);
         }}
-        className={`border-2 border-dashed rounded-xl p-6 text-center transition-all flex flex-col items-center justify-center gap-3 ${
-          isDragging
-            ? 'border-[#BF8647] bg-[#BF8647]/10 scale-[1.01]'
-            : isDarkMode
+        className={`border-2 border-dashed rounded-xl p-6 text-center transition-all flex flex-col items-center justify-center gap-3 ${isDragging
+          ? 'border-[#BF8647] bg-[#BF8647]/10 scale-[1.01]'
+          : isDarkMode
             ? 'border-[#333] hover:border-[#BF8647] bg-[#141414] hover:bg-[#1A1A1A]'
             : 'border-gray-300 hover:border-[#BF8647] bg-gray-50 hover:bg-gray-100'
-        }`}
+          }`}
       >
         <div className="w-12 h-12 rounded-full bg-[#BF8647]/20 border border-[#BF8647]/40 flex items-center justify-center text-[#BF8647]">
           <Upload className="w-6 h-6 animate-bounce" />
@@ -178,9 +205,8 @@ function ProductImageGalleryManager({ images = [], onChange, isDarkMode }: Produ
           value={urlInput}
           onChange={(e) => setUrlInput(e.target.value)}
           placeholder="Or paste external image URL (https://...)"
-          className={`flex-grow rounded px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#BF8647] ${
-            isDarkMode ? 'bg-[#181818] border border-[#333] text-white' : 'bg-gray-50 border border-gray-300 text-gray-900'
-          }`}
+          className={`flex-grow rounded px-3 py-2 text-xs font-medium focus:outline-none focus:border-[#BF8647] ${isDarkMode ? 'bg-[#181818] border border-[#333] text-white' : 'bg-gray-50 border border-gray-300 text-gray-900'
+            }`}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -198,31 +224,29 @@ function ProductImageGalleryManager({ images = [], onChange, isDarkMode }: Produ
       </div>
 
       {/* Interactive Gallery Thumbnails Grid */}
-      {images.length > 0 && (
+      {safeImages.length > 0 && (
         <div className="space-y-3 pt-2">
           <div className="text-xs font-black uppercase text-gray-400 tracking-wider">
             IMAGE GALLERY & DISPLAY POSITION REORDERING
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {images.map((imgUrl, index) => {
+            {safeImages.map((imgUrl: string, index: number) => {
               const isPrimary = index === 0;
               return (
                 <div
                   key={index}
-                  className={`relative group rounded-xl overflow-hidden border p-2 space-y-2 transition-all shadow-md ${
-                    isPrimary
-                      ? 'border-[#BF8647] bg-[#1A1610] ring-1 ring-[#BF8647]'
-                      : isDarkMode
+                  className={`relative group rounded-xl overflow-hidden border p-2 space-y-2 transition-all shadow-md ${isPrimary
+                    ? 'border-[#BF8647] bg-[#1A1610] ring-1 ring-[#BF8647]'
+                    : isDarkMode
                       ? 'border-[#2B2B2B] bg-[#141414]'
                       : 'border-gray-300 bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                      isPrimary
-                        ? 'bg-[#BF8647] text-black font-extrabold'
-                        : 'bg-zinc-800 text-gray-300 border border-zinc-700'
-                    }`}>
+                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${isPrimary
+                      ? 'bg-[#BF8647] text-black font-extrabold'
+                      : 'bg-zinc-800 text-gray-300 border border-zinc-700'
+                      }`}>
                       {isPrimary ? '★ PRIMARY COVER' : `IMAGE #${index + 1}`}
                     </span>
                     <button
@@ -261,11 +285,10 @@ function ProductImageGalleryManager({ images = [], onChange, isDarkMode }: Produ
                         type="button"
                         disabled={index === 0}
                         onClick={() => handleMove(index, 'left')}
-                        className={`px-2 py-1 rounded text-xs font-bold cursor-pointer ${
-                          index === 0
-                            ? 'text-gray-600 cursor-not-allowed bg-[#181818]'
-                            : 'text-gray-200 hover:text-white bg-[#222] hover:bg-[#BF8647] hover:text-black transition-colors'
-                        }`}
+                        className={`px-2 py-1 rounded text-xs font-bold cursor-pointer ${index === 0
+                          ? 'text-gray-600 cursor-not-allowed bg-[#181818]'
+                          : 'text-gray-200 hover:text-white bg-[#222] hover:bg-[#BF8647] hover:text-black transition-colors'
+                          }`}
                         title="Move Image Left"
                       >
                         ←
@@ -274,11 +297,10 @@ function ProductImageGalleryManager({ images = [], onChange, isDarkMode }: Produ
                         type="button"
                         disabled={index === images.length - 1}
                         onClick={() => handleMove(index, 'right')}
-                        className={`px-2 py-1 rounded text-xs font-bold cursor-pointer ${
-                          index === images.length - 1
-                            ? 'text-gray-600 cursor-not-allowed bg-[#181818]'
-                            : 'text-gray-200 hover:text-white bg-[#222] hover:bg-[#BF8647] hover:text-black transition-colors'
-                        }`}
+                        className={`px-2 py-1 rounded text-xs font-bold cursor-pointer ${index === images.length - 1
+                          ? 'text-gray-600 cursor-not-allowed bg-[#181818]'
+                          : 'text-gray-200 hover:text-white bg-[#222] hover:bg-[#BF8647] hover:text-black transition-colors'
+                          }`}
                         title="Move Image Right"
                       >
                         →
@@ -534,7 +556,7 @@ export default function AdminDashboardPage() {
     const headerLine = lines[0];
     if (!headerLine) return [];
     const header = parseLine(headerLine).map((h) => h.trim().replace(/[\x00-\x1F\x7F\xEF\xBB\xBF]/g, ''));
-    
+
     const rows: any[] = [];
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
@@ -807,30 +829,35 @@ export default function AdminDashboardPage() {
       setLoadingProducts(true);
       const res = await fetchAdminProductById(p.id);
       const fullProd = res?.data || res || p;
-      let imagesList: string[] = [];
-      if (Array.isArray(fullProd.gallery_images) && fullProd.gallery_images.length > 0) {
-        imagesList = fullProd.gallery_images;
-      } else if (fullProd.primary_image) {
-        imagesList = [fullProd.primary_image];
-      }
+
+      const parsedGallery = safeParseArray(fullProd.gallery_images);
+      const imagesList = parsedGallery.length > 0 ? parsedGallery : (fullProd.primary_image ? [fullProd.primary_image] : []);
+      const parsedCustomAttr = safeParseArray(fullProd.custom_attributes);
+      const parsedFitments = safeParseArray(fullProd.fitments);
+
       setEditingProduct({
         ...fullProd,
         images: imagesList,
+        gallery_images: imagesList,
         primary_image: fullProd.primary_image || (imagesList[0] || ''),
+        custom_attributes: parsedCustomAttr,
+        fitments: parsedFitments,
       });
       setActiveTab('edit_product');
     } catch (err) {
       console.error('Error fetching single product details:', err);
-      let imagesList: string[] = [];
-      if (Array.isArray(p.gallery_images) && p.gallery_images.length > 0) {
-        imagesList = p.gallery_images;
-      } else if (p.primary_image) {
-        imagesList = [p.primary_image];
-      }
+      const parsedGallery = safeParseArray(p.gallery_images);
+      const imagesList = parsedGallery.length > 0 ? parsedGallery : (p.primary_image ? [p.primary_image] : []);
+      const parsedCustomAttr = safeParseArray(p.custom_attributes);
+      const parsedFitments = safeParseArray(p.fitments);
+
       setEditingProduct({
         ...p,
         images: imagesList,
+        gallery_images: imagesList,
         primary_image: p.primary_image || (imagesList[0] || ''),
+        custom_attributes: parsedCustomAttr,
+        fitments: parsedFitments,
       });
       setActiveTab('edit_product');
     } finally {
@@ -1005,9 +1032,8 @@ export default function AdminDashboardPage() {
     <div suppressHydrationWarning className={isDarkMode ? 'min-h-screen flex transition-colors duration-300 bg-[#070707] text-white' : 'min-h-screen flex transition-colors duration-300 bg-[#F3F4F6] text-gray-900'}>
 
       {/* Admin Sidebar */}
-      <aside className={`w-64 flex flex-col justify-between p-6 shrink-0 transition-colors duration-300 ${
-        isDarkMode ? 'bg-[#0F0F0F] border-r border-[#1C1C1C]' : 'bg-white border-r border-gray-200 shadow-md text-gray-800'
-      }`}>
+      <aside className={`w-64 flex flex-col justify-between p-6 shrink-0 transition-colors duration-300 ${isDarkMode ? 'bg-[#0F0F0F] border-r border-[#1C1C1C]' : 'bg-white border-r border-gray-200 shadow-md text-gray-800'
+        }`}>
         <div>
           <Link href="/" className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-full border-2 border-[#BF8647]/60 bg-[#141414] flex items-center justify-center overflow-hidden shadow-md shadow-[#BF8647]/20">
@@ -1042,13 +1068,12 @@ export default function AdminDashboardPage() {
                 <button
                   key={navItem.id}
                   onClick={() => setActiveTab(navItem.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? 'bg-[#BF8647] text-black font-black shadow-md scale-[1.02]'
-                      : isDarkMode
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer ${isActive
+                    ? 'bg-[#BF8647] text-black font-black shadow-md scale-[1.02]'
+                    : isDarkMode
                       ? 'text-gray-400 hover:text-white hover:bg-[#1A1A1A]'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-bold'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{navItem.label}</span>
@@ -1061,11 +1086,10 @@ export default function AdminDashboardPage() {
         <div className={`pt-6 border-t ${isDarkMode ? 'border-[#1C1C1C]' : 'border-gray-200'} space-y-2`}>
           <Link
             href="/"
-            className={`w-full flex items-center justify-center gap-2 text-xs font-bold uppercase py-2.5 rounded-lg transition-all ${
-              isDarkMode
-                ? 'bg-[#1A1A1A] hover:bg-[#252525] text-gray-300 border border-[#2A2A2A]'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300'
-            }`}
+            className={`w-full flex items-center justify-center gap-2 text-xs font-bold uppercase py-2.5 rounded-lg transition-all ${isDarkMode
+              ? 'bg-[#1A1A1A] hover:bg-[#252525] text-gray-300 border border-[#2A2A2A]'
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300'
+              }`}
           >
             <Globe className="w-4 h-4 text-[#BF8647]" /> View Storefront
           </Link>
@@ -1082,13 +1106,11 @@ export default function AdminDashboardPage() {
       <main className="flex-grow p-8 overflow-y-auto">
 
         {/* Top Header */}
-        <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b mb-8 gap-4 ${
-          isDarkMode ? 'border-[#1C1C1C]' : 'border-gray-300'
-        }`}>
+        <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b mb-8 gap-4 ${isDarkMode ? 'border-[#1C1C1C]' : 'border-gray-300'
+          }`}>
           <div>
-            <h1 className={`text-2xl font-black uppercase tracking-wider font-heading ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
-            }`}>
+            <h1 className={`text-2xl font-black uppercase tracking-wider font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
               {activeTab === 'dashboard' && 'OVERVIEW DASHBOARD'}
               {activeTab === 'products' && 'PRODUCTS MANAGEMENT'}
               {activeTab === 'global_options' && 'GLOBAL PRODUCT OPTIONS & ADD-ONS'}
@@ -1099,9 +1121,8 @@ export default function AdminDashboardPage() {
               {activeTab === 'pages' && 'STATIC CMS PAGES EDITOR'}
               {activeTab === 'settings' && 'GLOBAL SITE SETTINGS'}
             </h1>
-            <p className={`text-xs uppercase tracking-widest mt-1 font-bold ${
-              isDarkMode ? 'text-gray-500' : 'text-gray-600'
-            }`}>
+            <p className={`text-xs uppercase tracking-widest mt-1 font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-600'
+              }`}>
               BMG CYCLES Full-Stack Engine
             </p>
           </div>
@@ -1109,11 +1130,10 @@ export default function AdminDashboardPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className={`p-2.5 rounded-lg border transition-all cursor-pointer flex items-center gap-2 text-xs font-bold uppercase shadow-md ${
-                isDarkMode
-                  ? 'bg-[#1F1F1F] border-[#333333] text-gray-200 hover:text-[#BF8647] hover:border-[#BF8647]'
-                  : 'bg-white border-gray-300 text-gray-800 hover:text-[#BF8647] hover:border-[#BF8647]'
-              }`}
+              className={`p-2.5 rounded-lg border transition-all cursor-pointer flex items-center gap-2 text-xs font-bold uppercase shadow-md ${isDarkMode
+                ? 'bg-[#1F1F1F] border-[#333333] text-gray-200 hover:text-[#BF8647] hover:border-[#BF8647]'
+                : 'bg-white border-gray-300 text-gray-800 hover:text-[#BF8647] hover:border-[#BF8647]'
+                }`}
               title="Toggle Dark / Light Mode"
             >
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-sky-500" />}
@@ -1131,11 +1151,10 @@ export default function AdminDashboardPage() {
 
                 <label
                   htmlFor="quickCsvUpload"
-                  className={`border font-bold text-xs uppercase px-4 py-2.5 rounded-lg flex items-center gap-2 cursor-pointer transition-all ${
-                    isDarkMode
-                      ? 'bg-[#1F1F1F] border-[#333] text-white hover:border-[#BF8647] hover:text-[#BF8647]'
-                      : 'bg-white border-gray-300 text-gray-800 hover:border-[#BF8647] hover:text-[#BF8647]'
-                  }`}
+                  className={`border font-bold text-xs uppercase px-4 py-2.5 rounded-lg flex items-center gap-2 cursor-pointer transition-all ${isDarkMode
+                    ? 'bg-[#1F1F1F] border-[#333] text-white hover:border-[#BF8647] hover:text-[#BF8647]'
+                    : 'bg-white border-gray-300 text-gray-800 hover:border-[#BF8647] hover:text-[#BF8647]'
+                    }`}
                 >
                   <Upload className="w-4 h-4 text-[#BF8647]" /> Import CSV
                 </label>
@@ -1149,11 +1168,10 @@ export default function AdminDashboardPage() {
 
                 <button
                   onClick={() => window.open(`${API_BASE_URL}/admin/products/export`, '_blank')}
-                  className={`border font-bold text-xs uppercase px-4 py-2.5 rounded-lg flex items-center gap-2 cursor-pointer transition-all ${
-                    isDarkMode
-                      ? 'bg-[#1F1F1F] border-[#333] text-white hover:border-[#BF8647] hover:text-[#BF8647]'
-                      : 'bg-white border-gray-300 text-gray-800 hover:border-[#BF8647] hover:text-[#BF8647]'
-                  }`}
+                  className={`border font-bold text-xs uppercase px-4 py-2.5 rounded-lg flex items-center gap-2 cursor-pointer transition-all ${isDarkMode
+                    ? 'bg-[#1F1F1F] border-[#333] text-white hover:border-[#BF8647] hover:text-[#BF8647]'
+                    : 'bg-white border-gray-300 text-gray-800 hover:border-[#BF8647] hover:text-[#BF8647]'
+                    }`}
                 >
                   <Download className="w-4 h-4 text-[#BF8647]" /> Export CSV
                 </button>
@@ -1167,9 +1185,8 @@ export default function AdminDashboardPage() {
           <div className="space-y-8">
             {/* Top KPI Stat Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className={`p-6 rounded-xl relative overflow-hidden shadow-xl transition-all group ${
-                isDarkMode ? 'bg-gradient-to-br from-[#141414] to-[#0A0A0A] border border-[#222222] hover:border-[#BF8647]/50' : 'bg-white border border-gray-200 hover:border-[#BF8647]'
-              }`}>
+              <div className={`p-6 rounded-xl relative overflow-hidden shadow-xl transition-all group ${isDarkMode ? 'bg-gradient-to-br from-[#141414] to-[#0A0A0A] border border-[#222222] hover:border-[#BF8647]/50' : 'bg-white border border-gray-200 hover:border-[#BF8647]'
+                }`}>
                 <div className="flex justify-between items-start mb-4">
                   <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>GROSS REVENUE</span>
                   <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full font-bold">
@@ -1184,9 +1201,8 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className={`p-6 rounded-xl relative overflow-hidden shadow-xl transition-all group ${
-                isDarkMode ? 'bg-gradient-to-br from-[#141414] to-[#0A0A0A] border border-[#222222] hover:border-[#BF8647]/50' : 'bg-white border border-gray-200 hover:border-[#BF8647]'
-              }`}>
+              <div className={`p-6 rounded-xl relative overflow-hidden shadow-xl transition-all group ${isDarkMode ? 'bg-gradient-to-br from-[#141414] to-[#0A0A0A] border border-[#222222] hover:border-[#BF8647]/50' : 'bg-white border border-gray-200 hover:border-[#BF8647]'
+                }`}>
                 <div className="flex justify-between items-start mb-4">
                   <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>TOTAL ORDERS</span>
                   <span className="text-[10px] bg-[#BF8647]/20 text-[#BF8647] border border-[#BF8647]/40 px-2 py-0.5 rounded-full font-bold">
@@ -1201,9 +1217,8 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className={`p-6 rounded-xl relative overflow-hidden shadow-xl transition-all group ${
-                isDarkMode ? 'bg-gradient-to-br from-[#141414] to-[#0A0A0A] border border-[#222222] hover:border-[#BF8647]/50' : 'bg-white border border-gray-200 hover:border-[#BF8647]'
-              }`}>
+              <div className={`p-6 rounded-xl relative overflow-hidden shadow-xl transition-all group ${isDarkMode ? 'bg-gradient-to-br from-[#141414] to-[#0A0A0A] border border-[#222222] hover:border-[#BF8647]/50' : 'bg-white border border-gray-200 hover:border-[#BF8647]'
+                }`}>
                 <div className="flex justify-between items-start mb-4">
                   <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>PENDING ORDERS</span>
                   <span className="text-[10px] bg-amber-950 text-amber-400 border border-amber-800 px-2 py-0.5 rounded-full font-bold">
@@ -1218,9 +1233,8 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className={`p-6 rounded-xl relative overflow-hidden shadow-xl transition-all group ${
-                isDarkMode ? 'bg-gradient-to-br from-[#141414] to-[#0A0A0A] border border-[#222222] hover:border-[#BF8647]/50' : 'bg-white border border-gray-200 hover:border-[#BF8647]'
-              }`}>
+              <div className={`p-6 rounded-xl relative overflow-hidden shadow-xl transition-all group ${isDarkMode ? 'bg-gradient-to-br from-[#141414] to-[#0A0A0A] border border-[#222222] hover:border-[#BF8647]/50' : 'bg-white border border-gray-200 hover:border-[#BF8647]'
+                }`}>
                 <div className="flex justify-between items-start mb-4">
                   <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>TIRES & PRODUCTS</span>
                   <span className="text-[10px] bg-sky-950 text-sky-400 border border-sky-800 px-2 py-0.5 rounded-full font-bold">
@@ -1237,18 +1251,16 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Quick Actions Hub */}
-            <div className={`p-6 rounded-xl space-y-4 shadow-xl ${
-              isDarkMode ? 'bg-[#101010] border border-[#222222]' : 'bg-white border border-gray-200'
-            }`}>
+            <div className={`p-6 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-[#101010] border border-[#222222]' : 'bg-white border border-gray-200'
+              }`}>
               <h3 className={`text-xs font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 STORE OPERATIONS & QUICK CONTROL HUB
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <button
                   onClick={() => setActiveTab('create_product')}
-                  className={`p-4 rounded-lg text-left transition-all group cursor-pointer border ${
-                    isDarkMode ? 'bg-[#1A1A1A] hover:bg-[#252525] border-[#2A2A2A] hover:border-[#BF8647]' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-[#BF8647]'
-                  }`}
+                  className={`p-4 rounded-lg text-left transition-all group cursor-pointer border ${isDarkMode ? 'bg-[#1A1A1A] hover:bg-[#252525] border-[#2A2A2A] hover:border-[#BF8647]' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-[#BF8647]'
+                    }`}
                 >
                   <Plus className="w-5 h-5 text-[#BF8647] mb-2 group-hover:scale-110 transition-transform" />
                   <div className={`font-bold text-xs uppercase ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Add New Product</div>
@@ -1257,9 +1269,8 @@ export default function AdminDashboardPage() {
 
                 <label
                   htmlFor="quickCsvUpload2"
-                  className={`p-4 rounded-lg text-left transition-all group cursor-pointer block border ${
-                    isDarkMode ? 'bg-[#1A1A1A] hover:bg-[#252525] border-[#2A2A2A] hover:border-[#BF8647]' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-[#BF8647]'
-                  }`}
+                  className={`p-4 rounded-lg text-left transition-all group cursor-pointer block border ${isDarkMode ? 'bg-[#1A1A1A] hover:bg-[#252525] border-[#2A2A2A] hover:border-[#BF8647]' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-[#BF8647]'
+                    }`}
                 >
                   <Upload className="w-5 h-5 text-[#BF8647] mb-2 group-hover:scale-110 transition-transform" />
                   <div className={`font-bold text-xs uppercase ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Import CSV</div>
@@ -1268,9 +1279,8 @@ export default function AdminDashboardPage() {
 
                 <button
                   onClick={() => window.open(`${API_BASE_URL}/admin/products/export`, '_blank')}
-                  className={`p-4 rounded-lg text-left transition-all group cursor-pointer border ${
-                    isDarkMode ? 'bg-[#1A1A1A] hover:bg-[#252525] border-[#2A2A2A] hover:border-[#BF8647]' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-[#BF8647]'
-                  }`}
+                  className={`p-4 rounded-lg text-left transition-all group cursor-pointer border ${isDarkMode ? 'bg-[#1A1A1A] hover:bg-[#252525] border-[#2A2A2A] hover:border-[#BF8647]' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-[#BF8647]'
+                    }`}
                 >
                   <Download className="w-5 h-5 text-[#BF8647] mb-2 group-hover:scale-110 transition-transform" />
                   <div className={`font-bold text-xs uppercase ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Export CSV</div>
@@ -1279,9 +1289,8 @@ export default function AdminDashboardPage() {
 
                 <button
                   onClick={() => setActiveTab('categories')}
-                  className={`p-4 rounded-lg text-left transition-all group cursor-pointer border ${
-                    isDarkMode ? 'bg-[#1A1A1A] hover:bg-[#252525] border-[#2A2A2A] hover:border-[#BF8647]' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-[#BF8647]'
-                  }`}
+                  className={`p-4 rounded-lg text-left transition-all group cursor-pointer border ${isDarkMode ? 'bg-[#1A1A1A] hover:bg-[#252525] border-[#2A2A2A] hover:border-[#BF8647]' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 hover:border-[#BF8647]'
+                    }`}
                 >
                   <Layers className="w-5 h-5 text-[#BF8647] mb-2 group-hover:scale-110 transition-transform" />
                   <div className={`font-bold text-xs uppercase ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Manage Categories</div>
@@ -1291,9 +1300,8 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Recent Orders Section */}
-            <div className={`rounded-xl p-6 shadow-xl border ${
-              isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-            }`}>
+            <div className={`rounded-xl p-6 shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+              }`}>
               <div className={`flex justify-between items-center mb-6 border-b pb-4 ${isDarkMode ? 'border-[#222]' : 'border-gray-200'}`}>
                 <div>
                   <h3 className={`text-sm font-black uppercase font-heading tracking-wider ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -1329,11 +1337,10 @@ export default function AdminDashboardPage() {
                         <td className="p-3 font-medium">{ord.customer_name}</td>
                         <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>${Number(ord.total_amount).toFixed(2)}</td>
                         <td className="p-3">
-                          <span className={`px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider ${
-                            ord.status === 'completed'
-                              ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                              : 'bg-[#BF8647] text-black font-extrabold'
-                          }`}>
+                          <span className={`px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider ${ord.status === 'completed'
+                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                            : 'bg-[#BF8647] text-black font-extrabold'
+                            }`}>
                             {ord.status}
                           </span>
                         </td>
@@ -1356,9 +1363,8 @@ export default function AdminDashboardPage() {
 
         {/* TAB 2: PRODUCTS */}
         {activeTab === 'products' && (
-          <div className={`rounded-xl p-6 space-y-5 shadow-xl border ${
-            isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-          }`}>
+          <div className={`rounded-xl p-6 space-y-5 shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+            }`}>
             {/* Header, Search & Quick Actions Bar */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-[#222]">
               <div>
@@ -1379,9 +1385,8 @@ export default function AdminDashboardPage() {
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                     placeholder="Search SKU, Part #, Name, Brand..."
-                    className={`w-full pl-9 pr-20 py-2 rounded-lg text-xs font-medium focus:outline-none focus:border-[#BF8647] border ${
-                      isDarkMode ? 'bg-[#181818] border-[#333] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full pl-9 pr-20 py-2 rounded-lg text-xs font-medium focus:outline-none focus:border-[#BF8647] border ${isDarkMode ? 'bg-[#181818] border-[#333] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'
+                      }`}
                   />
                   <button
                     type="submit"
@@ -1400,9 +1405,8 @@ export default function AdminDashboardPage() {
                     setProductPage(1);
                     loadAdminProducts(1, productSearch, newSort);
                   }}
-                  className={`py-2 px-3 rounded-lg text-xs font-extrabold uppercase focus:outline-none focus:border-[#BF8647] border cursor-pointer ${
-                    isDarkMode ? 'bg-[#181818] border-[#333] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'
-                  }`}
+                  className={`py-2 px-3 rounded-lg text-xs font-extrabold uppercase focus:outline-none focus:border-[#BF8647] border cursor-pointer ${isDarkMode ? 'bg-[#181818] border-[#333] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'
+                    }`}
                   title="Sort Catalog Items"
                 >
                   <option value="latest">★ Latest Updated / Imported First</option>
@@ -1439,18 +1443,16 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Products Table Container */}
-            <div className={`overflow-x-auto relative rounded-xl border ${
-              isDarkMode ? 'border-[#222222] bg-[#0D0D0D]' : 'border-gray-200 bg-white shadow-sm'
-            }`}>
+            <div className={`overflow-x-auto relative rounded-xl border ${isDarkMode ? 'border-[#222222] bg-[#0D0D0D]' : 'border-gray-200 bg-white shadow-sm'
+              }`}>
               {loadingProducts && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex items-center justify-center text-xs font-black uppercase text-[#BF8647] tracking-widest animate-pulse">
                   Loading Products Catalog...
                 </div>
               )}
               <table className="w-full text-left text-xs uppercase border-collapse">
-                <thead className={`font-black tracking-wider text-[11px] ${
-                  isDarkMode ? 'bg-[#161616] text-gray-400 border-b border-[#222]' : 'bg-gray-100 text-gray-700 border-b border-gray-200'
-                }`}>
+                <thead className={`font-black tracking-wider text-[11px] ${isDarkMode ? 'bg-[#161616] text-gray-400 border-b border-[#222]' : 'bg-gray-100 text-gray-700 border-b border-gray-200'
+                  }`}>
                   <tr>
                     <th className="py-3.5 px-4 w-16 text-center">Image</th>
                     <th className="py-3.5 px-4 whitespace-nowrap font-heading">Part # / Item #</th>
@@ -1464,9 +1466,8 @@ export default function AdminDashboardPage() {
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-[#1A1A1A] text-gray-300' : 'divide-gray-100 text-gray-800'}`}>
                   {safeProducts.map((p) => (
-                    <tr key={p.id} className={`transition-colors ${
-                      isDarkMode ? 'hover:bg-[#141414]' : 'hover:bg-amber-500/5'
-                    }`}>
+                    <tr key={p.id} className={`transition-colors ${isDarkMode ? 'hover:bg-[#141414]' : 'hover:bg-amber-500/5'
+                      }`}>
                       {/* Image */}
                       <td className="py-3 px-4 text-center">
                         <div className="w-12 h-12 rounded-lg bg-[#161616] border border-[#2A2A2A] overflow-hidden p-1 flex items-center justify-center mx-auto shadow-inner">
@@ -1541,11 +1542,10 @@ export default function AdminDashboardPage() {
                               loadAdminProducts(productPage, productSearch, productSort);
                             }
                           }}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border ${
-                            p.is_active !== false
-                              ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/20 shadow-sm'
-                              : 'bg-amber-500/10 border-amber-500/40 text-amber-400 hover:bg-amber-500/20 shadow-sm'
-                          }`}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border ${p.is_active !== false
+                            ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/20 shadow-sm'
+                            : 'bg-amber-500/10 border-amber-500/40 text-amber-400 hover:bg-amber-500/20 shadow-sm'
+                            }`}
                           title="Click to toggle Published / Draft state"
                         >
                           <span className={`w-1.5 h-1.5 rounded-full ${p.is_active !== false ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
@@ -1589,9 +1589,8 @@ export default function AdminDashboardPage() {
               const toItem = productsRaw?.data?.to || Math.min(currentPg * 50, totalItems);
 
               return (
-                <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t ${
-                  isDarkMode ? 'border-[#222]' : 'border-gray-200'
-                }`}>
+                <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t ${isDarkMode ? 'border-[#222]' : 'border-gray-200'
+                  }`}>
                   <div className="text-xs text-gray-400 font-medium">
                     Showing <span className="font-bold text-white">{fromItem}</span> to{' '}
                     <span className="font-bold text-white">{toItem}</span> of{' '}
@@ -1603,11 +1602,10 @@ export default function AdminDashboardPage() {
                       <button
                         disabled={currentPg <= 1}
                         onClick={() => handlePageChange(currentPg - 1)}
-                        className={`px-3 py-1.5 rounded text-xs font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
-                          currentPg <= 1
-                            ? 'opacity-40 cursor-not-allowed bg-[#181818] text-gray-500'
-                            : 'bg-[#222] hover:bg-[#BF8647] text-gray-200 hover:text-black'
-                        }`}
+                        className={`px-3 py-1.5 rounded text-xs font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${currentPg <= 1
+                          ? 'opacity-40 cursor-not-allowed bg-[#181818] text-gray-500'
+                          : 'bg-[#222] hover:bg-[#BF8647] text-gray-200 hover:text-black'
+                          }`}
                       >
                         <ChevronLeft className="w-4 h-4" /> Prev
                       </button>
@@ -1629,13 +1627,12 @@ export default function AdminDashboardPage() {
                             <button
                               key={pageNum}
                               onClick={() => handlePageChange(pageNum)}
-                              className={`w-8 h-8 rounded text-xs font-extrabold transition-all cursor-pointer ${
-                                isCurrent
-                                  ? 'bg-[#BF8647] text-black font-black shadow-md scale-105'
-                                  : isDarkMode
+                              className={`w-8 h-8 rounded text-xs font-extrabold transition-all cursor-pointer ${isCurrent
+                                ? 'bg-[#BF8647] text-black font-black shadow-md scale-105'
+                                : isDarkMode
                                   ? 'bg-[#1A1A1A] text-gray-300 hover:bg-[#2A2A2A] hover:text-white border border-[#2B2B2B]'
                                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
+                                }`}
                             >
                               {pageNum}
                             </button>
@@ -1646,11 +1643,10 @@ export default function AdminDashboardPage() {
                       <button
                         disabled={currentPg >= lastPg}
                         onClick={() => handlePageChange(currentPg + 1)}
-                        className={`px-3 py-1.5 rounded text-xs font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${
-                          currentPg >= lastPg
-                            ? 'opacity-40 cursor-not-allowed bg-[#181818] text-gray-500'
-                            : 'bg-[#222] hover:bg-[#BF8647] text-gray-200 hover:text-black'
-                        }`}
+                        className={`px-3 py-1.5 rounded text-xs font-bold uppercase transition-all flex items-center gap-1 cursor-pointer ${currentPg >= lastPg
+                          ? 'opacity-40 cursor-not-allowed bg-[#181818] text-gray-500'
+                          : 'bg-[#222] hover:bg-[#BF8647] text-gray-200 hover:text-black'
+                          }`}
                       >
                         Next <ChevronRight className="w-4 h-4" />
                       </button>
@@ -1683,9 +1679,8 @@ export default function AdminDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('products')}
-                  className={`px-4 py-2 text-xs font-bold uppercase rounded border transition-all cursor-pointer ${
-                    isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-gray-300 hover:text-white' : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-4 py-2 text-xs font-bold uppercase rounded border transition-all cursor-pointer ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-gray-300 hover:text-white' : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Cancel
                 </button>
@@ -2132,9 +2127,8 @@ export default function AdminDashboardPage() {
                     setEditingProduct(null);
                     setActiveTab('products');
                   }}
-                  className={`px-4 py-2 text-xs font-bold uppercase rounded border transition-all cursor-pointer ${
-                    isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-gray-300 hover:text-white' : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-4 py-2 text-xs font-bold uppercase rounded border transition-all cursor-pointer ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-gray-300 hover:text-white' : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Cancel
                 </button>
@@ -2250,7 +2244,7 @@ export default function AdminDashboardPage() {
                     <h4 className="text-xs font-black uppercase text-[#BF8647] tracking-wider flex items-center gap-1.5">
                       <Wrench className="w-4 h-4" /> SCRAPED VEHICLE & FITMENT METADATA
                     </h4>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Vehicle Type</label>
@@ -2365,10 +2359,7 @@ export default function AdminDashboardPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        const cur = editingProduct.custom_attributes || [
-                          { name: 'Wheel Location', options: 'Front, Rear' },
-                          { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL' }
-                        ];
+                        const cur = safeParseArray(editingProduct.custom_attributes);
                         setEditingProduct({
                           ...editingProduct,
                           custom_attributes: [...cur, { name: '', options: '' }]
@@ -2381,12 +2372,12 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div className="space-y-3">
-                    {((editingProduct.custom_attributes && editingProduct.custom_attributes.length > 0)
-                      ? editingProduct.custom_attributes
+                    {(safeParseArray(editingProduct.custom_attributes).length > 0
+                      ? safeParseArray(editingProduct.custom_attributes)
                       : [
-                          { name: 'Wheel Location', options: 'Front, Rear' },
-                          { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL, 180/65B16 81H TL' }
-                        ]
+                        { name: 'Wheel Location', options: 'Front, Rear' },
+                        { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL, 180/65B16 81H TL' }
+                      ]
                     ).map((attrItem: any, aIdx: number) => (
                       <div key={aIdx} className={`p-3.5 rounded-lg border flex flex-col sm:flex-row gap-3 items-start sm:items-center ${isDarkMode ? 'bg-[#181818] border-[#2B2B2B]' : 'bg-gray-50 border-gray-200'}`}>
                         <div className="w-full sm:w-1/3">
@@ -2396,12 +2387,7 @@ export default function AdminDashboardPage() {
                             placeholder="e.g. Wheel Location / Tire Size"
                             value={attrItem.name || ''}
                             onChange={(e) => {
-                              const baseList = (editingProduct.custom_attributes && editingProduct.custom_attributes.length > 0)
-                                ? editingProduct.custom_attributes
-                                : [
-                                    { name: 'Wheel Location', options: 'Front, Rear' },
-                                    { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL, 180/65B16 81H TL' }
-                                  ];
+                              const baseList = safeParseArray(editingProduct.custom_attributes);
                               const updated = [...baseList];
                               updated[aIdx] = { ...updated[aIdx], name: e.target.value };
                               setEditingProduct({ ...editingProduct, custom_attributes: updated });
@@ -2416,12 +2402,7 @@ export default function AdminDashboardPage() {
                             placeholder="Front, Rear OR Front MT90B16 72H TL NWS, 130/90B16 73H TL"
                             value={typeof attrItem.options === 'string' ? attrItem.options : (Array.isArray(attrItem.options) ? attrItem.options.join(', ') : '')}
                             onChange={(e) => {
-                              const baseList = (editingProduct.custom_attributes && editingProduct.custom_attributes.length > 0)
-                                ? editingProduct.custom_attributes
-                                : [
-                                    { name: 'Wheel Location', options: 'Front, Rear' },
-                                    { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL, 180/65B16 81H TL' }
-                                  ];
+                              const baseList = safeParseArray(editingProduct.custom_attributes);
                               const updated = [...baseList];
                               updated[aIdx] = { ...updated[aIdx], options: e.target.value };
                               setEditingProduct({ ...editingProduct, custom_attributes: updated });
@@ -2432,12 +2413,7 @@ export default function AdminDashboardPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            const baseList = (editingProduct.custom_attributes && editingProduct.custom_attributes.length > 0)
-                              ? editingProduct.custom_attributes
-                              : [
-                                  { name: 'Wheel Location', options: 'Front, Rear' },
-                                  { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL, 180/65B16 81H TL' }
-                                ];
+                            const baseList = safeParseArray(editingProduct.custom_attributes);
                             const updated = baseList.filter((_: any, idx: number) => idx !== aIdx);
                             setEditingProduct({ ...editingProduct, custom_attributes: updated });
                           }}
@@ -2581,7 +2557,7 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      const curFits = editingProduct.fitments || [];
+                      const curFits = safeParseArray(editingProduct.fitments);
                       setEditingProduct({
                         ...editingProduct,
                         fitments: [...curFits, { year: '2023', make: 'Harley-Davidson', model: '', position: 'Front' }]
@@ -2593,13 +2569,13 @@ export default function AdminDashboardPage() {
                   </button>
                 </div>
 
-                {(editingProduct.fitments || []).length === 0 ? (
+                {safeParseArray(editingProduct.fitments).length === 0 ? (
                   <div className="text-center py-6 border border-dashed border-[#222] rounded-lg text-xs text-gray-500">
                     No vehicle fitments added yet. Click "+ Add Fitment Row" above to specify compatible motorcycles.
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {(editingProduct.fitments || []).map((fitItem: any, fIdx: number) => (
+                    {safeParseArray(editingProduct.fitments).map((fitItem: any, fIdx: number) => (
                       <div key={fIdx} className={`p-4 rounded-xl border flex flex-col md:flex-row items-center gap-3 transition-all ${isDarkMode ? 'bg-[#181818] border-[#2B2B2B] hover:border-[#BF8647]/50' : 'bg-gray-50 border-gray-200 hover:border-[#BF8647]/50'}`}>
                         <span className="text-[11px] font-black uppercase text-[#BF8647] bg-[#BF8647]/10 px-2.5 py-1 rounded min-w-[90px] text-center">
                           FITMENT #{fIdx + 1}
@@ -2699,21 +2675,18 @@ export default function AdminDashboardPage() {
         {/* TAB 3: PAYMENTS & STRIPE GATEWAY */}
         {activeTab === 'payments' && (
           <div className="space-y-8 max-w-4xl">
-            <div className={`p-6 rounded-xl space-y-6 shadow-xl border ${
-              isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-            }`}>
-              <h3 className={`text-base font-bold uppercase border-b pb-3 font-heading ${
-                isDarkMode ? 'text-white border-[#222222]' : 'text-gray-900 border-gray-200'
+            <div className={`p-6 rounded-xl space-y-6 shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
               }`}>
+              <h3 className={`text-base font-bold uppercase border-b pb-3 font-heading ${isDarkMode ? 'text-white border-[#222222]' : 'text-gray-900 border-gray-200'
+                }`}>
                 PAYMENT GATEWAYS CONFIGURATION
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs uppercase font-bold">
 
                 {/* Credit Card / Stripe */}
-                <div className={`p-5 rounded-lg space-y-4 border ${
-                  isDarkMode ? 'bg-[#1A1A1A] border-[#333]' : 'bg-gray-50 border-gray-300'
-                }`}>
+                <div className={`p-5 rounded-lg space-y-4 border ${isDarkMode ? 'bg-[#1A1A1A] border-[#333]' : 'bg-gray-50 border-gray-300'
+                  }`}>
                   <div className="flex justify-between items-center">
                     <span className="text-[#BF8647] flex items-center gap-2">
                       <CreditCard className="w-5 h-5" /> Credit Card (Stripe)
@@ -2731,9 +2704,8 @@ export default function AdminDashboardPage() {
                       type="text"
                       value={paymentSettings.stripe_key}
                       onChange={(e) => setPaymentSettings({ ...paymentSettings, stripe_key: e.target.value })}
-                      className={`w-full rounded p-2 font-mono text-[11px] border ${
-                        isDarkMode ? 'bg-[#121212] border-[#333] text-gray-200' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full rounded p-2 font-mono text-[11px] border ${isDarkMode ? 'bg-[#121212] border-[#333] text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     />
                   </div>
                   <div>
@@ -2742,17 +2714,15 @@ export default function AdminDashboardPage() {
                       type="password"
                       value={paymentSettings.stripe_secret}
                       onChange={(e) => setPaymentSettings({ ...paymentSettings, stripe_secret: e.target.value })}
-                      className={`w-full rounded p-2 font-mono text-[11px] border ${
-                        isDarkMode ? 'bg-[#121212] border-[#333] text-gray-200' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full rounded p-2 font-mono text-[11px] border ${isDarkMode ? 'bg-[#121212] border-[#333] text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     />
                   </div>
                 </div>
 
                 {/* Cash on Pickup / COD */}
-                <div className={`p-5 rounded-lg space-y-4 border ${
-                  isDarkMode ? 'bg-[#1A1A1A] border-[#333]' : 'bg-gray-50 border-gray-300'
-                }`}>
+                <div className={`p-5 rounded-lg space-y-4 border ${isDarkMode ? 'bg-[#1A1A1A] border-[#333]' : 'bg-gray-50 border-gray-300'
+                  }`}>
                   <div className="flex justify-between items-center">
                     <span className={`flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                       <Wrench className="w-5 h-5 text-[#BF8647]" /> Pay On Pickup / COD
@@ -2783,9 +2753,8 @@ export default function AdminDashboardPage() {
 
         {/* TAB 4: EXCEL DATA IMPORTER */}
         {activeTab === 'import' && (
-          <div className={`p-8 rounded-xl space-y-6 max-w-4xl shadow-xl border ${
-            isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-          }`}>
+          <div className={`p-8 rounded-xl space-y-6 max-w-4xl shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+            }`}>
             <div>
               <h3 className={`text-lg font-black uppercase mb-1 font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 DRAG SPECIALTIES & EXCEL / CSV FITMENT IMPORTER
@@ -2796,9 +2765,8 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Direct File Upload Box */}
-            <div className={`border-2 border-dashed p-8 rounded-xl text-center space-y-4 transition-colors ${
-              isDarkMode ? 'bg-[#1A1A1A] border-[#BF8647]/60 hover:border-[#BF8647]' : 'bg-gray-50 border-[#BF8647]/60 hover:border-[#BF8647]'
-            }`}>
+            <div className={`border-2 border-dashed p-8 rounded-xl text-center space-y-4 transition-colors ${isDarkMode ? 'bg-[#1A1A1A] border-[#BF8647]/60 hover:border-[#BF8647]' : 'bg-gray-50 border-[#BF8647]/60 hover:border-[#BF8647]'
+              }`}>
               <div className="w-12 h-12 rounded-full bg-[#BF8647]/10 text-[#BF8647] mx-auto flex items-center justify-center">
                 <Upload className="w-6 h-6" />
               </div>
@@ -2863,9 +2831,8 @@ export default function AdminDashboardPage() {
                     link.click();
                     document.body.removeChild(link);
                   }}
-                  className={`inline-flex items-center gap-2 border hover:border-[#BF8647] hover:text-[#BF8647] font-bold uppercase text-xs px-6 py-3.5 rounded-lg transition-colors cursor-pointer ${
-                    isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-800'
-                  }`}
+                  className={`inline-flex items-center gap-2 border hover:border-[#BF8647] hover:text-[#BF8647] font-bold uppercase text-xs px-6 py-3.5 rounded-lg transition-colors cursor-pointer ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-800'
+                    }`}
                 >
                   <FileSpreadsheet className="w-4 h-4 text-[#BF8647]" /> DOWNLOAD SAMPLE CSV TEMPLATE
                 </button>
@@ -2882,9 +2849,8 @@ export default function AdminDashboardPage() {
                   rows={6}
                   value={importJsonText}
                   onChange={(e) => setImportJsonText(e.target.value)}
-                  className={`w-full font-mono text-xs text-emerald-400 p-4 rounded-lg focus:outline-none focus:border-[#BF8647] border ${
-                    isDarkMode ? 'bg-[#1A1A1A] border-[#333]' : 'bg-gray-900 border-gray-700'
-                  }`}
+                  className={`w-full font-mono text-xs text-emerald-400 p-4 rounded-lg focus:outline-none focus:border-[#BF8647] border ${isDarkMode ? 'bg-[#1A1A1A] border-[#333]' : 'bg-gray-900 border-gray-700'
+                    }`}
                 />
 
                 {importStatus && (
@@ -2895,9 +2861,8 @@ export default function AdminDashboardPage() {
 
                 <button
                   type="submit"
-                  className={`border hover:border-[#BF8647] hover:text-[#BF8647] font-bold uppercase text-xs px-6 py-2.5 rounded-lg transition-colors flex items-center gap-2 cursor-pointer ${
-                    isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-800'
-                  }`}
+                  className={`border hover:border-[#BF8647] hover:text-[#BF8647] font-bold uppercase text-xs px-6 py-2.5 rounded-lg transition-colors flex items-center gap-2 cursor-pointer ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-800'
+                    }`}
                 >
                   <Upload className="w-4 h-4 text-[#BF8647]" /> Import Raw Rows
                 </button>
@@ -2909,9 +2874,8 @@ export default function AdminDashboardPage() {
 
         {/* TAB 5: ORDERS */}
         {activeTab === 'orders' && (
-          <div className={`rounded-xl p-6 shadow-xl border ${
-            isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-          }`}>
+          <div className={`rounded-xl p-6 shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+            }`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs uppercase">
                 <thead className={`font-bold ${isDarkMode ? 'bg-[#181818] text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
@@ -2938,9 +2902,8 @@ export default function AdminDashboardPage() {
                         <select
                           value={ord.status}
                           onChange={(e) => handleStatusChange(ord.id, e.target.value)}
-                          className={`rounded text-[11px] font-bold p-1 border ${
-                            isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                          }`}
+                          className={`rounded text-[11px] font-bold p-1 border ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                            }`}
                         >
                           <option value="pending">PENDING</option>
                           <option value="processing">PROCESSING</option>
@@ -2952,9 +2915,8 @@ export default function AdminDashboardPage() {
                       <td className="p-3 text-right">
                         <button
                           onClick={() => setSelectedOrder(ord)}
-                          className={`border hover:border-[#BF8647] text-[#BF8647] text-[11px] px-3 py-1.5 rounded-md font-bold uppercase transition-all cursor-pointer ${
-                            isDarkMode ? 'bg-[#1C1C1C] border-[#333]' : 'bg-gray-100 border-gray-300'
-                          }`}
+                          className={`border hover:border-[#BF8647] text-[#BF8647] text-[11px] px-3 py-1.5 rounded-md font-bold uppercase transition-all cursor-pointer ${isDarkMode ? 'bg-[#1C1C1C] border-[#333]' : 'bg-gray-100 border-gray-300'
+                            }`}
                         >
                           View Order
                         </button>
@@ -2967,212 +2929,200 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-            {/* TAB 6: CATEGORIES & BRANDS */}
-            {activeTab === 'categories' && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Col 1: Categories */}
-                  <div className={`p-6 rounded-xl space-y-6 shadow-xl border ${
-                    isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-                  }`}>
-                    <div className={`flex justify-between items-center border-b pb-3 ${isDarkMode ? 'border-[#222222]' : 'border-gray-200'}`}>
-                      <h3 className={`text-sm font-black uppercase font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>CATEGORIES</h3>
-                      <span className="text-xs text-gray-500 font-bold">{safeCategories.length} Total</span>
-                    </div>
+        {/* TAB 6: CATEGORIES & BRANDS */}
+        {activeTab === 'categories' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Col 1: Categories */}
+              <div className={`p-6 rounded-xl space-y-6 shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+                }`}>
+                <div className={`flex justify-between items-center border-b pb-3 ${isDarkMode ? 'border-[#222222]' : 'border-gray-200'}`}>
+                  <h3 className={`text-sm font-black uppercase font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>CATEGORIES</h3>
+                  <span className="text-xs text-gray-500 font-bold">{safeCategories.length} Total</span>
+                </div>
 
-                    {/* Add Category Form */}
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const input = (e.target as any).elements.catName;
-                        const name = input?.value;
-                        if (!name) return;
-                        try {
-                          await api.post('/admin/categories', { name });
-                          alert(`Category "${name}" added successfully!`);
-                          input.value = '';
-                          loadAllData();
-                        } catch (err) {
-                          alert('Category created!');
-                          if (input) input.value = '';
-                          loadAllData();
-                        }
-                      }}
-                      className={`flex items-center gap-2 p-2 rounded-lg border ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-gray-50 border-gray-300'
+                {/* Add Category Form */}
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const input = (e.target as any).elements.catName;
+                    const name = input?.value;
+                    if (!name) return;
+                    try {
+                      await api.post('/admin/categories', { name });
+                      alert(`Category "${name}" added successfully!`);
+                      input.value = '';
+                      loadAllData();
+                    } catch (err) {
+                      alert('Category created!');
+                      if (input) input.value = '';
+                      loadAllData();
+                    }
+                  }}
+                  className={`flex items-center gap-2 p-2 rounded-lg border ${isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-gray-50 border-gray-300'
+                    }`}
+                >
+                  <input
+                    name="catName"
+                    type="text"
+                    required
+                    placeholder="New Category Name (e.g. Helmets & Gear)"
+                    className={`bg-transparent text-xs px-3 py-1.5 focus:outline-none flex-grow font-semibold ${isDarkMode ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
                       }`}
-                    >
-                      <input
-                        name="catName"
-                        type="text"
-                        required
-                        placeholder="New Category Name (e.g. Helmets & Gear)"
-                        className={`bg-transparent text-xs px-3 py-1.5 focus:outline-none flex-grow font-semibold ${
-                          isDarkMode ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
-                        }`}
-                      />
-                      <button
-                        type="submit"
-                        className="bg-[#BF8647] hover:bg-[#D49A50] text-black font-extrabold text-xs px-4 py-2 rounded-md uppercase cursor-pointer transition-all shadow-sm"
-                      >
-                        Add Category
-                      </button>
-                    </form>
+                  />
+                  <button
+                    type="submit"
+                    className="bg-[#BF8647] hover:bg-[#D49A50] text-black font-extrabold text-xs px-4 py-2 rounded-md uppercase cursor-pointer transition-all shadow-sm"
+                  >
+                    Add Category
+                  </button>
+                </form>
 
-                    <ul className={`divide-y text-xs uppercase max-h-96 overflow-y-auto pr-1 ${
-                      isDarkMode ? 'divide-[#222222]' : 'divide-gray-200'
-                    }`}>
-                      {safeCategories.map((c) => (
-                        <li key={c.id} className="py-3 flex justify-between items-center group">
-                          <div>
-                            <span className={`font-bold block ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{c.name}</span>
-                            <span className="text-gray-500 text-[10px] font-mono">{c.slug}</span>
-                          </div>
+                <ul className={`divide-y text-xs uppercase max-h-96 overflow-y-auto pr-1 ${isDarkMode ? 'divide-[#222222]' : 'divide-gray-200'
+                  }`}>
+                  {safeCategories.map((c) => (
+                    <li key={c.id} className="py-3 flex justify-between items-center group">
+                      <div>
+                        <span className={`font-bold block ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{c.name}</span>
+                        <span className="text-gray-500 text-[10px] font-mono">{c.slug}</span>
+                      </div>
 
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setEditingCat({ id: c.id, name: c.name })}
+                          className={`p-1.5 rounded border transition-all cursor-pointer ${isDarkMode
+                            ? 'text-gray-400 hover:text-[#BF8647] bg-[#1C1C1C] border-[#2B2B2B] hover:border-[#BF8647]'
+                            : 'text-gray-600 hover:text-[#BF8647] bg-gray-100 border-gray-300 hover:border-[#BF8647]'
+                            }`}
+                          title="Edit Category"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            if (confirm(`Are you sure you want to delete category "${c.name}"?`)) {
+                              try {
+                                await api.delete(`/admin/categories/${c.id}`);
+                                alert('Category deleted successfully!');
+                                loadAllData();
+                              } catch (err) {
+                                alert('Error deleting category.');
+                              }
+                            }
+                          }}
+                          className={`p-1.5 rounded border transition-all cursor-pointer ${isDarkMode
+                            ? 'text-gray-400 hover:text-red-400 bg-[#1C1C1C] border-[#2B2B2B] hover:border-red-500'
+                            : 'text-gray-600 hover:text-red-600 bg-gray-100 border-gray-300 hover:border-red-500'
+                            }`}
+                          title="Delete Category"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Col 2: Brands */}
+              <div className={`p-6 rounded-xl space-y-6 shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+                }`}>
+                <div className={`flex justify-between items-center border-b pb-3 ${isDarkMode ? 'border-[#222222]' : 'border-gray-200'}`}>
+                  <h3 className={`text-sm font-black uppercase font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>BRANDS</h3>
+                  <span className="text-xs text-gray-500 font-bold">{safeBrands.length} Total</span>
+                </div>
+
+                {/* Add Brand Form */}
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const input = (e.target as any).elements.brandName;
+                    const name = input?.value;
+                    if (!name) return;
+                    try {
+                      await api.post('/admin/brands', { name });
+                      alert(`Brand "${name}" added successfully!`);
+                      input.value = '';
+                      loadAllData();
+                    } catch (err) {
+                      alert('Brand created!');
+                      if (input) input.value = '';
+                      loadAllData();
+                    }
+                  }}
+                  className={`flex items-center gap-2 p-2 rounded-lg border ${isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-gray-50 border-gray-300'
+                    }`}
+                >
+                  <input
+                    name="brandName"
+                    type="text"
+                    required
+                    placeholder="New Brand Name (e.g. Vance & Hines)"
+                    className={`bg-transparent text-xs px-3 py-1.5 focus:outline-none flex-grow font-semibold ${isDarkMode ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
+                      }`}
+                  />
+                  <button
+                    type="submit"
+                    className="bg-[#BF8647] hover:bg-[#D49A50] text-black font-extrabold text-xs px-4 py-2 rounded-md uppercase cursor-pointer transition-all shadow-sm"
+                  >
+                    Add Brand
+                  </button>
+                </form>
+
+                <ul className={`divide-y text-xs uppercase max-h-96 overflow-y-auto pr-1 ${isDarkMode ? 'divide-[#222222]' : 'divide-gray-200'
+                  }`}>
+                  {safeBrands.map((b) => {
+                    const bId = b.id;
+                    const bName = b.name || b;
+                    return (
+                      <li key={bId || bName} className="py-3 flex justify-between items-center group">
+                        <div>
+                          <span className="font-bold text-[#BF8647] block">{bName}</span>
+                          <span className="text-gray-500 text-[10px]">ACTIVE</span>
+                        </div>
+
+                        {bId && (
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => setEditingCat({ id: c.id, name: c.name })}
-                              className={`p-1.5 rounded border transition-all cursor-pointer ${
-                                isDarkMode
-                                  ? 'text-gray-400 hover:text-[#BF8647] bg-[#1C1C1C] border-[#2B2B2B] hover:border-[#BF8647]'
-                                  : 'text-gray-600 hover:text-[#BF8647] bg-gray-100 border-gray-300 hover:border-[#BF8647]'
-                              }`}
-                              title="Edit Category"
+                              onClick={() => setEditingBrandItem({ id: bId, name: bName })}
+                              className={`p-1.5 rounded border transition-all cursor-pointer ${isDarkMode
+                                ? 'text-gray-400 hover:text-[#BF8647] bg-[#1C1C1C] border-[#2B2B2B] hover:border-[#BF8647]'
+                                : 'text-gray-600 hover:text-[#BF8647] bg-gray-100 border-gray-300 hover:border-[#BF8647]'
+                                }`}
+                              title="Edit Brand"
                             >
                               <Edit className="w-3.5 h-3.5" />
                             </button>
 
                             <button
                               onClick={async () => {
-                                if (confirm(`Are you sure you want to delete category "${c.name}"?`)) {
+                                if (confirm(`Are you sure you want to delete brand "${bName}"?`)) {
                                   try {
-                                    await api.delete(`/admin/categories/${c.id}`);
-                                    alert('Category deleted successfully!');
+                                    await api.delete(`/admin/brands/${bId}`);
+                                    alert('Brand deleted successfully!');
                                     loadAllData();
                                   } catch (err) {
-                                    alert('Error deleting category.');
+                                    alert('Error deleting brand.');
                                   }
                                 }
                               }}
-                              className={`p-1.5 rounded border transition-all cursor-pointer ${
-                                isDarkMode
-                                  ? 'text-gray-400 hover:text-red-400 bg-[#1C1C1C] border-[#2B2B2B] hover:border-red-500'
-                                  : 'text-gray-600 hover:text-red-600 bg-gray-100 border-gray-300 hover:border-red-500'
-                              }`}
-                              title="Delete Category"
+                              className={`p-1.5 rounded border transition-all cursor-pointer ${isDarkMode
+                                ? 'text-gray-400 hover:text-red-400 bg-[#1C1C1C] border-[#2B2B2B] hover:border-red-500'
+                                : 'text-gray-600 hover:text-red-600 bg-gray-100 border-gray-300 hover:border-red-500'
+                                }`}
+                              title="Delete Brand"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Col 2: Brands */}
-                  <div className={`p-6 rounded-xl space-y-6 shadow-xl border ${
-                    isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-                  }`}>
-                    <div className={`flex justify-between items-center border-b pb-3 ${isDarkMode ? 'border-[#222222]' : 'border-gray-200'}`}>
-                      <h3 className={`text-sm font-black uppercase font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>BRANDS</h3>
-                      <span className="text-xs text-gray-500 font-bold">{safeBrands.length} Total</span>
-                    </div>
-
-                    {/* Add Brand Form */}
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const input = (e.target as any).elements.brandName;
-                        const name = input?.value;
-                        if (!name) return;
-                        try {
-                          await api.post('/admin/brands', { name });
-                          alert(`Brand "${name}" added successfully!`);
-                          input.value = '';
-                          loadAllData();
-                        } catch (err) {
-                          alert('Brand created!');
-                          if (input) input.value = '';
-                          loadAllData();
-                        }
-                      }}
-                      className={`flex items-center gap-2 p-2 rounded-lg border ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#2A2A2A]' : 'bg-gray-50 border-gray-300'
-                      }`}
-                    >
-                      <input
-                        name="brandName"
-                        type="text"
-                        required
-                        placeholder="New Brand Name (e.g. Vance & Hines)"
-                        className={`bg-transparent text-xs px-3 py-1.5 focus:outline-none flex-grow font-semibold ${
-                          isDarkMode ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'
-                        }`}
-                      />
-                      <button
-                        type="submit"
-                        className="bg-[#BF8647] hover:bg-[#D49A50] text-black font-extrabold text-xs px-4 py-2 rounded-md uppercase cursor-pointer transition-all shadow-sm"
-                      >
-                        Add Brand
-                      </button>
-                    </form>
-
-                    <ul className={`divide-y text-xs uppercase max-h-96 overflow-y-auto pr-1 ${
-                      isDarkMode ? 'divide-[#222222]' : 'divide-gray-200'
-                    }`}>
-                      {safeBrands.map((b) => {
-                        const bId = b.id;
-                        const bName = b.name || b;
-                        return (
-                          <li key={bId || bName} className="py-3 flex justify-between items-center group">
-                            <div>
-                              <span className="font-bold text-[#BF8647] block">{bName}</span>
-                              <span className="text-gray-500 text-[10px]">ACTIVE</span>
-                            </div>
-
-                            {bId && (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => setEditingBrandItem({ id: bId, name: bName })}
-                                  className={`p-1.5 rounded border transition-all cursor-pointer ${
-                                    isDarkMode
-                                      ? 'text-gray-400 hover:text-[#BF8647] bg-[#1C1C1C] border-[#2B2B2B] hover:border-[#BF8647]'
-                                      : 'text-gray-600 hover:text-[#BF8647] bg-gray-100 border-gray-300 hover:border-[#BF8647]'
-                                  }`}
-                                  title="Edit Brand"
-                                >
-                                  <Edit className="w-3.5 h-3.5" />
-                                </button>
-
-                                <button
-                                  onClick={async () => {
-                                    if (confirm(`Are you sure you want to delete brand "${bName}"?`)) {
-                                      try {
-                                        await api.delete(`/admin/brands/${bId}`);
-                                        alert('Brand deleted successfully!');
-                                        loadAllData();
-                                      } catch (err) {
-                                        alert('Error deleting brand.');
-                                      }
-                                    }
-                                  }}
-                                  className={`p-1.5 rounded border transition-all cursor-pointer ${
-                                    isDarkMode
-                                      ? 'text-gray-400 hover:text-red-400 bg-[#1C1C1C] border-[#2B2B2B] hover:border-red-500'
-                                      : 'text-gray-600 hover:text-red-600 bg-gray-100 border-gray-300 hover:border-red-500'
-                                  }`}
-                                  title="Delete Brand"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
 
             {/* Modal: Edit Category */}
             {editingCat && (
@@ -3306,16 +3256,14 @@ export default function AdminDashboardPage() {
 
         {/* TAB 6.5: REVIEWS MANAGEMENT */}
         {activeTab === 'reviews' && (
-          <div className={`p-6 rounded-xl space-y-4 shadow-xl border ${
-            isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-          }`}>
+          <div className={`p-6 rounded-xl space-y-4 shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+            }`}>
             <h3 className={`text-sm font-black uppercase font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               CUSTOMER PRODUCT REVIEWS & RATINGS
             </h3>
             <div className="space-y-3">
-              <div className={`p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs border ${
-                isDarkMode ? 'bg-[#1A1A1A] border-[#262626]' : 'bg-gray-50 border-gray-200'
-              }`}>
+              <div className={`p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs border ${isDarkMode ? 'bg-[#1A1A1A] border-[#262626]' : 'bg-gray-50 border-gray-200'
+                }`}>
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-1">
                     <span className="font-bold text-[#BF8647]">Alex M.</span>
@@ -3340,9 +3288,8 @@ export default function AdminDashboardPage() {
 
         {/* TAB 7: STATIC CMS PAGES & SEO MANAGEMENT */}
         {activeTab === 'pages' && (
-          <div className={`p-6 rounded-xl space-y-8 max-w-5xl shadow-xl border ${
-            isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-          }`}>
+          <div className={`p-6 rounded-xl space-y-8 max-w-5xl shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+            }`}>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 border-[#222222]">
               <div>
                 <h3 className={`text-lg font-black uppercase font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -3367,13 +3314,12 @@ export default function AdminDashboardPage() {
                       key={p.slug}
                       type="button"
                       onClick={() => fetchCmsPageDetails(p.slug)}
-                      className={`px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase transition-all cursor-pointer flex items-center gap-2 border ${
-                        isSelected
-                          ? 'bg-[#BF8647] text-black border-[#BF8647] shadow-md shadow-[#BF8647]/20 scale-105'
-                          : isDarkMode
+                      className={`px-4 py-2.5 rounded-lg text-xs font-extrabold uppercase transition-all cursor-pointer flex items-center gap-2 border ${isSelected
+                        ? 'bg-[#BF8647] text-black border-[#BF8647] shadow-md shadow-[#BF8647]/20 scale-105'
+                        : isDarkMode
                           ? 'bg-[#1A1A1A] border-[#2B2B2B] text-gray-300 hover:border-[#BF8647] hover:text-white'
                           : 'bg-gray-100 border-gray-300 text-gray-700 hover:border-[#BF8647]'
-                      }`}
+                        }`}
                     >
                       <span>{p.label}</span>
                       <span className="text-[10px] opacity-60 font-mono">({p.path})</span>
@@ -3384,9 +3330,8 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Google Search Result Preview Box */}
-            <div className={`p-5 rounded-xl border space-y-2 shadow-inner ${
-              isDarkMode ? 'bg-[#0A0A0A] border-[#222222]' : 'bg-gray-50 border-gray-300'
-            }`}>
+            <div className={`p-5 rounded-xl border space-y-2 shadow-inner ${isDarkMode ? 'bg-[#0A0A0A] border-[#222222]' : 'bg-gray-50 border-gray-300'
+              }`}>
               <div className="flex items-center gap-2 text-xs font-bold uppercase text-gray-400 tracking-wider">
                 <Globe className="w-4 h-4 text-[#BF8647]" /> GOOGLE SEARCH ENGINE PREVIEW (LIVE SNIPPET)
               </div>
@@ -3411,9 +3356,8 @@ export default function AdminDashboardPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Column 1: Search Engine Meta Tags */}
-                <div className={`p-5 rounded-xl border space-y-4 ${
-                  isDarkMode ? 'bg-[#151515] border-[#262626]' : 'bg-gray-50 border-gray-200'
-                }`}>
+                <div className={`p-5 rounded-xl border space-y-4 ${isDarkMode ? 'bg-[#151515] border-[#262626]' : 'bg-gray-50 border-gray-200'
+                  }`}>
                   <h4 className="text-xs font-black uppercase text-[#BF8647] font-heading border-b border-[#2A2A2A] pb-2">
                     SEARCH ENGINE METADATA (GOOGLE / BING)
                   </h4>
@@ -3427,9 +3371,8 @@ export default function AdminDashboardPage() {
                       required
                       value={cmsTitle}
                       onChange={(e) => setCmsTitle(e.target.value)}
-                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] font-bold ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] font-bold ${isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     />
                   </div>
 
@@ -3447,9 +3390,8 @@ export default function AdminDashboardPage() {
                       placeholder="e.g. BMG CYCLES | Motorcycle Tires & Repair Specialists"
                       value={cmsMetaTitle}
                       onChange={(e) => setCmsMetaTitle(e.target.value)}
-                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     />
                   </div>
 
@@ -3467,9 +3409,8 @@ export default function AdminDashboardPage() {
                       placeholder="e.g. Premium motorcycle tires, wheel balancing, brake repair, and tune-ups in Fremont CA. Call 408-591-8484."
                       value={cmsMetaDescription}
                       onChange={(e) => setCmsMetaDescription(e.target.value)}
-                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     />
                   </div>
 
@@ -3482,17 +3423,15 @@ export default function AdminDashboardPage() {
                       placeholder="e.g. motorcycle tires, tire installation, Fremont CA, Dunlop, Michelin"
                       value={cmsMetaKeywords}
                       onChange={(e) => setCmsMetaKeywords(e.target.value)}
-                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     />
                   </div>
                 </div>
 
                 {/* Column 2: Social Open Graph & Robots Indexing */}
-                <div className={`p-5 rounded-xl border space-y-4 ${
-                  isDarkMode ? 'bg-[#151515] border-[#262626]' : 'bg-gray-50 border-gray-200'
-                }`}>
+                <div className={`p-5 rounded-xl border space-y-4 ${isDarkMode ? 'bg-[#151515] border-[#262626]' : 'bg-gray-50 border-gray-200'
+                  }`}>
                   <h4 className="text-xs font-black uppercase text-[#BF8647] font-heading border-b border-[#2A2A2A] pb-2">
                     SOCIAL MEDIA (OPENGRAPH) & ROBOTS INDEXING
                   </h4>
@@ -3506,9 +3445,8 @@ export default function AdminDashboardPage() {
                       placeholder="e.g. BMG CYCLES Fremont | Official Shop Page"
                       value={cmsOgTitle}
                       onChange={(e) => setCmsOgTitle(e.target.value)}
-                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     />
                   </div>
 
@@ -3521,9 +3459,8 @@ export default function AdminDashboardPage() {
                       placeholder="Summary shown when sharing link on Facebook, WhatsApp, Twitter..."
                       value={cmsOgDescription}
                       onChange={(e) => setCmsOgDescription(e.target.value)}
-                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case ${isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     />
                   </div>
 
@@ -3536,9 +3473,8 @@ export default function AdminDashboardPage() {
                       placeholder="e.g. https://americamotorcycletire.com/services"
                       value={cmsCanonicalUrl}
                       onChange={(e) => setCmsCanonicalUrl(e.target.value)}
-                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     />
                   </div>
 
@@ -3549,9 +3485,8 @@ export default function AdminDashboardPage() {
                     <select
                       value={cmsAllowIndexing ? 'index' : 'noindex'}
                       onChange={(e) => setCmsAllowIndexing(e.target.value === 'index')}
-                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] font-bold ${
-                        isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className={`w-full border rounded-lg p-2.5 focus:outline-none focus:border-[#BF8647] font-bold ${isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                        }`}
                     >
                       <option value="index">ALLOW INDEXING (INDEX, FOLLOW - RECOMMENDED)</option>
                       <option value="noindex">BLOCK INDEXING (NOINDEX, NOFOLLOW)</option>
@@ -3562,9 +3497,8 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* Page Body Content */}
-              <div className={`p-5 rounded-xl border space-y-2 ${
-                isDarkMode ? 'bg-[#151515] border-[#262626]' : 'bg-gray-50 border-gray-200'
-              }`}>
+              <div className={`p-5 rounded-xl border space-y-2 ${isDarkMode ? 'bg-[#151515] border-[#262626]' : 'bg-gray-50 border-gray-200'
+                }`}>
                 <label className={`block font-bold uppercase ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Page Body Content (HTML / Markdown Text)
                 </label>
@@ -3573,9 +3507,8 @@ export default function AdminDashboardPage() {
                   value={cmsContent}
                   onChange={(e) => setCmsContent(e.target.value)}
                   placeholder="Body content for this static page..."
-                  className={`w-full border rounded-lg p-3 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${
-                    isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                  }`}
+                  className={`w-full border rounded-lg p-3 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${isDarkMode ? 'bg-[#1A1A1A] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                    }`}
                 />
               </div>
 
@@ -3593,25 +3526,22 @@ export default function AdminDashboardPage() {
 
         {/* TAB 8: SITE SETTINGS */}
         {activeTab === 'settings' && (
-          <form onSubmit={handleSaveSettings} className={`p-6 rounded-xl max-w-2xl space-y-4 text-xs shadow-xl border ${
-            isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-          }`}>
+          <form onSubmit={handleSaveSettings} className={`p-6 rounded-xl max-w-2xl space-y-4 text-xs shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+            }`}>
             <div>
               <label className={`block font-bold uppercase mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Site Title</label>
               <input
                 type="text"
                 value={siteSettings.site_name || 'BMG CYCLES'}
                 onChange={(e) => setSiteSettings({ ...siteSettings, site_name: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] ${
-                  isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                }`}
+                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
               />
             </div>
 
             {/* Favicon & Brand Asset Management */}
-            <div className={`p-4 rounded-lg border space-y-4 ${
-              isDarkMode ? 'bg-[#1A1A1A] border-[#262626]' : 'bg-gray-50 border-gray-200'
-            }`}>
+            <div className={`p-4 rounded-lg border space-y-4 ${isDarkMode ? 'bg-[#1A1A1A] border-[#262626]' : 'bg-gray-50 border-gray-200'
+              }`}>
               <h4 className="text-xs font-black uppercase text-[#BF8647] font-heading border-b border-[#2B2B2B] pb-2">
                 FAVICON & BRAND ASSET SETTINGS
               </h4>
@@ -3626,9 +3556,8 @@ export default function AdminDashboardPage() {
                     placeholder="/favicon.png or https://..."
                     value={siteSettings.favicon_url || '/favicon.png'}
                     onChange={(e) => setSiteSettings({ ...siteSettings, favicon_url: e.target.value })}
-                    className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${
-                      isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                   />
                 </div>
               </div>
@@ -3644,9 +3573,8 @@ export default function AdminDashboardPage() {
                     placeholder="/bmg-logo.webp or https://..."
                     value={siteSettings.site_logo || '/bmg-logo.webp'}
                     onChange={(e) => setSiteSettings({ ...siteSettings, site_logo: e.target.value })}
-                    className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${
-                      isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] normal-case font-mono ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                   />
                 </div>
               </div>
@@ -3658,9 +3586,8 @@ export default function AdminDashboardPage() {
                 type="text"
                 value={siteSettings.contact_phone || '408-591-8484'}
                 onChange={(e) => setSiteSettings({ ...siteSettings, contact_phone: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] ${
-                  isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                }`}
+                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
               />
             </div>
             <div>
@@ -3669,9 +3596,8 @@ export default function AdminDashboardPage() {
                 type="text"
                 value={siteSettings.contact_email || 'INFO@BMGCYCLE.COM'}
                 onChange={(e) => setSiteSettings({ ...siteSettings, contact_email: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] ${
-                  isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                }`}
+                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
               />
             </div>
             <div>
@@ -3680,16 +3606,14 @@ export default function AdminDashboardPage() {
                 type="text"
                 value={siteSettings.announcement_bar || ''}
                 onChange={(e) => setSiteSettings({ ...siteSettings, announcement_bar: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] ${
-                  isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                }`}
+                className={`w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#BF8647] ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
               />
             </div>
 
             {/* Header Navigation Menu Links Manager */}
-            <div className={`p-4 rounded-lg border space-y-3 ${
-              isDarkMode ? 'bg-[#1A1A1A] border-[#262626]' : 'bg-gray-50 border-gray-200'
-            }`}>
+            <div className={`p-4 rounded-lg border space-y-3 ${isDarkMode ? 'bg-[#1A1A1A] border-[#262626]' : 'bg-gray-50 border-gray-200'
+              }`}>
               <div className={`flex justify-between items-center border-b pb-2 ${isDarkMode ? 'border-[#2B2B2B]' : 'border-gray-200'}`}>
                 <h4 className="text-xs font-extrabold uppercase text-[#BF8647]">HEADER NAVIGATION MENU LINKS</h4>
                 <button
@@ -3703,9 +3627,8 @@ export default function AdminDashboardPage() {
 
               <div className="space-y-2">
                 {menuItems.map((item, index) => (
-                  <div key={index} className={`flex items-center gap-2 p-2.5 rounded-lg border ${
-                    isDarkMode ? 'bg-[#121212] border-[#2B2B2B]' : 'bg-white border-gray-300'
-                  }`}>
+                  <div key={index} className={`flex items-center gap-2 p-2.5 rounded-lg border ${isDarkMode ? 'bg-[#121212] border-[#2B2B2B]' : 'bg-white border-gray-300'
+                    }`}>
                     <div className="w-1/2">
                       <label className="text-[10px] text-gray-500 font-bold uppercase block mb-0.5">Label</label>
                       <input
@@ -3716,9 +3639,8 @@ export default function AdminDashboardPage() {
                           updated[index].label = e.target.value;
                           setMenuItems(updated);
                         }}
-                        className={`w-full rounded px-3 py-1.5 font-bold border ${
-                          isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                        }`}
+                        className={`w-full rounded px-3 py-1.5 font-bold border ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                          }`}
                       />
                     </div>
                     <div className="w-1/2">
@@ -3731,9 +3653,8 @@ export default function AdminDashboardPage() {
                           updated[index].url = e.target.value;
                           setMenuItems(updated);
                         }}
-                        className={`w-full rounded px-3 py-1.5 font-mono border ${
-                          isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                        }`}
+                        className={`w-full rounded px-3 py-1.5 font-mono border ${isDarkMode ? 'bg-[#1F1F1F] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                          }`}
                       />
                     </div>
                     <button
@@ -3764,9 +3685,8 @@ export default function AdminDashboardPage() {
         {/* TAB: GLOBAL PRODUCT OPTIONS & ADD-ONS */}
         {activeTab === 'global_options' && (
           <div className="space-y-6 max-w-5xl">
-            <div className={`p-6 rounded-xl space-y-6 shadow-xl border ${
-              isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
-            }`}>
+            <div className={`p-6 rounded-xl space-y-6 shadow-xl border ${isDarkMode ? 'bg-[#101010] border-[#222222]' : 'bg-white border-gray-200'
+              }`}>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 border-[#222222]">
                 <div>
                   <h3 className={`text-base font-black uppercase font-heading ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -3811,9 +3731,8 @@ export default function AdminDashboardPage() {
                 {globalOptionsList.map((group, gIdx) => (
                   <div
                     key={group.id || gIdx}
-                    className={`p-5 rounded-xl border space-y-4 shadow-md ${
-                      isDarkMode ? 'bg-[#161616] border-[#2A2A2A]' : 'bg-gray-50 border-gray-300'
-                    }`}
+                    className={`p-5 rounded-xl border space-y-4 shadow-md ${isDarkMode ? 'bg-[#161616] border-[#2A2A2A]' : 'bg-gray-50 border-gray-300'
+                      }`}
                   >
                     {/* Group Header */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#262626] pb-3">
@@ -3828,9 +3747,8 @@ export default function AdminDashboardPage() {
                             setGlobalOptionsList(updated);
                           }}
                           placeholder="Option Title (e.g. Tire Installation)"
-                          className={`w-full rounded px-3 py-1.5 text-xs font-bold ${
-                            isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'
-                          }`}
+                          className={`w-full rounded px-3 py-1.5 text-xs font-bold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'
+                            }`}
                         />
                       </div>
 
@@ -3879,9 +3797,8 @@ export default function AdminDashboardPage() {
                       {(group.options || []).map((choice: any, cIdx: number) => (
                         <div
                           key={choice.id || cIdx}
-                          className={`grid grid-cols-12 gap-3 items-center p-2.5 rounded-lg border ${
-                            isDarkMode ? 'bg-[#101010] border-[#222]' : 'bg-white border-gray-200'
-                          }`}
+                          className={`grid grid-cols-12 gap-3 items-center p-2.5 rounded-lg border ${isDarkMode ? 'bg-[#101010] border-[#222]' : 'bg-white border-gray-200'
+                            }`}
                         >
                           {/* Label */}
                           <div className="col-span-5">
@@ -3894,9 +3811,8 @@ export default function AdminDashboardPage() {
                                 setGlobalOptionsList(updated);
                               }}
                               placeholder="e.g. Sport Bike Installation"
-                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${
-                                isDarkMode ? 'bg-[#1A1A1A] border border-[#333] text-white' : 'bg-gray-50 border border-gray-300 text-gray-900'
-                              }`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#1A1A1A] border border-[#333] text-white' : 'bg-gray-50 border border-gray-300 text-gray-900'
+                                }`}
                             />
                           </div>
 
@@ -3909,9 +3825,8 @@ export default function AdminDashboardPage() {
                                 updated[gIdx].options[cIdx].price_type = e.target.value;
                                 setGlobalOptionsList(updated);
                               }}
-                              className={`w-full rounded px-2 py-1.5 text-xs font-semibold ${
-                                isDarkMode ? 'bg-[#1A1A1A] border border-[#333] text-white' : 'bg-gray-50 border border-gray-300 text-gray-900'
-                              }`}
+                              className={`w-full rounded px-2 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#1A1A1A] border border-[#333] text-white' : 'bg-gray-50 border border-gray-300 text-gray-900'
+                                }`}
                             >
                               <option value="fixed">Fixed Price ($)</option>
                               <option value="percentage">Percentage (%)</option>
@@ -3929,9 +3844,8 @@ export default function AdminDashboardPage() {
                                 updated[gIdx].options[cIdx].price = parseFloat(e.target.value) || 0;
                                 setGlobalOptionsList(updated);
                               }}
-                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${
-                                isDarkMode ? 'bg-[#1A1A1A] border border-[#333] text-white' : 'bg-gray-50 border border-gray-300 text-gray-900'
-                              }`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#1A1A1A] border border-[#333] text-white' : 'bg-gray-50 border border-gray-300 text-gray-900'
+                                }`}
                             />
                           </div>
 
@@ -3977,9 +3891,8 @@ export default function AdminDashboardPage() {
       {/* Order Detail & Tracking Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className={`p-6 rounded-xl w-full max-w-xl space-y-4 text-xs shadow-2xl border ${
-            isDarkMode ? 'bg-[#141414] border-[#222222]' : 'bg-white border-gray-200'
-          }`}>
+          <div className={`p-6 rounded-xl w-full max-w-xl space-y-4 text-xs shadow-2xl border ${isDarkMode ? 'bg-[#141414] border-[#222222]' : 'bg-white border-gray-200'
+            }`}>
             <div className={`flex justify-between items-center border-b pb-3 ${isDarkMode ? 'border-[#222222]' : 'border-gray-200'}`}>
               <div>
                 <h3 className="text-lg font-black uppercase text-[#BF8647] font-heading">
@@ -3992,9 +3905,8 @@ export default function AdminDashboardPage() {
               </button>
             </div>
 
-            <div className={`grid grid-cols-2 gap-4 p-4 rounded-lg border ${
-              isDarkMode ? 'bg-[#1A1A1A] border-[#222222]' : 'bg-gray-50 border-gray-200'
-            }`}>
+            <div className={`grid grid-cols-2 gap-4 p-4 rounded-lg border ${isDarkMode ? 'bg-[#1A1A1A] border-[#222222]' : 'bg-gray-50 border-gray-200'
+              }`}>
               <div className="space-y-1">
                 <p><strong className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Customer:</strong> <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>{selectedOrder.customer_name}</span></p>
                 <p><strong className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Email:</strong> <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>{selectedOrder.customer_email}</span></p>
@@ -4009,9 +3921,8 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Order Status & Tracking Input Form */}
-            <div className={`space-y-3 p-4 rounded-lg border ${
-              isDarkMode ? 'bg-[#1A1A1A] border-[#222222]' : 'bg-gray-50 border-gray-200'
-            }`}>
+            <div className={`space-y-3 p-4 rounded-lg border ${isDarkMode ? 'bg-[#1A1A1A] border-[#222222]' : 'bg-gray-50 border-gray-200'
+              }`}>
               <h4 className={`font-bold uppercase text-xs ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>UPDATE ORDER STATUS & SHIPPING TRACKING</h4>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -4019,9 +3930,8 @@ export default function AdminDashboardPage() {
                   <select
                     value={selectedOrder.status}
                     onChange={(e) => setSelectedOrder({ ...selectedOrder, status: e.target.value })}
-                    className={`w-full border rounded-lg p-2 font-bold uppercase ${
-                      isDarkMode ? 'bg-[#121212] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full border rounded-lg p-2 font-bold uppercase ${isDarkMode ? 'bg-[#121212] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                   >
                     <option value="pending">PENDING</option>
                     <option value="processing">PROCESSING</option>
@@ -4036,9 +3946,8 @@ export default function AdminDashboardPage() {
                     type="text"
                     value={selectedOrder.shipping_carrier || 'UPS'}
                     onChange={(e) => setSelectedOrder({ ...selectedOrder, shipping_carrier: e.target.value })}
-                    className={`w-full border rounded-lg p-2 font-bold uppercase ${
-                      isDarkMode ? 'bg-[#121212] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
-                    }`}
+                    className={`w-full border rounded-lg p-2 font-bold uppercase ${isDarkMode ? 'bg-[#121212] border-[#333] text-white' : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                   />
                 </div>
               </div>
@@ -4050,9 +3959,8 @@ export default function AdminDashboardPage() {
                   placeholder="e.g. 1Z9999999999999999"
                   value={selectedOrder.tracking_number || ''}
                   onChange={(e) => setSelectedOrder({ ...selectedOrder, tracking_number: e.target.value })}
-                  className={`w-full border rounded-lg p-2 text-emerald-500 font-mono text-xs font-bold ${
-                    isDarkMode ? 'bg-[#121212] border-[#333]' : 'bg-white border-gray-300'
-                  }`}
+                  className={`w-full border rounded-lg p-2 text-emerald-500 font-mono text-xs font-bold ${isDarkMode ? 'bg-[#121212] border-[#333]' : 'bg-white border-gray-300'
+                    }`}
                 />
               </div>
 
@@ -4131,9 +4039,8 @@ export default function AdminDashboardPage() {
           {/* 2. FULL DETAILED PROGRESS MODAL */}
           {!importProgress.isMinimized && (
             <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
-              <div className={`p-8 rounded-2xl w-full max-w-2xl space-y-6 shadow-2xl border ${
-                isDarkMode ? 'bg-[#121212] border-[#BF8647]/40' : 'bg-white border-gray-300'
-              }`}>
+              <div className={`p-8 rounded-2xl w-full max-w-2xl space-y-6 shadow-2xl border ${isDarkMode ? 'bg-[#121212] border-[#BF8647]/40' : 'bg-white border-gray-300'
+                }`}>
                 {/* Header */}
                 <div className="flex justify-between items-start border-b border-[#222] pb-4">
                   <div>
@@ -4199,9 +4106,8 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Live Console Activity Log */}
-                <div className={`p-4 rounded-xl font-mono text-xs border space-y-1 ${
-                  isDarkMode ? 'bg-[#0A0A0A] border-[#222] text-gray-300' : 'bg-gray-900 border-gray-800 text-gray-200'
-                }`}>
+                <div className={`p-4 rounded-xl font-mono text-xs border space-y-1 ${isDarkMode ? 'bg-[#0A0A0A] border-[#222] text-gray-300' : 'bg-gray-900 border-gray-800 text-gray-200'
+                  }`}>
                   <div className="text-[10px] font-extrabold uppercase text-gray-500 mb-1">LIVE LOG OUTPUT:</div>
                   <div className="text-emerald-400 font-bold">{importProgress.currentAction}</div>
                   {importProgress.errorMessage && (

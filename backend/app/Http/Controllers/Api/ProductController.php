@@ -140,20 +140,57 @@ class ProductController extends Controller
 
         $allRawMakes = $rawMakes1->merge($rawMakes2);
 
-        $cleanMakes = [];
-        $ignoredMakes = [
-            'universal', 'all models', 'n/a', 'none', 'all makes', 'all', 'null',
-            'bridgestone', 'dunlop', 'maxxis', 'metzeler', 'michelin', 'ams', 'cst',
-            'irc', 'itp', 'shinko', 'continental', 'avon', 'kenda', 'heidenau', 'mitas',
-            'sedona', 'vee rubber', 'motoz', 'sunf', 'gbc', 'carlisle', 'performance machine',
-            'bmg', 'generic'
+        $validOemMakesMap = [
+            'harley' => 'Harley-Davidson',
+            'harley-davidson' => 'Harley-Davidson',
+            'honda' => 'Honda',
+            'yamaha' => 'Yamaha',
+            'kawasaki' => 'Kawasaki',
+            'suzuki' => 'Suzuki',
+            'bmw' => 'BMW',
+            'ktm' => 'KTM',
+            'ducati' => 'Ducati',
+            'triumph' => 'Triumph',
+            'indian' => 'Indian',
+            'husqvarna' => 'Husqvarna',
+            'can-am' => 'Can-Am',
+            'canam' => 'Can-Am',
+            'polaris' => 'Polaris',
+            'victory' => 'Victory',
+            'aprilia' => 'Aprilia',
+            'moto guzzi' => 'Moto Guzzi',
+            'royal enfield' => 'Royal Enfield',
+            'gasgas' => 'GasGas',
+            'gas gas' => 'GasGas',
+            'beta' => 'Beta',
+            'zero' => 'Zero',
+            'husaberg' => 'Husaberg',
+            'cobra' => 'Cobra',
+            'buell' => 'Buell',
+            'mv agusta' => 'MV Agusta',
+            'benelli' => 'Benelli',
+            'kymco' => 'Kymco',
+            'sym' => 'Sym',
+            'brp' => 'BRP',
+            'arctic cat' => 'Arctic Cat',
+            'ski-doo' => 'Ski-Doo',
+            'sea-doo' => 'Sea-Doo',
+            'vanderhall' => 'Vanderhall'
         ];
+
+        $cleanMakes = [];
         foreach ($allRawMakes as $rm) {
             foreach (explode('/', $rm) as $p1) {
                 foreach (explode(',', $p1) as $p2) {
                     $trimmed = trim($p2);
-                    if ($trimmed && !in_array(strtolower($trimmed), $ignoredMakes) && !in_array($trimmed, $cleanMakes)) {
-                        $cleanMakes[] = $trimmed;
+                    $lower = strtolower($trimmed);
+                    foreach ($validOemMakesMap as $key => $canonicalName) {
+                        if (str_contains($lower, $key) || $lower === $key) {
+                            if (!in_array($canonicalName, $cleanMakes)) {
+                                $cleanMakes[] = $canonicalName;
+                            }
+                            break;
+                        }
                     }
                 }
             }
