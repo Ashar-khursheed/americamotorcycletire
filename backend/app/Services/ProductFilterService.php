@@ -39,19 +39,16 @@ class ProductFilterService
             });
         }
 
-        // 2. Product Type Filter ('type' or 'product_type')
+        // 2. Type Filter ('type' or 'product_type' - searches both vehicle_type and product_type)
         $typeParam = $request->input('type') ?: $request->input('product_type');
         if (!empty($typeParam)) {
             $types = is_array($typeParam) ? $typeParam : explode(',', $typeParam);
             $query->where(function ($q) use ($types) {
-                foreach ($types as $idx => $t) {
+                foreach ($types as $t) {
                     $trimT = trim($t);
                     if (empty($trimT)) continue;
-                    if ($idx === 0) {
-                        $q->where('product_type', 'like', "%{$trimT}%");
-                    } else {
-                        $q->orWhere('product_type', 'like', "%{$trimT}%");
-                    }
+                    $q->orWhere('vehicle_type', 'like', "%{$trimT}%")
+                      ->orWhere('product_type', 'like', "%{$trimT}%");
                 }
             });
         }
