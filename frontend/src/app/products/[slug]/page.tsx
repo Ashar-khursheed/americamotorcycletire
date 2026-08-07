@@ -175,16 +175,37 @@ export default function ProductDetailPage() {
 
   const displayImages = React.useMemo(() => {
     if (!product) return [];
+    let list: string[] = [];
+
     if (Array.isArray(product.gallery_images) && product.gallery_images.length > 0) {
-      return product.gallery_images;
+      list = [...product.gallery_images];
+    } else if (typeof product.gallery_images === 'string' && product.gallery_images.trim()) {
+      try {
+        const parsed = JSON.parse(product.gallery_images);
+        if (Array.isArray(parsed)) list = parsed;
+      } catch (e) {
+        list = product.gallery_images.split(';').map((img: string) => img.trim()).filter(Boolean);
+      }
     }
-    if (product.primary_image) {
-      return [product.primary_image];
+
+    if (list.length === 0 && product.all_image_urls) {
+      if (typeof product.all_image_urls === 'string') {
+        list = product.all_image_urls.split(';').map((img: string) => img.trim()).filter(Boolean);
+      } else if (Array.isArray(product.all_image_urls)) {
+        list = [...product.all_image_urls];
+      }
     }
+
+    if (product.primary_image && !list.includes(product.primary_image)) {
+      list.unshift(product.primary_image);
+    }
+
+    if (list.length > 0) {
+      return Array.from(new Set(list));
+    }
+
     return [
-      'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800',
-      'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=800',
-      'https://images.unsplash.com/photo-1558980664-3a031cf67ea8?w=800'
+      'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800'
     ];
   }, [product]);
 
