@@ -102,16 +102,10 @@ class AdminProductController extends Controller
         }
 
         try {
-            // 1. Ensure storage directory exists with safe 0755 permissions
+            // Target the real physical storage directory (storage/app/public/products)
             $storageDir = storage_path('app/public/products');
             if (!file_exists($storageDir)) {
                 @mkdir($storageDir, 0755, true);
-            }
-
-            // 2. Also ensure public storage directory exists with safe 0755 permissions
-            $publicDir = public_path('storage/products');
-            if (!file_exists($publicDir)) {
-                @mkdir($publicDir, 0755, true);
             }
 
             $hash = md5($imageUrl);
@@ -119,19 +113,16 @@ class AdminProductController extends Controller
             $jpgFilename = 'prod_' . $hash . '.jpg';
 
             $storageWebpPath = $storageDir . '/' . $webpFilename;
-            $publicWebpPath = $publicDir . '/' . $webpFilename;
-
             $storageJpgPath = $storageDir . '/' . $jpgFilename;
-            $publicJpgPath = $publicDir . '/' . $jpgFilename;
 
             $webpAssetUrl = asset('storage/products/' . $webpFilename);
             $jpgAssetUrl = asset('storage/products/' . $jpgFilename);
 
-            if ((file_exists($storageWebpPath) && filesize($storageWebpPath) > 0) || (file_exists($publicWebpPath) && filesize($publicWebpPath) > 0)) {
+            if (file_exists($storageWebpPath) && filesize($storageWebpPath) > 0) {
                 return $webpAssetUrl;
             }
 
-            if ((file_exists($storageJpgPath) && filesize($storageJpgPath) > 0) || (file_exists($publicJpgPath) && filesize($publicJpgPath) > 0)) {
+            if (file_exists($storageJpgPath) && filesize($storageJpgPath) > 0) {
                 return $jpgAssetUrl;
             }
 
@@ -200,10 +191,6 @@ class AdminProductController extends Controller
                         imagesavealpha($imgRes, true);
                         if (@imagewebp($imgRes, $storageWebpPath, 85)) {
                             @chmod($storageWebpPath, 0644);
-                            if ($publicWebpPath !== $storageWebpPath) {
-                                @copy($storageWebpPath, $publicWebpPath);
-                                @chmod($publicWebpPath, 0644);
-                            }
                             imagedestroy($imgRes);
                             return $webpAssetUrl;
                         }
@@ -214,10 +201,6 @@ class AdminProductController extends Controller
                 // 2. Fallback JPG save
                 @file_put_contents($storageJpgPath, $rawBinary);
                 @chmod($storageJpgPath, 0644);
-                if ($publicJpgPath !== $storageJpgPath) {
-                    @copy($storageJpgPath, $publicJpgPath);
-                    @chmod($publicJpgPath, 0644);
-                }
                 return $jpgAssetUrl;
             }
         } catch (\Throwable $e) {
