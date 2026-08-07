@@ -608,6 +608,7 @@ export default function AdminDashboardPage() {
         if (res.data) {
           totalCreated += res.data.created || 0;
           totalUpdated += res.data.updated || 0;
+          totalErrors += res.data.failed || 0;
         }
       } catch (err: any) {
         totalErrors += chunk.length;

@@ -464,180 +464,214 @@ class AdminProductController extends Controller
 
         $createdCount = 0;
         $updatedCount = 0;
+        $failedCount = 0;
 
         foreach ($rows as $row) {
-            $sku = $row['SKU Number'] ?? $row['Part Number'] ?? $row['sku'] ?? $row['SKU'] ?? $row['Item Number'] ?? $row['item_number'] ?? null;
-            $name = $row['Product Name'] ?? $row['name'] ?? $row['Title'] ?? 'Motorcycle Component';
+            try {
+                $sku = $row['SKU Number'] ?? $row['Part Number'] ?? $row['sku'] ?? $row['SKU'] ?? $row['Item Number'] ?? $row['item_number'] ?? null;
+                $name = $row['Product Name'] ?? $row['name'] ?? $row['Title'] ?? 'Motorcycle Component';
 
-            if (empty($sku)) {
-                $sku = 'SKU-' . strtoupper(Str::slug(substr($name, 0, 10))) . '-' . rand(100, 999);
-            }
-
-            // Case-Insensitive Category Auto-Create or Match
-            $categoryName = $row['Category'] ?? $row['category'] ?? $row['Category Name'] ?? 'Tires';
-            $categoryId = null;
-            if (!empty($categoryName)) {
-                $catTrim = trim($categoryName);
-                $catObj = Category::whereRaw('LOWER(name) = ?', [strtolower($catTrim)])->first();
-                if (!$catObj) {
-                    $catObj = Category::create([
-                        'name' => ucfirst($catTrim),
-                        'slug' => Str::slug($catTrim),
-                        'is_active' => true,
-                    ]);
-                }
-                $categoryId = $catObj->id;
-            }
-
-            // Case-Insensitive Brand Auto-Create or Match
-            $brandName = $row['Brand'] ?? $row['brand'] ?? $row['Brand Name'] ?? 'BMG';
-            $brand = 'BMG';
-            if (!empty($brandName)) {
-                $brandTrim = trim($brandName);
-                $brandObj = Brand::whereRaw('LOWER(name) = ?', [strtolower($brandTrim)])->first();
-                if (!$brandObj) {
-                    $brandObj = Brand::create([
-                        'name' => strtoupper($brandTrim),
-                        'slug' => Str::slug($brandTrim),
-                        'is_active' => true,
-                    ]);
-                }
-                $brand = $brandObj ? $brandObj->name : strtoupper($brandTrim);
-            }
-
-            $priceStr = $row['Retail Price'] ?? $row['price'] ?? $row['Price'] ?? '99.95';
-            preg_match('/\$?([\d,]+\.?\d*)/', (string)$priceStr, $priceMatch);
-            $price = isset($priceMatch[1]) ? (float) str_replace(',', '', $priceMatch[1]) : 99.95;
-
-            $wasPriceStr = $row['Was Price / MSRP'] ?? $row['was_price'] ?? $row['Was Price'] ?? null;
-            $wasPrice = null;
-            if ($wasPriceStr) {
-                preg_match('/\$?([\d,]+\.?\d*)/', (string)$wasPriceStr, $wasMatch);
-                if (isset($wasMatch[1])) {
-                    $wasPrice = (float) str_replace(',', '', $wasMatch[1]);
-                }
-            }
-
-            $rawImage = $row['Primary Image URL'] ?? $row['Image URL'] ?? $row['primary_image'] ?? $row['Image'] ?? null;
-            $localImage = $this->downloadAndStoreImage($rawImage);
-            $desc = $row['Description'] ?? $row['description'] ?? '';
-
-            $vType = $row['Vehicle Type'] ?? $row['vehicle_type'] ?? null;
-            $pType = $row['Specific Product Type'] ?? $row['product_type'] ?? $row['Product Type'] ?? null;
-            $cMakes = $row['Compatible Bike Makes'] ?? $row['compatible_makes'] ?? null;
-            $cModels = $row['Compatible Bike Models'] ?? $row['compatible_models'] ?? null;
-            $fitYearRange = $row['Fitment Year / Range'] ?? $row['fitment_year_range'] ?? null;
-            $itemNum = $row['Item Number'] ?? $row['item_number'] ?? null;
-            $savings = $row['Savings'] ?? $row['savings'] ?? null;
-            $rating = (float) ($row['Rating'] ?? $row['rating'] ?? 0.0);
-            $revCount = (int) ($row['Review Count'] ?? $row['review_count'] ?? 0);
-            $frontFit = $row['Front Tire Fitment'] ?? $row['front_tire_fitment'] ?? null;
-            $rearFit = $row['Rear Tire Fitment'] ?? $row['rear_tire_fitment'] ?? null;
-            $wheelLoc = $row['Wheel Locations'] ?? $row['wheel_locations'] ?? null;
-            $availSizesCount = (int) ($row['Available Sizes Count'] ?? $row['available_sizes_count'] ?? 0);
-            $availSizes = $row['Available Sizes'] ?? $row['available_sizes'] ?? null;
-            $totalParts = (int) ($row['Total Part Numbers'] ?? $row['total_part_numbers'] ?? 0);
-            $specs = $row['Specs & Features'] ?? $row['specs_and_features'] ?? null;
-            $fitVehicle = $row['Fitment Vehicle'] ?? $row['fitment_vehicle'] ?? null;
-            $fitDisc = $row['Fitment Disclaimer'] ?? $row['fitment_disclaimer'] ?? null;
-            $sourceUrl = $row['URL'] ?? $row['source_url'] ?? null;
-
-            $metaTitle = $row['Meta Title'] ?? $row['meta_title'] ?? null;
-            $metaDesc = $row['Meta Description'] ?? $row['meta_description'] ?? null;
-            $metaKw = $row['Meta Keywords'] ?? $row['meta_keywords'] ?? null;
-            $canonicalUrl = $row['Canonical URL'] ?? $row['canonical_url'] ?? null;
-            $customSlug = $row['Slug'] ?? $row['slug'] ?? null;
-
-            // Upsert Product strictly by unique SKU (Part Number)
-            $existingProduct = !empty($sku) ? Product::where('sku', $sku)->first() : null;
-
-            $prodData = [
-                'name' => $name,
-                'brand' => $brand,
-                'category_id' => $categoryId,
-                'vehicle_type' => $vType,
-                'product_type' => $pType,
-                'compatible_makes' => $cMakes,
-                'compatible_models' => $cModels,
-                'fitment_year_range' => $fitYearRange,
-                'item_number' => $itemNum,
-                'price' => $price > 0 ? $price : 99.95,
-                'was_price' => $wasPrice,
-                'compare_at_price' => $wasPrice,
-                'savings' => $savings,
-                'rating' => $rating,
-                'review_count' => $revCount,
-                'front_tire_fitment' => $frontFit,
-                'rear_tire_fitment' => $rearFit,
-                'wheel_locations' => $wheelLoc,
-                'available_sizes_count' => $availSizesCount,
-                'available_sizes' => $availSizes,
-                'total_part_numbers' => $totalParts,
-                'primary_image' => !empty($localImage) ? $localImage : asset('storage/products/default.jpg'),
-                'gallery_images' => $row['gallery_images'] ?? $row['Gallery Images'] ?? $row['All Image URLs'] ?? null,
-                'custom_attributes' => $row['custom_attributes'] ?? $row['Custom Attributes'] ?? null,
-                'description' => $desc,
-                'specs_and_features' => $specs,
-                'fitment_vehicle' => $fitVehicle,
-                'fitment_disclaimer' => $fitDisc,
-                'source_url' => $sourceUrl,
-            ];
-
-            if ($existingProduct) {
-                if (!empty($metaTitle)) $prodData['meta_title'] = $metaTitle;
-                if (!empty($metaDesc)) $prodData['meta_description'] = $metaDesc;
-                if (!empty($metaKw)) $prodData['meta_keywords'] = $metaKw;
-                if (!empty($canonicalUrl)) $prodData['canonical_url'] = $canonicalUrl;
-                if (!empty($customSlug)) {
-                    $prodData['slug'] = $this->makeUniqueSlug($customSlug, $existingProduct->id);
+                if (empty($sku)) {
+                    $sku = 'SKU-' . strtoupper(Str::slug(substr($name, 0, 10))) . '-' . rand(100, 999);
                 }
 
-                $existingProduct->update($prodData);
-                $product = $existingProduct;
-                $updatedCount++;
-            } else {
-                $prodData['sku'] = $sku;
-                $prodData['slug'] = $this->makeUniqueSlug(!empty($customSlug) ? $customSlug : $name);
-                $prodData['stock_quantity'] = 50;
-                $prodData['is_active'] = true;
-                $prodData['meta_title'] = $metaTitle;
-                $prodData['meta_description'] = $metaDesc;
-                $prodData['meta_keywords'] = $metaKw;
-                $prodData['canonical_url'] = $canonicalUrl;
+                // Case-Insensitive Category Auto-Create or Match
+                $categoryName = $row['Category'] ?? $row['category'] ?? $row['Category Name'] ?? 'Tires';
+                $categoryId = null;
+                if (!empty($categoryName)) {
+                    $catTrim = trim($categoryName);
+                    $catObj = Category::whereRaw('LOWER(name) = ?', [strtolower($catTrim)])->first();
+                    if (!$catObj) {
+                        $catObj = Category::create([
+                            'name' => ucfirst($catTrim),
+                            'slug' => Str::slug($catTrim),
+                            'is_active' => true,
+                        ]);
+                    }
+                    $categoryId = $catObj->id;
+                }
 
-                $product = Product::create($prodData);
-                $createdCount++;
-            }
+                // Case-Insensitive Brand Auto-Create or Match
+                $brandName = $row['Brand'] ?? $row['brand'] ?? $row['Brand Name'] ?? 'BMG';
+                $brand = 'BMG';
+                if (!empty($brandName)) {
+                    $brandTrim = trim($brandName);
+                    $brandObj = Brand::whereRaw('LOWER(name) = ?', [strtolower($brandTrim)])->first();
+                    if (!$brandObj) {
+                        $brandObj = Brand::create([
+                            'name' => strtoupper($brandTrim),
+                            'slug' => Str::slug($brandTrim),
+                            'is_active' => true,
+                        ]);
+                    }
+                    $brand = $brandObj ? $brandObj->name : strtoupper($brandTrim);
+                }
 
-            // Fitments Upsert
-            $year = trim($row['Year'] ?? $row['year'] ?? $row['Fitment Year / Range'] ?? $row['fitment_year_range'] ?? '');
-            $make = trim($row['Make'] ?? $row['make'] ?? $row['Compatible Bike Makes'] ?? $row['compatible_makes'] ?? '');
-            $model = trim($row['Model'] ?? $row['model'] ?? $row['Compatible Bike Models'] ?? $row['compatible_models'] ?? '');
-            $position = trim($row['Position'] ?? $row['position'] ?? $row['Wheel Locations'] ?? $row['wheel_locations'] ?? '');
-            $vendorPart = trim($row['Vendor Part Number'] ?? $row['vendor_part_number'] ?? '');
-            $tireSize = trim($row['Tire Size'] ?? $row['tire_size'] ?? $row['Available Sizes'] ?? $row['available_sizes'] ?? '');
+                $priceStr = $row['Retail Price'] ?? $row['price'] ?? $row['Price'] ?? '99.95';
+                preg_match('/\$?([\d,]+\.?\d*)/', (string)$priceStr, $priceMatch);
+                $price = isset($priceMatch[1]) ? (float) str_replace(',', '', $priceMatch[1]) : 99.95;
 
-            if (str_contains(strtolower($position), 'position (e.g.')) {
-                $position = '';
-            }
+                $wasPriceStr = $row['Was Price / MSRP'] ?? $row['was_price'] ?? $row['Was Price'] ?? null;
+                $wasPrice = null;
+                if ($wasPriceStr) {
+                    preg_match('/\$?([\d,]+\.?\d*)/', (string)$wasPriceStr, $wasMatch);
+                    if (isset($wasMatch[1])) {
+                        $wasPrice = (float) str_replace(',', '', $wasMatch[1]);
+                    }
+                }
 
-            if (!empty($year) || !empty($make) || !empty($model)) {
-                ProductFitment::updateOrCreate(
-                    [
-                        'product_id' => $product->id,
-                        'year' => $year ?: null,
-                        'make' => $make ?: null,
-                        'model' => $model ?: null,
-                        'position' => $position ?: null,
-                    ],
-                    [
-                        'tire_size' => $tireSize ?: null,
-                        'sku_number' => $sku,
-                        'item_number' => $itemNum,
-                        'vendor_part_number' => $vendorPart ?: $sku,
-                        'notes' => $row['Notes'] ?? null,
-                    ]
-                );
+                $rawImage = $row['Primary Image URL'] ?? $row['Image URL'] ?? $row['primary_image'] ?? $row['Image'] ?? null;
+                $primaryImage = !empty($rawImage) ? trim($rawImage) : asset('storage/products/default.jpg');
+                $desc = $row['Description'] ?? $row['description'] ?? '';
+
+                $vType = $row['Vehicle Type'] ?? $row['vehicle_type'] ?? null;
+                $pType = $row['Specific Product Type'] ?? $row['product_type'] ?? $row['Product Type'] ?? null;
+                $cMakes = $row['Compatible Bike Makes'] ?? $row['compatible_makes'] ?? null;
+                $cModels = $row['Compatible Bike Models'] ?? $row['compatible_models'] ?? null;
+                $fitYearRange = $row['Fitment Year / Range'] ?? $row['fitment_year_range'] ?? null;
+                $itemNum = $row['Item Number'] ?? $row['item_number'] ?? null;
+                $savings = $row['Savings'] ?? $row['savings'] ?? null;
+                $rating = (float) ($row['Rating'] ?? $row['rating'] ?? 0.0);
+                $revCount = (int) ($row['Review Count'] ?? $row['review_count'] ?? 0);
+                $frontFit = $row['Front Tire Fitment'] ?? $row['front_tire_fitment'] ?? null;
+                $rearFit = $row['Rear Tire Fitment'] ?? $row['rear_tire_fitment'] ?? null;
+                $wheelLoc = $row['Wheel Locations'] ?? $row['wheel_locations'] ?? null;
+                $availSizesCount = (int) ($row['Available Sizes Count'] ?? $row['available_sizes_count'] ?? 0);
+                $availSizes = $row['Available Sizes'] ?? $row['available_sizes'] ?? null;
+                $totalParts = (int) ($row['Total Part Numbers'] ?? $row['total_part_numbers'] ?? 0);
+                $specs = $row['Specs & Features'] ?? $row['specs_and_features'] ?? null;
+                $fitVehicle = $row['Fitment Vehicle'] ?? $row['fitment_vehicle'] ?? null;
+                $fitDisc = $row['Fitment Disclaimer'] ?? $row['fitment_disclaimer'] ?? null;
+                $sourceUrl = $row['URL'] ?? $row['source_url'] ?? null;
+
+                $metaTitle = $row['Meta Title'] ?? $row['meta_title'] ?? null;
+                $metaDesc = $row['Meta Description'] ?? $row['meta_description'] ?? null;
+                $metaKw = $row['Meta Keywords'] ?? $row['meta_keywords'] ?? null;
+                $canonicalUrl = $row['Canonical URL'] ?? $row['canonical_url'] ?? null;
+                $customSlug = $row['Slug'] ?? $row['slug'] ?? null;
+
+                // Parse Gallery Images into array if string
+                $galleryVal = $row['gallery_images'] ?? $row['Gallery Images'] ?? $row['All Image URLs'] ?? null;
+                $galleryImages = [];
+                if (is_array($galleryVal)) {
+                    $galleryImages = $galleryVal;
+                } else if (is_string($galleryVal) && !empty($galleryVal)) {
+                    $decoded = json_decode($galleryVal, true);
+                    if (is_array($decoded)) {
+                        $galleryImages = $decoded;
+                    } else if (str_contains($galleryVal, ',')) {
+                        $galleryImages = array_values(array_filter(array_map('trim', explode(',', $galleryVal))));
+                    } else {
+                        $galleryImages = [$galleryVal];
+                    }
+                }
+
+                // Parse Custom Attributes into array if string
+                $customAttrVal = $row['custom_attributes'] ?? $row['Custom Attributes'] ?? null;
+                $customAttributes = [];
+                if (is_array($customAttrVal)) {
+                    $customAttributes = $customAttrVal;
+                } else if (is_string($customAttrVal) && !empty($customAttrVal)) {
+                    $decoded = json_decode($customAttrVal, true);
+                    if (is_array($decoded)) {
+                        $customAttributes = $decoded;
+                    }
+                }
+
+                // Upsert Product strictly by unique SKU (Part Number)
+                $existingProduct = !empty($sku) ? Product::where('sku', $sku)->first() : null;
+
+                $prodData = [
+                    'name' => $name,
+                    'brand' => $brand,
+                    'category_id' => $categoryId,
+                    'vehicle_type' => $vType,
+                    'product_type' => $pType,
+                    'compatible_makes' => $cMakes,
+                    'compatible_models' => $cModels,
+                    'fitment_year_range' => $fitYearRange,
+                    'item_number' => $itemNum,
+                    'price' => $price > 0 ? $price : 99.95,
+                    'was_price' => $wasPrice,
+                    'compare_at_price' => $wasPrice,
+                    'savings' => $savings,
+                    'rating' => $rating,
+                    'review_count' => $revCount,
+                    'front_tire_fitment' => $frontFit,
+                    'rear_tire_fitment' => $rearFit,
+                    'wheel_locations' => $wheelLoc,
+                    'available_sizes_count' => $availSizesCount,
+                    'available_sizes' => $availSizes,
+                    'total_part_numbers' => $totalParts,
+                    'primary_image' => $primaryImage,
+                    'gallery_images' => $galleryImages,
+                    'custom_attributes' => $customAttributes,
+                    'description' => $desc,
+                    'specs_and_features' => $specs,
+                    'fitment_vehicle' => $fitVehicle,
+                    'fitment_disclaimer' => $fitDisc,
+                    'source_url' => $sourceUrl,
+                ];
+
+                if ($existingProduct) {
+                    if (!empty($metaTitle)) $prodData['meta_title'] = $metaTitle;
+                    if (!empty($metaDesc)) $prodData['meta_description'] = $metaDesc;
+                    if (!empty($metaKw)) $prodData['meta_keywords'] = $metaKw;
+                    if (!empty($canonicalUrl)) $prodData['canonical_url'] = $canonicalUrl;
+                    if (!empty($customSlug)) {
+                        $prodData['slug'] = $this->makeUniqueSlug($customSlug, $existingProduct->id);
+                    }
+
+                    $existingProduct->update($prodData);
+                    $product = $existingProduct;
+                    $updatedCount++;
+                } else {
+                    $prodData['sku'] = $sku;
+                    $prodData['slug'] = $this->makeUniqueSlug(!empty($customSlug) ? $customSlug : $name);
+                    $prodData['stock_quantity'] = 50;
+                    $prodData['is_active'] = true;
+                    $prodData['meta_title'] = $metaTitle;
+                    $prodData['meta_description'] = $metaDesc;
+                    $prodData['meta_keywords'] = $metaKw;
+                    $prodData['canonical_url'] = $canonicalUrl;
+
+                    $product = Product::create($prodData);
+                    $createdCount++;
+                }
+
+                // Fitments Upsert
+                $year = trim($row['Year'] ?? $row['year'] ?? $row['Fitment Year / Range'] ?? $row['fitment_year_range'] ?? '');
+                $make = trim($row['Make'] ?? $row['make'] ?? $row['Compatible Bike Makes'] ?? $row['compatible_makes'] ?? '');
+                $model = trim($row['Model'] ?? $row['model'] ?? $row['Compatible Bike Models'] ?? $row['compatible_models'] ?? '');
+                $position = trim($row['Position'] ?? $row['position'] ?? $row['Wheel Locations'] ?? $row['wheel_locations'] ?? '');
+                $vendorPart = trim($row['Vendor Part Number'] ?? $row['vendor_part_number'] ?? '');
+                $tireSize = trim($row['Tire Size'] ?? $row['tire_size'] ?? $row['Available Sizes'] ?? $row['available_sizes'] ?? '');
+
+                if (str_contains(strtolower($position), 'position (e.g.')) {
+                    $position = '';
+                }
+
+                if (!empty($year) || !empty($make) || !empty($model)) {
+                    ProductFitment::updateOrCreate(
+                        [
+                            'product_id' => $product->id,
+                            'year' => $year ?: null,
+                            'make' => $make ?: null,
+                            'model' => $model ?: null,
+                            'position' => $position ?: null,
+                        ],
+                        [
+                            'tire_size' => $tireSize ?: null,
+                            'sku_number' => $sku,
+                            'item_number' => $itemNum,
+                            'vendor_part_number' => $vendorPart ?: $sku,
+                            'notes' => $row['Notes'] ?? null,
+                        ]
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::error("CSV import row error for SKU '" . ($sku ?? 'unknown') . "': " . $e->getMessage());
+                $failedCount++;
             }
         }
 
@@ -645,7 +679,8 @@ class AdminProductController extends Controller
             'status' => 'success',
             'created' => $createdCount,
             'updated' => $updatedCount,
-            'message' => "Import complete! Created: {$createdCount}, Updated: {$updatedCount} products, brands, and categories.",
+            'failed' => $failedCount,
+            'message' => "Import complete! Created: {$createdCount}, Updated: {$updatedCount}, Failed: {$failedCount} products.",
         ]);
     }
 
