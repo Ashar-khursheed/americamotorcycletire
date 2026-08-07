@@ -15,6 +15,9 @@ class ProductFitment extends Model
         'make',
         'model',
         'position',
+        'tire_size',
+        'sku_number',
+        'item_number',
         'vendor_part_number',
         'notes',
     ];

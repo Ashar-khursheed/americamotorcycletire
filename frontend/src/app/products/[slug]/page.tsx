@@ -545,33 +545,87 @@ export default function ProductDetailPage() {
               {(() => {
                 const overviewContent = (
                   <div className="space-y-4 text-gray-300 text-xs leading-relaxed py-2">
-                    <p>{product.description || product.short_description}</p>
-                    <p>
-                      Engineered specifically to handle intense braking loads and rapid acceleration. The advanced compound distribution ensures consistent performance from center tread through full lean angle.
-                    </p>
+                    <p className="text-sm font-medium leading-relaxed">{product.description || product.short_description}</p>
+                    {product.specs_and_features && (
+                      <div className="bg-[#181818] border border-[#262626] p-4 rounded-lg space-y-2">
+                        <h4 className="text-xs font-black uppercase text-[#BF8647] tracking-wider">SPECS & KEY FEATURES</h4>
+                        <div className="whitespace-pre-line text-xs text-gray-300 leading-relaxed font-mono">
+                          {product.specs_and_features}
+                        </div>
+                      </div>
+                    )}
+                    {product.fitment_disclaimer && (
+                      <p className="text-[11px] text-amber-400/90 italic bg-amber-950/30 border border-amber-800/30 p-3 rounded">
+                        <strong>Fitment Disclaimer:</strong> {product.fitment_disclaimer}
+                      </p>
+                    )}
                   </div>
                 );
 
                 const specsContent = (
-                  <div className="border border-[#262626] rounded overflow-hidden my-2">
+                  <div className="border border-[#262626] rounded-lg overflow-hidden my-2 bg-[#141414]">
                     <table className="w-full text-left text-xs uppercase">
                       <tbody className="divide-y divide-[#222]">
-                        <tr>
-                          <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400 w-1/3">Brand</td>
-                          <td className="p-3 font-bold text-white">{product.brand}</td>
-                        </tr>
-                        <tr>
-                          <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Construction</td>
-                          <td className="p-3 font-bold text-white">Radial Tubeless (TL)</td>
-                        </tr>
-                        <tr>
-                          <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Speed Rating</td>
-                          <td className="p-3 font-bold text-white">(W) 168+ MPH</td>
-                        </tr>
-                        <tr>
-                          <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Approved Rim Width</td>
-                          <td className="p-3 font-bold text-white">3.50 - 6.00 Inch</td>
-                        </tr>
+                        {product.brand && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400 w-1/3">Brand</td>
+                            <td className="p-3 font-bold text-white">{product.brand}</td>
+                          </tr>
+                        )}
+                        {product.sku && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">SKU / Part #</td>
+                            <td className="p-3 font-mono font-bold text-white">{product.sku}</td>
+                          </tr>
+                        )}
+                        {product.item_number && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Item Number</td>
+                            <td className="p-3 font-mono font-bold text-white">{product.item_number}</td>
+                          </tr>
+                        )}
+                        {product.vehicle_type && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Vehicle Type</td>
+                            <td className="p-3 font-bold text-[#BF8647]">{product.vehicle_type}</td>
+                          </tr>
+                        )}
+                        {product.product_type && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Specific Product Type</td>
+                            <td className="p-3 font-bold text-white">{product.product_type}</td>
+                          </tr>
+                        )}
+                        {product.front_tire_fitment && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Front Tire Fitment</td>
+                            <td className="p-3 font-mono text-emerald-400 font-bold">{product.front_tire_fitment}</td>
+                          </tr>
+                        )}
+                        {product.rear_tire_fitment && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Rear Tire Fitment</td>
+                            <td className="p-3 font-mono text-emerald-400 font-bold">{product.rear_tire_fitment}</td>
+                          </tr>
+                        )}
+                        {product.wheel_locations && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Wheel Locations</td>
+                            <td className="p-3 font-bold text-white">{product.wheel_locations}</td>
+                          </tr>
+                        )}
+                        {product.available_sizes && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Available Sizes ({product.available_sizes_count || 0})</td>
+                            <td className="p-3 font-mono text-xs text-gray-300">{product.available_sizes}</td>
+                          </tr>
+                        )}
+                        {product.fitment_year_range && (
+                          <tr>
+                            <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400">Compatible Year Range</td>
+                            <td className="p-3 font-bold text-white">{product.fitment_year_range}</td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>

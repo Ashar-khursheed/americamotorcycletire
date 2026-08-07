@@ -447,7 +447,7 @@ class AdminProductController extends Controller
         $updatedCount = 0;
 
         foreach ($rows as $row) {
-            $sku = $row['Part Number'] ?? $row['sku'] ?? $row['SKU'] ?? $row['Part #'] ?? null;
+            $sku = $row['SKU Number'] ?? $row['Part Number'] ?? $row['sku'] ?? $row['SKU'] ?? $row['Item Number'] ?? $row['item_number'] ?? null;
             $name = $row['Product Name'] ?? $row['name'] ?? $row['Title'] ?? 'Motorcycle Component';
 
             if (empty($sku)) {
@@ -455,7 +455,7 @@ class AdminProductController extends Controller
             }
 
             // Case-Insensitive Category Auto-Create or Match
-            $categoryName = $row['Category'] ?? $row['category'] ?? $row['Category Name'] ?? null;
+            $categoryName = $row['Category'] ?? $row['category'] ?? $row['Category Name'] ?? 'Tires';
             $categoryId = null;
             if (!empty($categoryName)) {
                 $catTrim = trim($categoryName);
@@ -487,11 +487,41 @@ class AdminProductController extends Controller
             }
 
             $priceStr = $row['Retail Price'] ?? $row['price'] ?? $row['Price'] ?? '99.95';
-            $price = (float) str_replace(['$', ','], '', $priceStr);
-            $rawImage = $row['Image URL'] ?? $row['primary_image'] ?? $row['Image'] ?? null;
+            preg_match('/\$?([\d,]+\.?\d*)/', (string)$priceStr, $priceMatch);
+            $price = isset($priceMatch[1]) ? (float) str_replace(',', '', $priceMatch[1]) : 99.95;
 
+            $wasPriceStr = $row['Was Price / MSRP'] ?? $row['was_price'] ?? $row['Was Price'] ?? null;
+            $wasPrice = null;
+            if ($wasPriceStr) {
+                preg_match('/\$?([\d,]+\.?\d*)/', (string)$wasPriceStr, $wasMatch);
+                if (isset($wasMatch[1])) {
+                    $wasPrice = (float) str_replace(',', '', $wasMatch[1]);
+                }
+            }
+
+            $rawImage = $row['Primary Image URL'] ?? $row['Image URL'] ?? $row['primary_image'] ?? $row['Image'] ?? null;
             $localImage = $this->downloadAndStoreImage($rawImage);
             $desc = $row['Description'] ?? $row['description'] ?? '';
+
+            $vType = $row['Vehicle Type'] ?? $row['vehicle_type'] ?? null;
+            $pType = $row['Specific Product Type'] ?? $row['product_type'] ?? $row['Product Type'] ?? null;
+            $cMakes = $row['Compatible Bike Makes'] ?? $row['compatible_makes'] ?? null;
+            $cModels = $row['Compatible Bike Models'] ?? $row['compatible_models'] ?? null;
+            $fitYearRange = $row['Fitment Year / Range'] ?? $row['fitment_year_range'] ?? null;
+            $itemNum = $row['Item Number'] ?? $row['item_number'] ?? null;
+            $savings = $row['Savings'] ?? $row['savings'] ?? null;
+            $rating = (float) ($row['Rating'] ?? $row['rating'] ?? 0.0);
+            $revCount = (int) ($row['Review Count'] ?? $row['review_count'] ?? 0);
+            $frontFit = $row['Front Tire Fitment'] ?? $row['front_tire_fitment'] ?? null;
+            $rearFit = $row['Rear Tire Fitment'] ?? $row['rear_tire_fitment'] ?? null;
+            $wheelLoc = $row['Wheel Locations'] ?? $row['wheel_locations'] ?? null;
+            $availSizesCount = (int) ($row['Available Sizes Count'] ?? $row['available_sizes_count'] ?? 0);
+            $availSizes = $row['Available Sizes'] ?? $row['available_sizes'] ?? null;
+            $totalParts = (int) ($row['Total Part Numbers'] ?? $row['total_part_numbers'] ?? 0);
+            $specs = $row['Specs & Features'] ?? $row['specs_and_features'] ?? null;
+            $fitVehicle = $row['Fitment Vehicle'] ?? $row['fitment_vehicle'] ?? null;
+            $fitDisc = $row['Fitment Disclaimer'] ?? $row['fitment_disclaimer'] ?? null;
+            $sourceUrl = $row['URL'] ?? $row['source_url'] ?? null;
 
             $metaTitle = $row['Meta Title'] ?? $row['meta_title'] ?? null;
             $metaDesc = $row['Meta Description'] ?? $row['meta_description'] ?? null;
@@ -499,46 +529,62 @@ class AdminProductController extends Controller
             $canonicalUrl = $row['Canonical URL'] ?? $row['canonical_url'] ?? null;
             $customSlug = $row['Slug'] ?? $row['slug'] ?? null;
 
-            // Upsert Product strictly by unique SKU (Part Number)
-            $existingProduct = Product::where('sku', $sku)->first();
+            // Upsert Product strictly by unique SKU (Part Number) or Name
+            $existingProduct = Product::where('sku', $sku)->orWhere('name', $name)->first();
+
+            $prodData = [
+                'name' => $name,
+                'brand' => $brand,
+                'category_id' => $categoryId,
+                'vehicle_type' => $vType,
+                'product_type' => $pType,
+                'compatible_makes' => $cMakes,
+                'compatible_models' => $cModels,
+                'fitment_year_range' => $fitYearRange,
+                'item_number' => $itemNum,
+                'price' => $price > 0 ? $price : 99.95,
+                'was_price' => $wasPrice,
+                'compare_at_price' => $wasPrice,
+                'savings' => $savings,
+                'rating' => $rating,
+                'review_count' => $revCount,
+                'front_tire_fitment' => $frontFit,
+                'rear_tire_fitment' => $rearFit,
+                'wheel_locations' => $wheelLoc,
+                'available_sizes_count' => $availSizesCount,
+                'available_sizes' => $availSizes,
+                'total_part_numbers' => $totalParts,
+                'primary_image' => !empty($localImage) ? $localImage : asset('storage/products/default.jpg'),
+                'description' => $desc,
+                'specs_and_features' => $specs,
+                'fitment_vehicle' => $fitVehicle,
+                'fitment_disclaimer' => $fitDisc,
+                'source_url' => $sourceUrl,
+            ];
 
             if ($existingProduct) {
-                $upData = [
-                    'name' => $name,
-                    'brand' => $brand,
-                    'category_id' => $categoryId ?? $existingProduct->category_id,
-                    'price' => $price > 0 ? $price : $existingProduct->price,
-                    'primary_image' => !empty($localImage) ? $localImage : $existingProduct->primary_image,
-                    'description' => !empty($desc) ? $desc : $existingProduct->description,
-                ];
-                if (!empty($metaTitle)) $upData['meta_title'] = $metaTitle;
-                if (!empty($metaDesc)) $upData['meta_description'] = $metaDesc;
-                if (!empty($metaKw)) $upData['meta_keywords'] = $metaKw;
-                if (!empty($canonicalUrl)) $upData['canonical_url'] = $canonicalUrl;
+                if (!empty($metaTitle)) $prodData['meta_title'] = $metaTitle;
+                if (!empty($metaDesc)) $prodData['meta_description'] = $metaDesc;
+                if (!empty($metaKw)) $prodData['meta_keywords'] = $metaKw;
+                if (!empty($canonicalUrl)) $prodData['canonical_url'] = $canonicalUrl;
                 if (!empty($customSlug)) {
-                    $upData['slug'] = $this->makeUniqueSlug($customSlug, $existingProduct->id);
+                    $prodData['slug'] = $this->makeUniqueSlug($customSlug, $existingProduct->id);
                 }
 
-                $existingProduct->update($upData);
+                $existingProduct->update($prodData);
                 $product = $existingProduct;
                 $updatedCount++;
             } else {
-                $product = Product::create([
-                    'name' => $name,
-                    'slug' => $this->makeUniqueSlug(!empty($customSlug) ? $customSlug : $name),
-                    'sku' => $sku,
-                    'brand' => $brand,
-                    'category_id' => $categoryId,
-                    'price' => $price > 0 ? $price : 99.95,
-                    'stock_quantity' => 25,
-                    'primary_image' => $localImage ?: asset('storage/products/default.jpg'),
-                    'description' => $desc,
-                    'meta_title' => $metaTitle,
-                    'meta_description' => $metaDesc,
-                    'meta_keywords' => $metaKw,
-                    'canonical_url' => $canonicalUrl,
-                    'is_active' => true,
-                ]);
+                $prodData['sku'] = $sku;
+                $prodData['slug'] = $this->makeUniqueSlug(!empty($customSlug) ? $customSlug : $name);
+                $prodData['stock_quantity'] = 50;
+                $prodData['is_active'] = true;
+                $prodData['meta_title'] = $metaTitle;
+                $prodData['meta_description'] = $metaDesc;
+                $prodData['meta_keywords'] = $metaKw;
+                $prodData['canonical_url'] = $canonicalUrl;
+
+                $product = Product::create($prodData);
                 $createdCount++;
             }
 
@@ -548,6 +594,7 @@ class AdminProductController extends Controller
             $model = trim($row['Model'] ?? $row['model'] ?? '');
             $position = trim($row['Position'] ?? $row['position'] ?? '');
             $vendorPart = trim($row['Vendor Part Number'] ?? $row['vendor_part_number'] ?? '');
+            $tireSize = trim($row['Tire Size'] ?? $row['tire_size'] ?? '');
 
             if (str_contains(strtolower($position), 'position (e.g.')) {
                 $position = '';
@@ -563,7 +610,10 @@ class AdminProductController extends Controller
                         'position' => $position ?: null,
                     ],
                     [
-                        'vendor_part_number' => $vendorPart ?: null,
+                        'tire_size' => $tireSize ?: null,
+                        'sku_number' => $sku,
+                        'item_number' => $itemNum,
+                        'vendor_part_number' => $vendorPart ?: $sku,
                         'notes' => $row['Notes'] ?? null,
                     ]
                 );
@@ -574,7 +624,7 @@ class AdminProductController extends Controller
             'status' => 'success',
             'created' => $createdCount,
             'updated' => $updatedCount,
-            'message' => "CSV Import complete! Created: {$createdCount}, Updated: {$updatedCount} products, brands, and categories.",
+            'message' => "Import complete! Created: {$createdCount}, Updated: {$updatedCount} products, brands, and categories.",
         ]);
     }
 
@@ -582,36 +632,29 @@ class AdminProductController extends Controller
     {
         $products = Product::with(['category', 'fitments'])->get();
 
-        $csvHeader = "Part Number,Vendor Part Number,Product Name,Slug,Category,Brand,Retail Price,Year,Make,Model,Position,Description,Image URL,Meta Title,Meta Description,Meta Keywords,Canonical URL\n";
+        $csvHeader = "Part Number,Item Number,Product Name,Slug,Category,Brand,Vehicle Type,Product Type,Retail Price,Was Price / MSRP,Rating,Review Count,Compatible Bike Makes,Compatible Bike Models,Fitment Year / Range,Description,Specs & Features,Image URL,Canonical URL\n";
         $csvRows = [];
 
         foreach ($products as $p) {
-            $firstFitment = $p->fitments->first();
-            $vendorPart = $firstFitment ? $firstFitment->vendor_part_number : '';
-            $year = $firstFitment ? $firstFitment->year : '';
-            $make = $firstFitment ? $firstFitment->make : '';
-            $model = $firstFitment ? $firstFitment->model : '';
-            $position = $firstFitment ? $firstFitment->position : '';
             $categoryName = $p->category ? $p->category->name : '';
 
             $cleanName = '"' . str_replace('"', '""', $p->name) . '"';
             $cleanDesc = '"' . str_replace('"', '""', $p->description ?? '') . '"';
-            $cleanMake = '"' . str_replace('"', '""', $make) . '"';
-            $cleanModel = '"' . str_replace('"', '""', $model) . '"';
-
-            $mTitle = '"' . str_replace('"', '""', $p->meta_title ?? '') . '"';
-            $mDesc = '"' . str_replace('"', '""', $p->meta_description ?? '') . '"';
-            $mKw = '"' . str_replace('"', '""', $p->meta_keywords ?? '') . '"';
+            $cleanSpecs = '"' . str_replace('"', '""', $p->specs_and_features ?? '') . '"';
+            $cleanMakes = '"' . str_replace('"', '""', $p->compatible_makes ?? '') . '"';
+            $cleanModels = '"' . str_replace('"', '""', $p->compatible_models ?? '') . '"';
+            $vType = '"' . str_replace('"', '""', $p->vehicle_type ?? '') . '"';
+            $pType = '"' . str_replace('"', '""', $p->product_type ?? '') . '"';
             $cUrl = '"' . str_replace('"', '""', $p->canonical_url ?? '') . '"';
 
-            $csvRows[] = "{$p->sku},{$vendorPart},{$cleanName},{$p->slug},{$categoryName},{$p->brand},{$p->price},{$year},{$cleanMake},{$cleanModel},{$position},{$cleanDesc},{$p->primary_image},{$mTitle},{$mDesc},{$mKw},{$cUrl}";
+            $csvRows[] = "{$p->sku},{$p->item_number},{$cleanName},{$p->slug},{$categoryName},{$p->brand},{$vType},{$pType},{$p->price},{$p->was_price},{$p->rating},{$p->review_count},{$cleanMakes},{$cleanModels},{$p->fitment_year_range},{$cleanDesc},{$cleanSpecs},{$p->primary_image},{$cUrl}";
         }
 
         $csvContent = $csvHeader . implode("\n", $csvRows);
 
         return response($csvContent, 200, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="bmg_cycles_products_export_' . date('Y-m-d') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="americamotorcycletire_products_export_' . date('Y-m-d') . '.csv"',
         ]);
     }
 

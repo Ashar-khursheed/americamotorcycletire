@@ -37,7 +37,7 @@ class ProductController extends Controller
             'fitments',
             'productAttributeValues.attribute',
             'productAttributeValues.attributeValue',
-        ])->where('slug', $slug)->firstOrFail();
+        ])->where('slug', $slug)->orWhere('id', $slug)->firstOrFail();
 
         return response()->json([
             'status' => 'success',
@@ -51,7 +51,6 @@ class ProductController extends Controller
         $make = $request->input('make');
         $model = $request->input('model');
 
-        // Only query fitments belonging to active products
         $baseQuery = ProductFitment::query()
             ->whereHas('product', function ($q) {
                 $q->where('is_active', true);
@@ -59,26 +58,40 @@ class ProductController extends Controller
 
         // 1. Years list
         $yearsQuery = (clone $baseQuery)->whereNotNull('year')->where('year', '!=', '');
-        if (!empty($make)) $yearsQuery->where('make', $make);
-        if (!empty($model)) $yearsQuery->where('model', $model);
+        if (!empty($make)) $yearsQuery->where('make', 'like', "%{$make}%");
+        if (!empty($model)) $yearsQuery->where('model', 'like', "%{$model}%");
         $years = $yearsQuery->distinct()->pluck('year')->sortDesc()->values();
 
         // 2. Makes list
         $makesQuery = (clone $baseQuery)->whereNotNull('make')->where('make', '!=', '');
         if (!empty($year)) $makesQuery->where('year', $year);
-        if (!empty($model)) $makesQuery->where('model', $model);
+        if (!empty($model)) $makesQuery->where('model', 'like', "%{$model}%");
         $makes = $makesQuery->distinct()->pluck('make')->sort()->values();
 
         // 3. Models list
         $modelsQuery = (clone $baseQuery)->whereNotNull('model')->where('model', '!=', '');
         if (!empty($year)) $modelsQuery->where('year', $year);
-        if (!empty($make)) $modelsQuery->where('make', $make);
+        if (!empty($make)) $modelsQuery->where('make', 'like', "%{$make}%");
         $models = $modelsQuery->distinct()->pluck('model')->sort()->values();
+
+        // 4. Product Types list
+        $rawTypes = Product::where('is_active', true)->whereNotNull('product_type')->pluck('product_type');
+        $typesSet = [];
+        foreach ($rawTypes as $rt) {
+            foreach (explode('/', $rt) as $p) {
+                $trimmed = trim($p);
+                if ($trimmed && !in_array($trimmed, $typesSet)) {
+                    $typesSet[] = $trimmed;
+                }
+            }
+        }
+        sort($typesSet);
 
         return response()->json([
             'years' => $years,
             'makes' => $makes,
             'models' => $models,
+            'types' => $typesSet,
         ]);
     }
 }
