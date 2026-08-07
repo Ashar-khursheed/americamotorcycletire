@@ -72,20 +72,23 @@ class ProductController extends Controller
         $expandedYearsMap = [];
         foreach ($rawYears as $ry) {
             if (preg_match('/(\d{4})\s*-\s*(\d{4})/', $ry, $matches)) {
-                $start = (int)$matches[1];
-                $end = (int)$matches[2];
+                $start = max(1995, (int)$matches[1]);
+                $end = min(2025, (int)$matches[2]);
                 for ($y = $end; $y >= $start; $y--) {
                     $expandedYearsMap[$y] = true;
                 }
             } else if (preg_match_all('/\b(19\d\d|20\d\d)\b/', $ry, $m)) {
                 foreach ($m[1] as $yStr) {
-                    $expandedYearsMap[(int)$yStr] = true;
+                    $yInt = (int)$yStr;
+                    if ($yInt >= 1995 && $yInt <= 2025) {
+                        $expandedYearsMap[$yInt] = true;
+                    }
                 }
             }
         }
 
         if (empty($expandedYearsMap)) {
-            for ($y = 2026; $y >= 1980; $y--) {
+            for ($y = 2025; $y >= 2000; $y--) {
                 $expandedYearsMap[$y] = true;
             }
         }
