@@ -154,6 +154,9 @@ class Product extends Model
     {
         if (empty($value)) return null;
 
+        $value = trim($value, " \t\n\r\0\x0B\"'");
+        if (empty($value)) return null;
+
         $baseUrl = rtrim(config('app.url', 'https://americaapi.kaafifoods.com'), '/');
 
         // Replace local dev host URL if present
@@ -180,11 +183,25 @@ class Product extends Model
 
     public function getGalleryImagesAttribute($value)
     {
-        $images = is_string($value) ? json_decode($value, true) : $value;
-        if (!is_array($images) || empty($images)) {
+        $images = [];
+        if (is_string($value) && !empty($value)) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $images = $decoded;
+            } elseif (str_contains($value, ';')) {
+                $images = array_map(fn($item) => trim($item, " \t\n\r\0\x0B\"'"), explode(';', $value));
+            } else {
+                $images = [trim($value, " \t\n\r\0\x0B\"'")];
+            }
+        } elseif (is_array($value)) {
+            $images = $value;
+        }
+
+        if (empty($images)) {
             $primary = static::formatImageUrl($this->attributes['primary_image'] ?? null);
             return $primary ? [$primary] : [];
         }
+
         return array_values(array_filter(array_map(fn($img) => static::formatImageUrl($img), $images)));
     }
 
