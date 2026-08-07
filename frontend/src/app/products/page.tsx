@@ -687,6 +687,7 @@ function ProductsContent() {
                       const numPrice = Number(product.price) || 0;
                       const numWasPrice = Number(product.was_price || product.compare_at_price) || 0;
                       const hasDiscount = numWasPrice > numPrice;
+                      const numRating = typeof product.rating === 'number' ? product.rating : (parseFloat(String(product.rating || '0')) || 0);
 
                       return (
                         <div
@@ -732,10 +733,10 @@ function ProductsContent() {
                                 <span className="font-mono text-[10px] bg-[#1A1A1A] px-1.5 py-0.5 rounded border border-[#262626]">
                                   ITEM #: {product.item_number || product.sku}
                                 </span>
-                                {product.rating > 0 && (
+                                {numRating > 0 && (
                                   <div className="flex items-center gap-1 text-[#BF8647] font-bold">
                                     <Star className="w-3 h-3 fill-[#BF8647]" />
-                                    <span>{product.rating.toFixed(1)}</span>
+                                    <span>{numRating.toFixed(1)}</span>
                                     <span className="text-gray-500 text-[10px]">({product.review_count || 12})</span>
                                   </div>
                                 )}

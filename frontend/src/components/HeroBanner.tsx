@@ -3,56 +3,111 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Bike, Filter } from 'lucide-react';
+import { Search, Bike, CheckCircle2, RotateCcw } from 'lucide-react';
 import { api } from '@/lib/api';
 
 export function HeroBanner() {
   const router = useRouter();
+
+  const [types, setTypes] = useState<string[]>([]);
   const [years, setYears] = useState<string[]>([]);
   const [makes, setMakes] = useState<string[]>([]);
   const [models, setModels] = useState<string[]>([]);
 
+  const [selectedType, setSelectedType] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedMake, setSelectedMake] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
 
-  useEffect(() => {
-    const params: Record<string, string> = {};
-    if (selectedYear) params.year = selectedYear;
-    if (selectedMake) params.make = selectedMake;
-    if (selectedModel) params.model = selectedModel;
+  const [loadingYears, setLoadingYears] = useState(false);
+  const [loadingMakes, setLoadingMakes] = useState(false);
+  const [loadingModels, setLoadingModels] = useState(false);
 
-    api.get('/fitments/options', { params })
+  // 1. Initial fetch for Vehicle Types
+  useEffect(() => {
+    api
+      .get('/fitments/options')
       .then((res) => {
         if (res.data) {
-          const newYears = res.data.years || [];
-          const newMakes = res.data.makes || [];
-          const newModels = res.data.models || [];
-
-          setYears(newYears);
-          setMakes(newMakes);
-          setModels(newModels);
-
-          if (selectedMake && !newMakes.includes(selectedMake)) {
-            setSelectedMake('');
-          }
-          if (selectedModel && !newModels.includes(selectedModel)) {
-            setSelectedModel('');
-          }
+          setTypes(res.data.types || []);
         }
       })
-      .catch(() => { });
-  }, [selectedYear, selectedMake, selectedModel]);
+      .catch(() => {});
+  }, []);
+
+  // 2. Type changed -> Fetch Years
+  useEffect(() => {
+    setSelectedYear('');
+    setSelectedMake('');
+    setSelectedModel('');
+    setYears([]);
+    setMakes([]);
+    setModels([]);
+
+    if (selectedType) {
+      setLoadingYears(true);
+      api
+        .get('/fitments/options', { params: { type: selectedType } })
+        .then((res) => {
+          if (res.data) setYears(res.data.years || []);
+        })
+        .catch(() => {})
+        .finally(() => setLoadingYears(false));
+    }
+  }, [selectedType]);
+
+  // 3. Year changed -> Fetch Makes
+  useEffect(() => {
+    setSelectedMake('');
+    setSelectedModel('');
+    setMakes([]);
+    setModels([]);
+
+    if (selectedType && selectedYear) {
+      setLoadingMakes(true);
+      api
+        .get('/fitments/options', { params: { type: selectedType, year: selectedYear } })
+        .then((res) => {
+          if (res.data) setMakes(res.data.makes || []);
+        })
+        .catch(() => {})
+        .finally(() => setLoadingMakes(false));
+    }
+  }, [selectedYear]);
+
+  // 4. Make changed -> Fetch Models
+  useEffect(() => {
+    setSelectedModel('');
+    setModels([]);
+
+    if (selectedType && selectedYear && selectedMake) {
+      setLoadingModels(true);
+      api
+        .get('/fitments/options', {
+          params: { type: selectedType, year: selectedYear, make: selectedMake },
+        })
+        .then((res) => {
+          if (res.data) setModels(res.data.models || []);
+        })
+        .catch(() => {})
+        .finally(() => setLoadingModels(false));
+    }
+  }, [selectedMake]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedType || !selectedYear || !selectedMake || !selectedModel) return;
+
     const query = new URLSearchParams();
-    if (selectedYear) query.set('year', selectedYear);
-    if (selectedMake) query.set('make', selectedMake);
-    if (selectedModel) query.set('model', selectedModel);
+    if (selectedType) query.set('vehicle_type', selectedType);
+    query.set('year', selectedYear);
+    query.set('make', selectedMake);
+    query.set('model', selectedModel);
 
     router.push(`/products?${query.toString()}`);
   };
+
+  const isFormComplete = Boolean(selectedType && selectedYear && selectedMake && selectedModel);
 
   return (
     <section className="relative bg-[#0A0A0A] overflow-hidden py-16 lg:py-24 border-b border-[#1E1E1E]">
@@ -69,7 +124,6 @@ export function HeroBanner() {
 
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-
           {/* Left Column Text */}
           <div className="lg:col-span-7">
             <div className="flex items-center gap-2 mb-4">
@@ -107,79 +161,176 @@ export function HeroBanner() {
           {/* Right Column: Motorcycle Fitment Finder Card */}
           <div className="lg:col-span-5">
             <div className="bg-[#121212]/95 border-2 border-[#BF8647]/60 rounded-xl p-6 shadow-2xl backdrop-blur-md">
-              <div className="flex items-center gap-3 mb-4 border-b border-[#222] pb-3">
-                <Bike className="w-6 h-6 text-[#BF8647]" />
-                <div>
-                  <h3 className="font-extrabold text-white text-base uppercase tracking-wider">
-                    BIKE FITMENT FINDER
-                  </h3>
-                  <p className="text-gray-400 text-xs">Select your motorcycle to filter exact fit parts</p>
+              <div className="flex items-center justify-between mb-4 border-b border-[#222] pb-3">
+                <div className="flex items-center gap-3">
+                  <Bike className="w-6 h-6 text-[#BF8647]" />
+                  <div>
+                    <h3 className="font-extrabold text-white text-base uppercase tracking-wider">
+                      SHOP YOUR RIDE
+                    </h3>
+                    <p className="text-gray-400 text-xs">Select steps in sequence to unlock fitment</p>
+                  </div>
                 </div>
+                {(selectedType || selectedYear || selectedMake || selectedModel) && (
+                  <button
+                    onClick={() => {
+                      setSelectedType('');
+                      setSelectedYear('');
+                      setSelectedMake('');
+                      setSelectedModel('');
+                    }}
+                    className="text-[11px] text-gray-400 hover:text-[#BF8647] flex items-center gap-1 font-bold lowercase"
+                  >
+                    <RotateCcw className="w-3 h-3" /> reset
+                  </button>
+                )}
               </div>
 
-              <form onSubmit={handleSearch} className="space-y-4">
-
-                {/* Year Select */}
+              <form onSubmit={handleSearch} className="space-y-3.5">
+                {/* STEP 1: Select Type */}
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">
-                    1. Select Year
+                  <label className="flex items-center justify-between text-[11px] font-bold text-gray-300 uppercase mb-1">
+                    <span>1. SELECT BIKE TYPE</span>
+                    {selectedType && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                  </label>
+                  <select
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                    className="w-full bg-[#1A1A1A] border border-[#333] text-white rounded px-3 py-2.5 text-xs font-semibold uppercase focus:border-[#BF8647] focus:outline-none cursor-pointer"
+                  >
+                    <option value="">-- SELECT TYPE --</option>
+                    {types.length > 0
+                      ? types.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))
+                      : [
+                          'Street Bike',
+                          'Cruiser',
+                          'Dirt / Off-Road',
+                          'Adventure / Dual-Sport',
+                          'Scooter',
+                        ].map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                  </select>
+                </div>
+
+                {/* STEP 2: Select Year */}
+                <div>
+                  <label
+                    className={`flex items-center justify-between text-[11px] font-bold uppercase mb-1 ${
+                      selectedType ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                  >
+                    <span>2. SELECT YEAR</span>
+                    {selectedYear && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
                   </label>
                   <select
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(e.target.value)}
-                    className="w-full bg-[#1A1A1A] border border-[#333] text-white rounded px-3 py-2.5 text-xs font-semibold uppercase focus:border-[#BF8647] focus:outline-none"
+                    disabled={!selectedType || loadingYears}
+                    className="w-full bg-[#1A1A1A] border border-[#333] text-white rounded px-3 py-2.5 text-xs font-semibold uppercase focus:border-[#BF8647] focus:outline-none disabled:opacity-40 disabled:bg-[#141414] disabled:border-[#222] disabled:cursor-not-allowed cursor-pointer"
                   >
-                    <option value="">ALL YEARS</option>
+                    <option value="">
+                      {!selectedType
+                        ? 'SELECT TYPE FIRST'
+                        : loadingYears
+                        ? 'LOADING YEARS...'
+                        : '-- SELECT YEAR --'}
+                    </option>
                     {years.map((y) => (
-                      <option key={y} value={y}>{y}</option>
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Make Select */}
+                {/* STEP 3: Select Make */}
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">
-                    2. Select Make
+                  <label
+                    className={`flex items-center justify-between text-[11px] font-bold uppercase mb-1 ${
+                      selectedYear ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                  >
+                    <span>3. SELECT MAKE</span>
+                    {selectedMake && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
                   </label>
                   <select
                     value={selectedMake}
                     onChange={(e) => setSelectedMake(e.target.value)}
-                    className="w-full bg-[#1A1A1A] border border-[#333] text-white rounded px-3 py-2.5 text-xs font-semibold uppercase focus:border-[#BF8647] focus:outline-none"
+                    disabled={!selectedYear || loadingMakes}
+                    className="w-full bg-[#1A1A1A] border border-[#333] text-white rounded px-3 py-2.5 text-xs font-semibold uppercase focus:border-[#BF8647] focus:outline-none disabled:opacity-40 disabled:bg-[#141414] disabled:border-[#222] disabled:cursor-not-allowed cursor-pointer"
                   >
-                    <option value="">ALL MAKES (Harley, Honda, etc.)</option>
+                    <option value="">
+                      {!selectedYear
+                        ? 'SELECT YEAR FIRST'
+                        : loadingMakes
+                        ? 'LOADING MAKES...'
+                        : '-- SELECT MAKE --'}
+                    </option>
                     {makes.map((m) => (
-                      <option key={m} value={m}>{m}</option>
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Model Select */}
+                {/* STEP 4: Select Model */}
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase mb-1">
-                    3. Select Model
+                  <label
+                    className={`flex items-center justify-between text-[11px] font-bold uppercase mb-1 ${
+                      selectedMake ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                  >
+                    <span>4. SELECT MODEL</span>
+                    {selectedModel && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
                   </label>
                   <select
                     value={selectedModel}
                     onChange={(e) => setSelectedModel(e.target.value)}
-                    className="w-full bg-[#1A1A1A] border border-[#333] text-white rounded px-3 py-2.5 text-xs font-semibold uppercase focus:border-[#BF8647] focus:outline-none"
+                    disabled={!selectedMake || loadingModels}
+                    className="w-full bg-[#1A1A1A] border border-[#333] text-white rounded px-3 py-2.5 text-xs font-semibold uppercase focus:border-[#BF8647] focus:outline-none disabled:opacity-40 disabled:bg-[#141414] disabled:border-[#222] disabled:cursor-not-allowed cursor-pointer"
                   >
-                    <option value="">ALL MODELS (Road Glide, CBR, etc.)</option>
+                    <option value="">
+                      {!selectedMake
+                        ? 'SELECT MAKE FIRST'
+                        : loadingModels
+                        ? 'LOADING MODELS...'
+                        : '-- SELECT MODEL --'}
+                    </option>
                     {models.map((mod) => (
-                      <option key={mod} value={mod}>{mod}</option>
+                      <option key={mod} value={mod}>
+                        {mod}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-[#BF8647] text-black font-extrabold uppercase text-xs py-3.5 rounded hover:bg-[#D49A50] transition-colors flex items-center justify-center gap-2 mt-2"
+                  disabled={!isFormComplete}
+                  className={`w-full font-extrabold uppercase text-xs py-3.5 rounded transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer ${
+                    isFormComplete
+                      ? 'bg-[#BF8647] text-black hover:bg-[#D49A50] shadow-lg shadow-[#BF8647]/30'
+                      : 'bg-[#222] text-gray-500 border border-[#333] cursor-not-allowed opacity-60'
+                  }`}
                 >
-                  <Search className="w-4 h-4" /> FIND TIRES & PARTS FOR MY BIKE
+                  <Search className="w-4 h-4" />
+                  <span>
+                    {isFormComplete
+                      ? 'FIND TIRES & PARTS FOR MY BIKE'
+                      : 'COMPLETE ALL STEPS TO SEARCH'}
+                  </span>
                 </button>
               </form>
             </div>
           </div>
-
         </div>
       </div>
     </section>

@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Phone, Menu, X, User as UserIcon } from 'lucide-react';
+import { ShoppingBag, Phone, Menu, X, User as UserIcon, Bike } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { CartDrawer } from './CartDrawer';
+import { ShopYourRideDrawer } from './ShopYourRideDrawer';
 import { fetchSettings } from '@/lib/api';
 
 export function Header() {
   const [mounted, setMounted] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isVehicleDrawerOpen, setIsVehicleDrawerOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [customerUser, setCustomerUser] = useState<any>(null);
   const [settings, setSettings] = useState<any>({
@@ -82,12 +84,21 @@ export function Header() {
           </nav>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+
+            {/* Shop Your Ride Button */}
+            <button
+              onClick={() => setIsVehicleDrawerOpen(true)}
+              className="flex items-center gap-2 text-xs font-black uppercase tracking-wider bg-[#1F1912] text-[#BF8647] border border-[#BF8647]/60 px-3.5 py-2 rounded-lg hover:bg-[#BF8647] hover:text-black hover:shadow-lg hover:shadow-[#BF8647]/30 transition-all duration-300 font-heading cursor-pointer"
+            >
+              <Bike className="w-4 h-4" />
+              <span className="hidden sm:inline">SHOP YOUR RIDE</span>
+            </button>
 
             {/* Phone Button */}
             <a
               href={`tel:${settings.contact_phone}`}
-              className="hidden lg:flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider bg-[#BF8647] text-black px-4 py-2.5 rounded-lg hover:bg-[#D49A50] hover:shadow-lg hover:shadow-[#BF8647]/30 hover:scale-105 transition-all duration-300 font-heading cursor-pointer"
+              className="hidden lg:flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider bg-[#BF8647] text-black px-4 py-2 rounded-lg hover:bg-[#D49A50] hover:shadow-lg hover:shadow-[#BF8647]/30 hover:scale-105 transition-all duration-300 font-heading cursor-pointer"
             >
               <Phone className="w-3.5 h-3.5 fill-black" />
               <span>CALL {settings.contact_phone}</span>
@@ -141,6 +152,18 @@ export function Header() {
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden bg-[#121212] border-b border-[#222222] px-4 pt-2 pb-6 space-y-3 font-medium uppercase text-sm font-heading tracking-widest animate-in slide-in-from-top-2 duration-300">
+            {/* Mobile Shop Your Ride Button */}
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsVehicleDrawerOpen(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider bg-[#BF8647] text-black py-2.5 rounded-lg font-heading"
+            >
+              <Bike className="w-4 h-4" />
+              <span>SHOP YOUR RIDE</span>
+            </button>
+
             {(() => {
               let menuList = [
                 { label: 'Home', url: '/' },
@@ -170,8 +193,9 @@ export function Header() {
         )}
       </header>
 
-      {/* Cart Drawer */}
+      {/* Drawers */}
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <ShopYourRideDrawer isOpen={isVehicleDrawerOpen} onClose={() => setIsVehicleDrawerOpen(false)} />
     </>
   );
 }

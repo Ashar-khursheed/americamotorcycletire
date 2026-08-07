@@ -47,13 +47,20 @@ class ProductController extends Controller
 
     public function getFitmentOptions(Request $request)
     {
+        $type = $request->input('type') ?: $request->input('vehicle_type');
         $year = $request->input('year');
         $make = $request->input('make');
         $model = $request->input('model');
 
         $baseQuery = ProductFitment::query()
-            ->whereHas('product', function ($q) {
+            ->whereHas('product', function ($q) use ($type) {
                 $q->where('is_active', true);
+                if (!empty($type)) {
+                    $q->where(function ($tQ) use ($type) {
+                        $tQ->where('vehicle_type', 'like', "%{$type}%")
+                           ->orWhere('product_type', 'like', "%{$type}%");
+                    });
+                }
             });
 
         // 1. Years list
@@ -74,11 +81,21 @@ class ProductController extends Controller
         if (!empty($make)) $modelsQuery->where('make', 'like', "%{$make}%");
         $models = $modelsQuery->distinct()->pluck('model')->sort()->values();
 
-        // 4. Product Types list
-        $rawTypes = Product::where('is_active', true)->whereNotNull('product_type')->pluck('product_type');
+        // 4. Vehicle Types & Product Types combined list
+        $rawVehicleTypes = Product::where('is_active', true)->whereNotNull('vehicle_type')->pluck('vehicle_type');
+        $rawProductTypes = Product::where('is_active', true)->whereNotNull('product_type')->pluck('product_type');
+
         $typesSet = [];
-        foreach ($rawTypes as $rt) {
-            foreach (explode('/', $rt) as $p) {
+        foreach ($rawVehicleTypes as $vt) {
+            foreach (explode('/', $vt) as $p) {
+                $trimmed = trim($p);
+                if ($trimmed && !in_array($trimmed, $typesSet)) {
+                    $typesSet[] = $trimmed;
+                }
+            }
+        }
+        foreach ($rawProductTypes as $pt) {
+            foreach (explode('/', $pt) as $p) {
                 $trimmed = trim($p);
                 if ($trimmed && !in_array($trimmed, $typesSet)) {
                     $typesSet[] = $trimmed;
