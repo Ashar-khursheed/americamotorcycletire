@@ -181,8 +181,11 @@ class Product extends Model
     public function getGalleryImagesAttribute($value)
     {
         $images = is_string($value) ? json_decode($value, true) : $value;
-        if (!is_array($images)) return [];
-        return array_map(fn($img) => static::formatImageUrl($img), $images);
+        if (!is_array($images) || empty($images)) {
+            $primary = static::formatImageUrl($this->attributes['primary_image'] ?? null);
+            return $primary ? [$primary] : [];
+        }
+        return array_values(array_filter(array_map(fn($img) => static::formatImageUrl($img), $images)));
     }
 
     public function reviews()

@@ -201,6 +201,19 @@ def main():
         fitment_disclaimer = str(row_dict.get('Fitment Disclaimer') or '').strip() or None
         source_url = str(row_dict.get('URL') or '').strip() or None
 
+        custom_attr_dict = {
+            "Wheel Location": wheel_locations or "Front, Rear",
+            "Type": vehicle_type,
+            "Product Type": product_type,
+            "Make": compatible_makes or brand_name or "Universal",
+            "Model": compatible_models or p_name,
+            "Tire Size": available_sizes or "Standard"
+        }
+        custom_attributes_json = json.dumps(custom_attr_dict)
+
+        if not gallery_images and primary_image:
+            gallery_images = [primary_image]
+
         sql = """
             INSERT INTO products (
                 sku, name, slug, brand, category_id, vehicle_type, product_type,
@@ -208,7 +221,7 @@ def main():
                 price, was_price, compare_at_price, cost_price, savings, rating, review_count,
                 front_tire_fitment, rear_tire_fitment, wheel_locations, available_sizes_count,
                 available_sizes, total_part_numbers, description, specs_and_features,
-                fitment_vehicle, fitment_disclaimer, primary_image, gallery_images,
+                fitment_vehicle, fitment_disclaimer, primary_image, gallery_images, custom_attributes,
                 source_url, stock_quantity, is_active, is_featured, created_at, updated_at
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s,
@@ -216,7 +229,7 @@ def main():
                 %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s,
                 %s, %s, %s, %s,
-                %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
                 %s, %s, 1, %s, NOW(), NOW()
             )
         """
@@ -228,7 +241,7 @@ def main():
             price, was_price, was_price, None, savings, rating, review_count,
             front_tire_fitment, rear_tire_fitment, wheel_locations, available_sizes_count,
             available_sizes, total_part_numbers, desc, specs,
-            fitment_vehicle, fitment_disclaimer, primary_image, json.dumps(gallery_images),
+            fitment_vehicle, fitment_disclaimer, primary_image, json.dumps(gallery_images), custom_attributes_json,
             source_url, 50, is_featured
         ))
 

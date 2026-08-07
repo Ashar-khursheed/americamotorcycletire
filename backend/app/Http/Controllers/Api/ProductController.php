@@ -160,13 +160,22 @@ class ProductController extends Controller
             if (!empty($type)) $q->where('vehicle_type', 'like', "%{$type}%");
         })->whereNotNull('model')->where('model', '!=', '');
         $applyYearMatchFitment($fitmentModelsQ);
-        if (!empty($make)) $fitmentModelsQ->where('make', 'like', "%{$make}%");
+        if (!empty($make)) {
+            $fitmentModelsQ->where(function($q) use ($make) {
+                $q->where('make', 'like', "%{$make}%");
+            });
+        }
         $rawModels1 = $fitmentModelsQ->distinct()->pluck('model')->filter()->values();
 
         $prodModelsQ = Product::where('is_active', true)->whereNotNull('compatible_models')->where('compatible_models', '!=', '');
         if (!empty($type)) $prodModelsQ->where('vehicle_type', 'like', "%{$type}%");
         $applyYearMatchProduct($prodModelsQ);
-        if (!empty($make)) $prodModelsQ->where('compatible_makes', 'like', "%{$make}%");
+        if (!empty($make)) {
+            $prodModelsQ->where(function($q) use ($make) {
+                $q->where('compatible_makes', 'like', "%{$make}%")
+                  ->orWhere('brand', 'like', "%{$make}%");
+            });
+        }
         $rawModels2 = $prodModelsQ->distinct()->pluck('compatible_models')->filter()->values();
 
         $allRawModels = $rawModels1->merge($rawModels2);
@@ -181,36 +190,6 @@ class ProductController extends Controller
                         $cleanModels[] = $trimmed;
                     }
                 }
-            }
-        }
-
-        // Filter models to match selected Make
-        if (!empty($make)) {
-            $knownMakes = ["BMW","Ducati","GasGas","Harley-Davidson","Harley","Honda","Husqvarna","Indian","KTM","Kawasaki","Suzuki","Triumph","Victory","Yamaha","Can-Am","Aprilia","Buell","Polaris","Vespa","Piaggio","Kymco"];
-            $otherMakes = array_values(array_filter($knownMakes, function($m) use ($make) {
-                $lcM = strtolower($make);
-                $lcOther = strtolower($m);
-                if ($lcM === 'harley-davidson' || $lcM === 'harley') {
-                    return $lcOther !== 'harley-davidson' && $lcOther !== 'harley';
-                }
-                return $lcOther !== $lcM;
-            }));
-
-            $filteredByMakeModels = [];
-            foreach ($cleanModels as $cm) {
-                $belongsToOther = false;
-                foreach ($otherMakes as $om) {
-                    if (stripos($cm, $om) !== false) {
-                        $belongsToOther = true;
-                        break;
-                    }
-                }
-                if (!$belongsToOther) {
-                    $filteredByMakeModels[] = $cm;
-                }
-            }
-            if (!empty($filteredByMakeModels)) {
-                $cleanModels = $filteredByMakeModels;
             }
         }
         sort($cleanModels);

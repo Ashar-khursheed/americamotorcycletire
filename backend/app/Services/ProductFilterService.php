@@ -103,9 +103,7 @@ class ProductFilterService
                     if (!empty($year)) {
                         $yInt = (int)$year;
                         $fitQ->where(function ($subQ) use ($year, $yInt) {
-                            $subQ->where('year', 'like', "%{$year}%")
-                                 ->orWhereNull('year')
-                                 ->orWhere('year', '');
+                            $subQ->where('year', 'like', "%{$year}%");
                             if ($yInt > 0) {
                                 $subQ->orWhereRaw("CAST(SUBSTRING_INDEX(year, '-', 1) AS UNSIGNED) <= ? AND CAST(SUBSTRING_INDEX(year, '-', -1) AS UNSIGNED) >= ?", [$yInt, $yInt]);
                             }
@@ -122,13 +120,22 @@ class ProductFilterService
                 // Fallback: check columns on products table
                 $q->orWhere(function ($textQ) use ($year, $make, $model) {
                     if (!empty($make)) {
-                        $textQ->where('compatible_makes', 'like', "%{$make}%");
+                        $textQ->where(function($mkQ) use ($make) {
+                            $mkQ->where('compatible_makes', 'like', "%{$make}%")
+                                ->orWhere('brand', 'like', "%{$make}%");
+                        });
                     }
                     if (!empty($model)) {
                         $textQ->where('compatible_models', 'like', "%{$model}%");
                     }
                     if (!empty($year)) {
-                        $textQ->where('fitment_year_range', 'like', "%{$year}%");
+                        $yInt = (int)$year;
+                        $textQ->where(function($yQ) use ($year, $yInt) {
+                            $yQ->where('fitment_year_range', 'like', "%{$year}%");
+                            if ($yInt > 0) {
+                                $yQ->orWhereRaw("CAST(SUBSTRING_INDEX(fitment_year_range, '-', 1) AS UNSIGNED) <= ? AND CAST(SUBSTRING_INDEX(fitment_year_range, '-', -1) AS UNSIGNED) >= ?", [$yInt, $yInt]);
+                            }
+                        });
                     }
                 });
             });

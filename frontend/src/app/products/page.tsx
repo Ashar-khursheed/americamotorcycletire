@@ -368,15 +368,20 @@ function ProductsContent() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs uppercase font-semibold">
-              {/* Product Type / Specific Category */}
+              {/* Type */}
               <div>
                 <label className="text-[10px] text-gray-400 font-bold block mb-1">TYPE / CATEGORY</label>
                 <select
                   value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedType(e.target.value);
+                    setSelectedYear('');
+                    setSelectedMake('');
+                    setSelectedModel('');
+                  }}
                   className="w-full bg-[#1A1A1A] border border-[#333] rounded px-3 py-2 text-white focus:border-[#BF8647] focus:outline-none"
                 >
-                  <option value="">ALL PRODUCT TYPES</option>
+                  <option value="">ALL TYPES</option>
                   {typesList.map((t) => (
                     <option key={t} value={t}>
                       {t}
@@ -390,7 +395,11 @@ function ProductsContent() {
                 <label className="text-[10px] text-gray-400 font-bold block mb-1">YEAR</label>
                 <select
                   value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value);
+                    setSelectedMake('');
+                    setSelectedModel('');
+                  }}
                   className="w-full bg-[#1A1A1A] border border-[#333] rounded px-3 py-2 text-white focus:border-[#BF8647] focus:outline-none"
                 >
                   <option value="">ALL YEARS</option>
@@ -407,7 +416,10 @@ function ProductsContent() {
                 <label className="text-[10px] text-gray-400 font-bold block mb-1">MAKE</label>
                 <select
                   value={selectedMake}
-                  onChange={(e) => setSelectedMake(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedMake(e.target.value);
+                    setSelectedModel('');
+                  }}
                   className="w-full bg-[#1A1A1A] border border-[#333] rounded px-3 py-2 text-white focus:border-[#BF8647] focus:outline-none"
                 >
                   <option value="">ALL MAKES</option>
