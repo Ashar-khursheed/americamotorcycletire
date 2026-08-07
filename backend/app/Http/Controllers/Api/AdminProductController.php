@@ -610,12 +610,12 @@ class AdminProductController extends Controller
             }
 
             // Fitments Upsert
-            $year = trim($row['Year'] ?? $row['year'] ?? '');
-            $make = trim($row['Make'] ?? $row['make'] ?? '');
-            $model = trim($row['Model'] ?? $row['model'] ?? '');
-            $position = trim($row['Position'] ?? $row['position'] ?? '');
+            $year = trim($row['Year'] ?? $row['year'] ?? $row['Fitment Year / Range'] ?? $row['fitment_year_range'] ?? '');
+            $make = trim($row['Make'] ?? $row['make'] ?? $row['Compatible Bike Makes'] ?? $row['compatible_makes'] ?? '');
+            $model = trim($row['Model'] ?? $row['model'] ?? $row['Compatible Bike Models'] ?? $row['compatible_models'] ?? '');
+            $position = trim($row['Position'] ?? $row['position'] ?? $row['Wheel Locations'] ?? $row['wheel_locations'] ?? '');
             $vendorPart = trim($row['Vendor Part Number'] ?? $row['vendor_part_number'] ?? '');
-            $tireSize = trim($row['Tire Size'] ?? $row['tire_size'] ?? '');
+            $tireSize = trim($row['Tire Size'] ?? $row['tire_size'] ?? $row['Available Sizes'] ?? $row['available_sizes'] ?? '');
 
             if (str_contains(strtolower($position), 'position (e.g.')) {
                 $position = '';
