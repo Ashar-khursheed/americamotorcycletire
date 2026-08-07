@@ -302,13 +302,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
                           {t}
                         </option>
                       ))
-                    : [
-                        'Street Bike',
-                        'Cruiser',
-                        'Dirt / Off-Road',
-                        'Adventure / Dual-Sport',
-                        'Scooter',
-                      ].map((t) => (
+                    : ['Street Bike', 'Dirt Bike', 'UTV/ATV'].map((t) => (
                         <option key={t} value={t}>
                           {t}
                         </option>

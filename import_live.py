@@ -20,6 +20,46 @@ def parse_int(val):
     except:
         return 0
 
+def map_vehicle_type(val):
+    if not val or not str(val).strip():
+        return 'Street Bike'
+    v = str(val).strip()
+    mapping_explicit = {
+        'Street / Sportbike': 'Street Bike',
+        'Cruiser / V-Twin': 'Street Bike',
+        'Cafe': 'Street Bike',
+        'Scooter': 'Street Bike',
+        'Adventure / Dual Sport': 'Dirt Bike',
+        'Dirt Bike / Off-Road': 'Dirt Bike',
+        'UTVATV': 'UTV/ATV',
+        'Utvatv': 'UTV/ATV',
+        'Adventure / Dual Sport / Cruiser / V-Twin': 'Dirt Bike',
+        'Adventure / Dual Sport / Street / Sportbike': 'Dirt Bike',
+        'Street / Sportbike / Adventure / Dual Sport': 'Dirt Bike',
+        'Cruiser / V-Twin / Adventure / Dual Sport': 'Dirt Bike',
+        'Adventure / Dual Sport / Dirt Bike / Off-Road': 'Dirt Bike',
+        'Dirt Bike / Off-Road / Adventure / Dual Sport': 'Dirt Bike',
+        'Scooter / Street / Sportbike': 'Street Bike',
+        'Scooter / Adventure / Dual Sport': 'Dirt Bike',
+        'Cruiser / V-Twin / Street / Sportbike': 'Street Bike',
+        'Cafe / Cruiser / V-Twin': 'Street Bike',
+        'Cafe / Cruiser / V-Twin / Adventure / Dual Sport': 'Dirt Bike',
+        'Street / Sportbike / Cruiser / V-Twin': 'Street Bike',
+        'Cruiser / V-Twin / Street / Sportbike / Adventure / Dual Sport': 'Dirt Bike',
+        'Street / Sportbike / Cruiser / V-Twin / Dirt Bike / Off-Road': 'Dirt Bike',
+        'Scooter / Cruiser / V-Twin': 'Street Bike',
+        'Cruiser / V-Twin / Utvatv': 'UTV/ATV',
+        'Adventure / Dual Sport / Utvatv': 'UTV/ATV'
+    }
+    if v in mapping_explicit:
+        return mapping_explicit[v]
+    vl = v.lower()
+    if 'utv' in vl or 'atv' in vl:
+        return 'UTV/ATV'
+    if 'adventure' in vl or 'dual sport' in vl or 'dirt' in vl or 'off-road' in vl:
+        return 'Dirt Bike'
+    return 'Street Bike'
+
 def slugify(text):
     text = str(text).lower().strip()
     text = re.sub(r'[^\w\s-]', '', text)
@@ -125,7 +165,8 @@ def main():
             counter += 1
         used_slugs.add(slug)
 
-        vehicle_type = str(row_dict.get('Vehicle Type') or '').strip() or None
+        raw_vt = str(row_dict.get('Vehicle Type') or '').strip()
+        vehicle_type = map_vehicle_type(raw_vt) if raw_vt else 'Street Bike'
         product_type = str(row_dict.get('Specific Product Type') or '').strip() or None
         compatible_makes = str(row_dict.get('Compatible Bike Makes') or '').strip() or None
         compatible_models = str(row_dict.get('Compatible Bike Models') or '').strip() or None
