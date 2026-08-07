@@ -90,6 +90,12 @@ class AdminProductController extends Controller
             return asset('storage/products/default.jpg');
         }
 
+        $imageUrl = trim($imageUrl, " \t\n\r\0\x0B\"'");
+
+        if (empty($imageUrl)) {
+            return asset('storage/products/default.jpg');
+        }
+
         // If it's already hosted on our local server, return as is
         if (str_contains($imageUrl, '127.0.0.1') || str_contains($imageUrl, 'localhost') || str_contains($imageUrl, '/storage/products/')) {
             return $imageUrl;
@@ -98,7 +104,7 @@ class AdminProductController extends Controller
         try {
             $folderPath = public_path('storage/products');
             if (!file_exists($folderPath)) {
-                mkdir($folderPath, 0777, true);
+                @mkdir($folderPath, 0777, true);
             }
 
             $hash = md5($imageUrl);
@@ -122,17 +128,50 @@ class AdminProductController extends Controller
             }
 
             $rawBinary = null;
+
             if (str_starts_with($imageUrl, 'data:image/')) {
                 $parts = explode(',', $imageUrl, 2);
                 if (count($parts) === 2) {
                     $rawBinary = base64_decode($parts[1]);
                 }
             } else if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
-                $context = stream_context_create([
-                    'http' => ['timeout' => 4, 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'],
-                    'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
-                ]);
-                $rawBinary = @file_get_contents($imageUrl, false, $context);
+                if (function_exists('curl_init')) {
+                    $ch = curl_init();
+                    curl_setopt_array($ch, [
+                        CURLOPT_URL => $imageUrl,
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_FOLLOWLOCATION => true,
+                        CURLOPT_MAXREDIRS => 3,
+                        CURLOPT_CONNECTTIMEOUT => 2,
+                        CURLOPT_TIMEOUT => 5,
+                        CURLOPT_SSL_VERIFYPEER => false,
+                        CURLOPT_SSL_VERIFYHOST => false,
+                        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                        CURLOPT_HTTPHEADER => [
+                            'Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                            'Accept-Language: en-US,en;q=0.9',
+                        ],
+                    ]);
+                    $rawBinary = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+
+                    if ($httpCode !== 200 || empty($rawBinary)) {
+                        $rawBinary = null;
+                    }
+                }
+
+                if (empty($rawBinary)) {
+                    $context = stream_context_create([
+                        'http' => [
+                            'timeout' => 3,
+                            'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                            'header' => "Accept: image/webp,image/*\r\n"
+                        ],
+                        'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
+                    ]);
+                    $rawBinary = @file_get_contents($imageUrl, false, $context);
+                }
             }
 
             if (!empty($rawBinary)) {
@@ -162,8 +201,8 @@ class AdminProductController extends Controller
                     }
                 }
 
-                // 3. Fallback: Save binary directly as JPG
-                file_put_contents($jpgPath, $rawBinary);
+                // 3. Direct save binary
+                @file_put_contents($jpgPath, $rawBinary);
                 return $jpgAssetUrl;
             }
         } catch (\Throwable $e) {
@@ -521,7 +560,7 @@ class AdminProductController extends Controller
                 }
 
                 $rawImage = $row['Primary Image URL'] ?? $row['Image URL'] ?? $row['primary_image'] ?? $row['Image'] ?? null;
-                $primaryImage = !empty($rawImage) ? trim($rawImage) : asset('storage/products/default.jpg');
+                $primaryImage = $this->downloadAndStoreImage($rawImage);
                 $desc = $row['Description'] ?? $row['description'] ?? '';
 
                 $vType = $row['Vehicle Type'] ?? $row['vehicle_type'] ?? null;
@@ -550,19 +589,26 @@ class AdminProductController extends Controller
                 $canonicalUrl = $row['Canonical URL'] ?? $row['canonical_url'] ?? null;
                 $customSlug = $row['Slug'] ?? $row['slug'] ?? null;
 
-                // Parse Gallery Images into array if string
+                // Parse & download Gallery Images into local storage
                 $galleryVal = $row['gallery_images'] ?? $row['Gallery Images'] ?? $row['All Image URLs'] ?? null;
-                $galleryImages = [];
+                $galleryRaw = [];
                 if (is_array($galleryVal)) {
-                    $galleryImages = $galleryVal;
+                    $galleryRaw = $galleryVal;
                 } else if (is_string($galleryVal) && !empty($galleryVal)) {
                     $decoded = json_decode($galleryVal, true);
                     if (is_array($decoded)) {
-                        $galleryImages = $decoded;
+                        $galleryRaw = $decoded;
                     } else if (str_contains($galleryVal, ',')) {
-                        $galleryImages = array_values(array_filter(array_map('trim', explode(',', $galleryVal))));
+                        $galleryRaw = array_values(array_filter(array_map('trim', explode(',', $galleryVal))));
                     } else {
-                        $galleryImages = [$galleryVal];
+                        $galleryRaw = [$galleryVal];
+                    }
+                }
+
+                $galleryImages = [];
+                foreach ($galleryRaw as $gImg) {
+                    if (!empty($gImg)) {
+                        $galleryImages[] = $this->downloadAndStoreImage($gImg);
                     }
                 }
 
