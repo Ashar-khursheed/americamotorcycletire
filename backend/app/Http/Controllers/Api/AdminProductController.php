@@ -102,28 +102,36 @@ class AdminProductController extends Controller
         }
 
         try {
-            $folderPath = public_path('storage/products');
-            if (!file_exists($folderPath)) {
-                @mkdir($folderPath, 0777, true);
+            // 1. Ensure storage directory exists with safe 0755 permissions
+            $storageDir = storage_path('app/public/products');
+            if (!file_exists($storageDir)) {
+                @mkdir($storageDir, 0755, true);
+            }
+
+            // 2. Also ensure public storage directory exists with safe 0755 permissions
+            $publicDir = public_path('storage/products');
+            if (!file_exists($publicDir)) {
+                @mkdir($publicDir, 0755, true);
             }
 
             $hash = md5($imageUrl);
-
-            // Check if WebP file already exists
             $webpFilename = 'prod_' . $hash . '.webp';
-            $webpPath = $folderPath . '/' . $webpFilename;
-            $webpAssetUrl = asset('storage/products/' . $webpFilename);
+            $jpgFilename = 'prod_' . $hash . '.jpg';
 
-            if (file_exists($webpPath) && filesize($webpPath) > 0) {
+            $storageWebpPath = $storageDir . '/' . $webpFilename;
+            $publicWebpPath = $publicDir . '/' . $webpFilename;
+
+            $storageJpgPath = $storageDir . '/' . $jpgFilename;
+            $publicJpgPath = $publicDir . '/' . $jpgFilename;
+
+            $webpAssetUrl = asset('storage/products/' . $webpFilename);
+            $jpgAssetUrl = asset('storage/products/' . $jpgFilename);
+
+            if ((file_exists($storageWebpPath) && filesize($storageWebpPath) > 0) || (file_exists($publicWebpPath) && filesize($publicWebpPath) > 0)) {
                 return $webpAssetUrl;
             }
 
-            // Check if JPG file already exists
-            $jpgFilename = 'prod_' . $hash . '.jpg';
-            $jpgPath = $folderPath . '/' . $jpgFilename;
-            $jpgAssetUrl = asset('storage/products/' . $jpgFilename);
-
-            if (file_exists($jpgPath) && filesize($jpgPath) > 0) {
+            if ((file_exists($storageJpgPath) && filesize($storageJpgPath) > 0) || (file_exists($publicJpgPath) && filesize($publicJpgPath) > 0)) {
                 return $jpgAssetUrl;
             }
 
@@ -181,7 +189,12 @@ class AdminProductController extends Controller
                     if ($imgRes !== false) {
                         imagealphablending($imgRes, true);
                         imagesavealpha($imgRes, true);
-                        if (@imagewebp($imgRes, $webpPath, 85)) {
+                        if (@imagewebp($imgRes, $storageWebpPath, 85)) {
+                            @chmod($storageWebpPath, 0644);
+                            if ($publicWebpPath !== $storageWebpPath) {
+                                @copy($storageWebpPath, $publicWebpPath);
+                                @chmod($publicWebpPath, 0644);
+                            }
                             imagedestroy($imgRes);
                             return $webpAssetUrl;
                         }
@@ -189,20 +202,13 @@ class AdminProductController extends Controller
                     }
                 }
 
-                // 2. Try converting bitmap to JPG via GD
-                if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
-                    $imgRes = @imagecreatefromstring($rawBinary);
-                    if ($imgRes !== false) {
-                        if (@imagejpeg($imgRes, $jpgPath, 90)) {
-                            imagedestroy($imgRes);
-                            return $jpgAssetUrl;
-                        }
-                        imagedestroy($imgRes);
-                    }
+                // 2. Fallback JPG save
+                @file_put_contents($storageJpgPath, $rawBinary);
+                @chmod($storageJpgPath, 0644);
+                if ($publicJpgPath !== $storageJpgPath) {
+                    @copy($storageJpgPath, $publicJpgPath);
+                    @chmod($publicJpgPath, 0644);
                 }
-
-                // 3. Direct save binary
-                @file_put_contents($jpgPath, $rawBinary);
                 return $jpgAssetUrl;
             }
         } catch (\Throwable $e) {
