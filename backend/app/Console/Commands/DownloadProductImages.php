@@ -30,9 +30,9 @@ class DownloadProductImages extends Command
     {
         $this->info("Starting download of remote product images...");
 
-        $folderPath = public_path('storage/products');
+        $folderPath = storage_path('app/public/products');
         if (!file_exists($folderPath)) {
-            mkdir($folderPath, 0777, true);
+            @mkdir($folderPath, 0755, true);
         }
 
         $downloadedCount = 0;

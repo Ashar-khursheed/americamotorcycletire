@@ -96,16 +96,22 @@ class AdminProductController extends Controller
             return asset('storage/products/default.jpg');
         }
 
-        // If it's already hosted on our local server, return as is
-        if (str_contains($imageUrl, '127.0.0.1') || str_contains($imageUrl, 'localhost') || str_contains($imageUrl, '/storage/products/')) {
-            return $imageUrl;
-        }
-
         try {
             // Target the real physical storage directory (storage/app/public/products)
             $storageDir = storage_path('app/public/products');
             if (!file_exists($storageDir)) {
                 @mkdir($storageDir, 0755, true);
+            }
+
+            // If URL points to local storage, verify physical file existence on disk
+            if (str_contains($imageUrl, '/storage/products/')) {
+                $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
+                if (!empty($filename)) {
+                    $localPath = $storageDir . '/' . $filename;
+                    if (file_exists($localPath) && filesize($localPath) > 0) {
+                        return asset('storage/products/' . $filename);
+                    }
+                }
             }
 
             $hash = md5($imageUrl);
