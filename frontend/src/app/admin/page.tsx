@@ -295,9 +295,9 @@ function ProductImageGalleryManager({ images = [], onChange, isDarkMode }: Produ
                       </button>
                       <button
                         type="button"
-                        disabled={index === images.length - 1}
+                        disabled={index === safeImages.length - 1}
                         onClick={() => handleMove(index, 'right')}
-                        className={`px-2 py-1 rounded text-xs font-bold cursor-pointer ${index === images.length - 1
+                        className={`px-2 py-1 rounded text-xs font-bold cursor-pointer ${index === safeImages.length - 1
                           ? 'text-gray-600 cursor-not-allowed bg-[#181818]'
                           : 'text-gray-200 hover:text-white bg-[#222] hover:bg-[#BF8647] hover:text-black transition-colors'
                           }`}
