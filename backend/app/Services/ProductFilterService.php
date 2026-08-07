@@ -249,7 +249,18 @@ class ProductFilterService
         }
         sort($productTypesSet);
 
-        $makes = ProductFitment::distinct()->whereNotNull('make')->where('make', '!=', '')->pluck('make')->sort()->values();
+        $ignoredMakes = [
+            'universal', 'all models', 'n/a', 'none', 'all makes', 'all', 'null',
+            'bridgestone', 'dunlop', 'maxxis', 'metzeler', 'michelin', 'ams', 'cst',
+            'irc', 'itp', 'shinko', 'continental', 'avon', 'kenda', 'heidenau', 'mitas',
+            'sedona', 'vee rubber', 'motoz', 'sunf', 'gbc', 'carlisle', 'performance machine',
+            'bmg', 'generic'
+        ];
+        $rawMakesList = ProductFitment::distinct()->whereNotNull('make')->where('make', '!=', '')->pluck('make');
+        $makes = $rawMakesList->filter(function($m) use ($ignoredMakes) {
+            return !in_array(strtolower(trim($m)), $ignoredMakes);
+        })->sort()->values();
+
         $models = ProductFitment::distinct()->whereNotNull('model')->where('model', '!=', '')->pluck('model')->sort()->values();
         $years = ProductFitment::distinct()->whereNotNull('year')->where('year', '!=', '')->pluck('year')->sortDesc()->values();
 

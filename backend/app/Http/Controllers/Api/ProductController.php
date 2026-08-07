@@ -141,7 +141,13 @@ class ProductController extends Controller
         $allRawMakes = $rawMakes1->merge($rawMakes2);
 
         $cleanMakes = [];
-        $ignoredMakes = ['universal', 'all models', 'n/a', 'none', 'all makes', 'all'];
+        $ignoredMakes = [
+            'universal', 'all models', 'n/a', 'none', 'all makes', 'all', 'null',
+            'bridgestone', 'dunlop', 'maxxis', 'metzeler', 'michelin', 'ams', 'cst',
+            'irc', 'itp', 'shinko', 'continental', 'avon', 'kenda', 'heidenau', 'mitas',
+            'sedona', 'vee rubber', 'motoz', 'sunf', 'gbc', 'carlisle', 'performance machine',
+            'bmg', 'generic'
+        ];
         foreach ($allRawMakes as $rm) {
             foreach (explode('/', $rm) as $p1) {
                 foreach (explode(',', $p1) as $p2) {
