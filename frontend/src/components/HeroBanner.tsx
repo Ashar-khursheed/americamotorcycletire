@@ -63,36 +63,40 @@ export function HeroBanner() {
     setMakes([]);
     setModels([]);
 
-    if (selectedType && selectedYear) {
+    if (selectedYear) {
       setLoadingMakes(true);
+      const params: Record<string, string> = { year: selectedYear };
+      if (selectedType) params.type = selectedType;
+
       api
-        .get('/fitments/options', { params: { type: selectedType, year: selectedYear } })
+        .get('/fitments/options', { params })
         .then((res) => {
           if (res.data) setMakes(res.data.makes || []);
         })
         .catch(() => {})
         .finally(() => setLoadingMakes(false));
     }
-  }, [selectedYear]);
+  }, [selectedType, selectedYear]);
 
   // 4. Make changed -> Fetch Models
   useEffect(() => {
     setSelectedModel('');
     setModels([]);
 
-    if (selectedType && selectedYear && selectedMake) {
+    if (selectedYear && selectedMake) {
       setLoadingModels(true);
+      const params: Record<string, string> = { year: selectedYear, make: selectedMake };
+      if (selectedType) params.type = selectedType;
+
       api
-        .get('/fitments/options', {
-          params: { type: selectedType, year: selectedYear, make: selectedMake },
-        })
+        .get('/fitments/options', { params })
         .then((res) => {
           if (res.data) setModels(res.data.models || []);
         })
         .catch(() => {})
         .finally(() => setLoadingModels(false));
     }
-  }, [selectedMake]);
+  }, [selectedType, selectedYear, selectedMake]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

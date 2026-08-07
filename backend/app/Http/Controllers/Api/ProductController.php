@@ -127,6 +127,22 @@ class ProductController extends Controller
         if (!empty($model)) $makesQuery->where('model', 'like', "%{$model}%");
         
         $rawMakes = $makesQuery->distinct()->pluck('make')->filter()->values();
+
+        // Fallback: If rawMakes is empty, extract from Product.compatible_makes
+        if ($rawMakes->isEmpty()) {
+            $pMakeQ = Product::where('is_active', true)->whereNotNull('compatible_makes');
+            if (!empty($type)) {
+                $pMakeQ->where(function ($tQ) use ($type) {
+                    $tQ->where('vehicle_type', 'like', "%{$type}%")
+                       ->orWhere('product_type', 'like', "%{$type}%");
+                });
+            }
+            if (!empty($year)) {
+                $pMakeQ->where('fitment_year_range', 'like', "%{$year}%");
+            }
+            $rawMakes = $pMakeQ->distinct()->pluck('compatible_makes')->filter()->values();
+        }
+
         $cleanMakes = [];
         foreach ($rawMakes as $rm) {
             foreach (explode('/', $rm) as $p1) {
@@ -146,6 +162,25 @@ class ProductController extends Controller
         if (!empty($make)) $modelsQuery->where('make', 'like', "%{$make}%");
 
         $rawModels = $modelsQuery->distinct()->pluck('model')->filter()->values();
+
+        // Fallback: If rawModels is empty, extract from Product.compatible_models
+        if ($rawModels->isEmpty()) {
+            $pModQ = Product::where('is_active', true)->whereNotNull('compatible_models');
+            if (!empty($type)) {
+                $pModQ->where(function ($tQ) use ($type) {
+                    $tQ->where('vehicle_type', 'like', "%{$type}%")
+                       ->orWhere('product_type', 'like', "%{$type}%");
+                });
+            }
+            if (!empty($make)) {
+                $pModQ->where('compatible_makes', 'like', "%{$make}%");
+            }
+            if (!empty($year)) {
+                $pModQ->where('fitment_year_range', 'like', "%{$year}%");
+            }
+            $rawModels = $pModQ->distinct()->pluck('compatible_models')->filter()->values();
+        }
+
         $cleanModels = [];
         foreach ($rawModels as $rm) {
             foreach (explode('/', $rm) as $p1) {
@@ -157,6 +192,37 @@ class ProductController extends Controller
                 }
             }
         }
+
+        // Filter models to make sure they match the selected Make if specified
+        if (!empty($make)) {
+            $knownMakes = ["BMW","Ducati","GasGas","Harley-Davidson","Harley","Honda","Husqvarna","Indian","KTM","Kawasaki","Suzuki","Triumph","Victory","Yamaha","Can-Am","Aprilia","Buell","Polaris","Vespa","Piaggio","Kymco"];
+            $otherMakes = array_values(array_filter($knownMakes, function($m) use ($make) {
+                $lcM = strtolower($make);
+                $lcOther = strtolower($m);
+                if ($lcM === 'harley-davidson' || $lcM === 'harley') {
+                    return $lcOther !== 'harley-davidson' && $lcOther !== 'harley';
+                }
+                return $lcOther !== $lcM;
+            }));
+
+            $filteredByMakeModels = [];
+            foreach ($cleanModels as $cm) {
+                $belongsToOther = false;
+                foreach ($otherMakes as $om) {
+                    if (stripos($cm, $om) !== false) {
+                        $belongsToOther = true;
+                        break;
+                    }
+                }
+                if (!$belongsToOther) {
+                    $filteredByMakeModels[] = $cm;
+                }
+            }
+            if (!empty($filteredByMakeModels)) {
+                $cleanModels = $filteredByMakeModels;
+            }
+        }
+
         sort($cleanModels);
 
         // 4. Vehicle Types & Product Types combined list

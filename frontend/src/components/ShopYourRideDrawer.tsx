@@ -96,10 +96,13 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
     setMakesList([]);
     setModelsList([]);
 
-    if (selectedType && selectedYear) {
+    if (selectedYear) {
       setLoadingMakes(true);
+      const params: Record<string, string> = { year: selectedYear };
+      if (selectedType) params.type = selectedType;
+
       api
-        .get('/fitments/options', { params: { type: selectedType, year: selectedYear } })
+        .get('/fitments/options', { params })
         .then((res) => {
           if (res.data) {
             setMakesList(res.data.makes || []);
@@ -108,19 +111,20 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
         .catch(() => {})
         .finally(() => setLoadingMakes(false));
     }
-  }, [selectedYear]);
+  }, [selectedType, selectedYear]);
 
   // Step 4: When Make changes -> Enable & fetch Models
   useEffect(() => {
     setSelectedModel('');
     setModelsList([]);
 
-    if (selectedType && selectedYear && selectedMake) {
+    if (selectedYear && selectedMake) {
       setLoadingModels(true);
+      const params: Record<string, string> = { year: selectedYear, make: selectedMake };
+      if (selectedType) params.type = selectedType;
+
       api
-        .get('/fitments/options', {
-          params: { type: selectedType, year: selectedYear, make: selectedMake },
-        })
+        .get('/fitments/options', { params })
         .then((res) => {
           if (res.data) {
             setModelsList(res.data.models || []);
@@ -129,7 +133,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
         .catch(() => {})
         .finally(() => setLoadingModels(false));
     }
-  }, [selectedMake]);
+  }, [selectedType, selectedYear, selectedMake]);
 
   // Submit Handler
   const handleFindVehicleProducts = (vType = selectedType, yr = selectedYear, mk = selectedMake, md = selectedModel) => {
