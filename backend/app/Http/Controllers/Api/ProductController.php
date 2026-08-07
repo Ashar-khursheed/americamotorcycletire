@@ -225,34 +225,33 @@ class ProductController extends Controller
 
         sort($cleanModels);
 
-        // 4. Vehicle Types & Product Types combined list
-        $rawVehicleTypes = Product::where('is_active', true)->whereNotNull('vehicle_type')->pluck('vehicle_type');
-        $rawProductTypes = Product::where('is_active', true)->whereNotNull('product_type')->pluck('product_type');
+        // 4. Clean Vehicle Types list (Only Dirt Bike, Street Bike, UTV/ATV)
+        $rawVehicleTypes = Product::where('is_active', true)
+            ->whereNotNull('vehicle_type')
+            ->where('vehicle_type', '!=', '')
+            ->distinct()
+            ->pluck('vehicle_type')
+            ->filter()
+            ->values();
 
         $typesSet = [];
         foreach ($rawVehicleTypes as $vt) {
-            foreach (explode('/', $vt) as $p) {
-                $trimmed = trim($p);
-                if ($trimmed && !in_array($trimmed, $typesSet)) {
-                    $typesSet[] = $trimmed;
-                }
-            }
-        }
-        foreach ($rawProductTypes as $pt) {
-            foreach (explode('/', $pt) as $p) {
-                $trimmed = trim($p);
-                if ($trimmed && !in_array($trimmed, $typesSet)) {
-                    $typesSet[] = $trimmed;
-                }
+            $trimmed = trim($vt);
+            if ($trimmed && !in_array($trimmed, $typesSet)) {
+                $typesSet[] = $trimmed;
             }
         }
         sort($typesSet);
+
+        if (empty($typesSet)) {
+            $typesSet = ['Dirt Bike', 'Street Bike', 'UTV/ATV'];
+        }
 
         return response()->json([
             'years' => $years,
             'makes' => $cleanMakes,
             'models' => $cleanModels,
-            'types' => $typesSet,
+            'types' => array_values($typesSet),
         ]);
     }
 }
