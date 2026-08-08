@@ -45,11 +45,11 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
 
           {/* Logo */}
-          <Link href="/" className="flex flex-col group">
-            <span className="font-bold text-2xl tracking-wider text-white uppercase font-heading group-hover:text-gray-100 transition-colors">
+          <Link href="/" className="flex flex-col group shrink-0">
+            <span className="font-bold text-lg sm:text-2xl tracking-wider text-white uppercase font-heading group-hover:text-gray-100 transition-colors">
               BMG <span className="text-[#BF8647]">CYCLES</span>
             </span>
-            <span className="text-[10px] text-gray-400 tracking-widest uppercase font-heading">
+            <span className="text-[9px] sm:text-[10px] text-gray-400 tracking-wider sm:tracking-widest uppercase font-heading">
               FREMONT CA • REPAIR & SERVICE
             </span>
           </Link>
@@ -84,15 +84,16 @@ export function Header() {
           </nav>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
 
             {/* Shop Your Ride Button */}
             <button
               onClick={() => setIsVehicleDrawerOpen(true)}
-              className="flex items-center gap-2 text-xs font-black uppercase tracking-wider bg-[#1F1912] text-[#BF8647] border border-[#BF8647]/60 px-3.5 py-2 rounded-lg hover:bg-[#BF8647] hover:text-black hover:shadow-lg hover:shadow-[#BF8647]/30 transition-all duration-300 font-heading cursor-pointer"
+              className="flex items-center gap-1.5 text-[11px] sm:text-xs font-black uppercase tracking-wider bg-[#1F1912] text-[#BF8647] border border-[#BF8647]/60 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg hover:bg-[#BF8647] hover:text-black hover:shadow-lg hover:shadow-[#BF8647]/30 transition-all duration-300 font-heading cursor-pointer"
             >
               <Bike className="w-4 h-4" />
               <span className="hidden sm:inline">SHOP YOUR RIDE</span>
+              <span className="inline sm:hidden text-[10px]">RIDE</span>
             </button>
 
             {/* Phone Button */}
@@ -108,9 +109,9 @@ export function Header() {
             {mounted && customerUser ? (
               <Link
                 href="/account"
-                className="flex items-center gap-2 bg-[#1A1A1A] border border-[#2B2B2B] hover:border-[#BF8647] text-white text-xs font-bold uppercase px-3 py-1.5 rounded-lg transition-all"
+                className="flex items-center gap-1.5 bg-[#1A1A1A] border border-[#2B2B2B] hover:border-[#BF8647] text-white text-xs font-bold uppercase px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition-all"
               >
-                <div className="w-6 h-6 rounded-full bg-[#BF8647] text-black font-extrabold flex items-center justify-center text-[11px]">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#BF8647] text-black font-extrabold flex items-center justify-center text-[10px] sm:text-[11px]">
                   {customerUser.name ? customerUser.name.charAt(0).toUpperCase() : 'R'}
                 </div>
                 <span className="hidden sm:inline line-clamp-1">{customerUser.name || 'Account'}</span>
@@ -118,7 +119,7 @@ export function Header() {
             ) : (
               <Link
                 href="/login"
-                className="flex items-center gap-1.5 text-xs text-gray-300 hover:text-[#BF8647] font-bold uppercase py-1.5 px-2.5 rounded hover:bg-[#161616] transition-colors"
+                className="flex items-center gap-1 text-xs text-gray-300 hover:text-[#BF8647] font-bold uppercase py-1.5 px-2 sm:px-2.5 rounded hover:bg-[#161616] transition-colors"
               >
                 <UserIcon className="w-4 h-4 text-[#BF8647]" />
                 <span className="hidden sm:inline">Sign In</span>
@@ -128,12 +129,12 @@ export function Header() {
             {/* Cart Icon */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 text-gray-300 hover:text-[#BF8647] hover:scale-110 transition-all duration-200 cursor-pointer"
+              className="relative p-1.5 sm:p-2 text-gray-300 hover:text-[#BF8647] hover:scale-110 transition-all duration-200 cursor-pointer"
               aria-label="Shopping Cart"
             >
-              <ShoppingBag className="w-6 h-6" />
+              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
               {mounted && totalCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#BF8647] text-black font-extrabold text-xs w-5 h-5 rounded-full flex items-center justify-center shadow-md shadow-[#BF8647]/40 animate-pulse font-heading">
+                <span className="absolute -top-1 -right-1 bg-[#BF8647] text-black font-extrabold text-[10px] sm:text-xs w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shadow-md shadow-[#BF8647]/40 font-heading">
                   {totalCount}
                 </span>
               )}
@@ -142,7 +143,8 @@ export function Header() {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-gray-300 hover:text-white transition-colors"
+              className="md:hidden p-1.5 text-gray-300 hover:text-white transition-colors"
+              aria-label="Toggle Navigation Menu"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -151,17 +153,17 @@ export function Header() {
 
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-[#121212] border-b border-[#222222] px-4 pt-2 pb-6 space-y-3 font-medium uppercase text-sm font-heading tracking-widest animate-in slide-in-from-top-2 duration-300">
+          <div className="md:hidden bg-[#121212] border-b border-[#222222] px-4 pt-3 pb-6 space-y-3 font-medium uppercase text-sm font-heading tracking-widest animate-in slide-in-from-top-2 duration-300">
             {/* Mobile Shop Your Ride Button */}
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 setIsVehicleDrawerOpen(true);
               }}
-              className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider bg-[#BF8647] text-black py-2.5 rounded-lg font-heading"
+              className="w-full flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider bg-[#BF8647] text-black py-2.5 rounded-lg font-heading shadow-md"
             >
               <Bike className="w-4 h-4" />
-              <span>SHOP YOUR RIDE</span>
+              <span>SHOP YOUR RIDE (SELECT BIKE)</span>
             </button>
 
             {(() => {
@@ -183,12 +185,21 @@ export function Header() {
                   key={idx}
                   href={item.url || '/'}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block text-gray-300 hover:text-[#BF8647] py-1 transition-colors font-heading tracking-widest text-sm"
+                  className="block text-gray-300 hover:text-[#BF8647] py-2 border-b border-[#1A1A1A] last:border-none transition-colors font-heading tracking-widest text-xs font-bold"
                 >
                   <span className="font-heading tracking-widest">{item.label}</span>
                 </Link>
               ));
             })()}
+
+            {/* Mobile Contact Phone */}
+            <a
+              href={`tel:${settings.contact_phone}`}
+              className="flex items-center justify-center gap-2 text-xs font-extrabold uppercase tracking-wider border border-[#BF8647] text-[#BF8647] py-2.5 rounded-lg mt-2 font-heading"
+            >
+              <Phone className="w-4 h-4" />
+              <span>CALL {settings.contact_phone}</span>
+            </a>
           </div>
         )}
       </header>
