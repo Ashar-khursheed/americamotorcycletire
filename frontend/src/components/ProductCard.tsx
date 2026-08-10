@@ -30,11 +30,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           {/* Brand & Stock Badges */}
           <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-            {product.brand && (
-              <span className="px-2.5 py-1 rounded-md bg-slate-950/90 border border-slate-700 text-slate-200 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
-                {product.brand}
-              </span>
-            )}
+            {product.brand &&
+              !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE'].includes(product.brand.trim().toUpperCase()) && (
+                <span className="px-2.5 py-1 rounded-md bg-slate-950/90 border border-slate-700 text-slate-200 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
+                  {product.brand}
+                </span>
+              )}
           </div>
 
           {hasDiscount && (

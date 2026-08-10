@@ -276,9 +276,11 @@ export default function ProductDetailPage() {
                       alt={product.name}
                       className="max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
                     />
-                    <span className="absolute top-4 left-4 bg-[#BF8647] text-black font-extrabold text-xs uppercase px-3 py-1 rounded">
-                      {product.brand}
-                    </span>
+                    {product.brand && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE'].includes(product.brand.trim().toUpperCase()) && (
+                      <span className="absolute top-4 left-4 bg-[#BF8647] text-black font-extrabold text-xs uppercase px-3 py-1 rounded">
+                        {product.brand}
+                      </span>
+                    )}
                   </div>
 
                   {/* Image Thumbnails */}
@@ -304,7 +306,7 @@ export default function ProductDetailPage() {
                     {/* Brand & Stars */}
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-[#BF8647] font-bold uppercase tracking-widest">
-                        {product.brand} MOTORCYCLE TIRE
+                        {product.brand && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE'].includes(product.brand.trim().toUpperCase()) ? `${product.brand} MOTORCYCLE TIRE` : 'MOTORCYCLE TIRE'}
                       </span>
                       <div className="flex items-center gap-1 text-[#BF8647]">
                         {[...Array(5)].map((_, i) => (
@@ -587,7 +589,7 @@ export default function ProductDetailPage() {
                   <div className="border border-[#262626] rounded-lg overflow-hidden my-2 bg-[#141414]">
                     <table className="w-full text-left text-xs uppercase">
                       <tbody className="divide-y divide-[#222]">
-                        {product.brand && (
+                        {product.brand && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE'].includes(product.brand.trim().toUpperCase()) && (
                           <tr>
                             <td className="p-3 bg-[#1A1A1A] font-bold text-gray-400 w-1/3">Brand</td>
                             <td className="p-3 font-bold text-white">{product.brand}</td>

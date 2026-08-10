@@ -308,7 +308,20 @@ function ProductsContent() {
     return pages;
   };
 
-  const brandsList: string[] = availableFilters?.brands || [
+  const isValidBrand = (b: any): boolean => {
+    if (!b || typeof b !== 'string') return false;
+    const cleaned = b.trim().toUpperCase();
+    return (
+      cleaned !== '' &&
+      cleaned !== 'NAN' &&
+      cleaned !== 'NULL' &&
+      cleaned !== 'UNDEFINED' &&
+      cleaned !== 'N/A' &&
+      cleaned !== 'NONE'
+    );
+  };
+
+  const rawBrandsList: string[] = availableFilters?.brands || [
     'Bridgestone',
     'Continental',
     'Dunlop',
@@ -319,6 +332,8 @@ function ProductsContent() {
     'Shinko',
     'Kenda',
   ];
+
+  const brandsList: string[] = rawBrandsList.filter(isValidBrand);
 
   const vehicleTypesList: string[] = availableFilters?.vehicle_types || [
     'Street',
@@ -831,7 +846,7 @@ function ProductsContent() {
                             />
 
                             <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 items-start">
-                              {product.brand && (
+                              {isValidBrand(product.brand) && (
                                 <span className="bg-[#BF8647] text-black text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow">
                                   {product.brand}
                                 </span>

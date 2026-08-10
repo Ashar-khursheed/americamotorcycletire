@@ -42,7 +42,8 @@ export function FeaturedTires() {
     safeProducts.forEach((p) => {
       if (p.brand && typeof p.brand === 'string') {
         const trimmed = p.brand.trim();
-        if (trimmed) {
+        const upper = trimmed.toUpperCase();
+        if (trimmed && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE'].includes(upper)) {
           brandSet.add(trimmed);
         }
       }
@@ -109,9 +110,11 @@ export function FeaturedTires() {
                     alt={product.name}
                     className="max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
                   />
-                  <span className="absolute top-3 left-3 bg-[#BF8647] text-black text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
-                    {product.brand}
-                  </span>
+                  {product.brand && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE'].includes(product.brand.trim().toUpperCase()) && (
+                    <span className="absolute top-3 left-3 bg-[#BF8647] text-black text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
+                      {product.brand}
+                    </span>
+                  )}
                 </Link>
 
                 {/* Content */}
