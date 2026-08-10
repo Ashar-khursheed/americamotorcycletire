@@ -204,9 +204,7 @@ class ProductController extends Controller
         })->whereNotNull('model')->where('model', '!=', '');
         $applyYearMatchFitment($fitmentModelsQ);
         if (!empty($make)) {
-            $fitmentModelsQ->where(function($q) use ($make) {
-                $q->where('make', 'like', "%{$make}%");
-            });
+            $fitmentModelsQ->where('make', 'like', "%{$make}%");
         }
         $rawModels1 = $fitmentModelsQ->distinct()->pluck('model')->filter()->values();
 
@@ -214,23 +212,92 @@ class ProductController extends Controller
         if (!empty($type)) $prodModelsQ->where('vehicle_type', 'like', "%{$type}%");
         $applyYearMatchProduct($prodModelsQ);
         if (!empty($make)) {
-            $prodModelsQ->where(function($q) use ($make) {
-                $q->where('compatible_makes', 'like', "%{$make}%")
-                  ->orWhere('brand', 'like', "%{$make}%");
-            });
+            $prodModelsQ->where('compatible_makes', 'like', "%{$make}%");
         }
         $rawModels2 = $prodModelsQ->distinct()->pluck('compatible_models')->filter()->values();
 
         $allRawModels = $rawModels1->merge($rawModels2);
 
+        $exclusiveModelsByMake = [
+            'Harley-Davidson' => ['fat boy', 'fat bob', 'softail', 'dyna', 'sportster', 'street glide', 'road king', 'electra glide', 'road glide', 'heritage', 'v-rod', 'v rod', 'iron 883', 'forty-eight', 'low rider', 'breakout', 'fxfxr', 'street rod'],
+            'BMW'             => ['bmw', 'r1200gs', 'r1250gs', 'r1250rt', 's1000rr', 'f850gs', 'f750gs', 'f800gs', 'k1600gt', 'g310gs', 'r ninet', 'm1000rr', 's1000r', 'r1250rs', 'gs'],
+            'Honda'           => ['cbr600rr', 'cbr1000rr', 'cbr', 'crf250r', 'crf450r', 'crf300l', 'crf', 'africa twin', 'goldwing', 'grom', 'rebel', 'cb650r', 'cb1000r', 'shadow', 'vfr800', 'foreman', 'ruckus', 'vtx'],
+            'Kawasaki'        => ['ninja', 'zx-6r', 'zx-10r', 'zx-14r', 'z900', 'z650', 'klr650', 'kx250', 'kx450', 'vulcan'],
+            'Suzuki'          => ['gsx-r600', 'gsx-r750', 'gsx-r1000', 'gsx-r', 'hayabusa', 'v-strom', 'sv650', 'dr-z400', 'rm-z250', 'rm-z450', 'boulevard'],
+            'KTM'             => ['250 sx-f', '450 sx-f', 'sx-f', '890 adventure', '1290 super adventure', '390 duke', '890 duke', '1290 super duke', '690 enduro', 'super adventure'],
+            'Ducati'          => ['monster', 'panigale', 'multistrada', 'scrambler', 'diavel', 'streetfighter', 'supersport', 'hypermotard'],
+            'Yamaha'          => ['yzf-r1', 'yzf-r6', 'yzf-r3', 'mt-07', 'mt-09', 'mt-10', 'tracer', 'ténéré', 'tenere', 'bolt', 'v-star', 'zuma', 'xmax', 'fjr1300', 'grizzly', 'yz250f', 'yz450f'],
+            'Indian'          => ['scout', 'chief', 'chieftain', 'roadmaster', 'challenger', 'ftr'],
+            'Triumph'         => ['bonneville', 'street triple', 'speed triple', 'tiger', 'thruxton', 'rocket 3'],
+            'Husqvarna'       => ['fc 250', 'fc 450', 'fe 350', '701 enduro', 'svartpilen', 'vitpilen'],
+            'Vespa'           => ['gts 300', 'primavera', 'sprint'],
+            'Can-Am'          => ['maverick', 'ryker', 'defender'],
+            'Polaris'         => ['ranger', 'rzr', 'sportsman'],
+        ];
+
+        $targetMakeCanonical = null;
+        if (!empty($make)) {
+            $targetLower = strtolower(trim($make));
+            foreach ($validOemMakesMap as $k => $can) {
+                if ($targetLower === $k || str_contains($targetLower, $k)) {
+                    $targetMakeCanonical = $can;
+                    break;
+                }
+            }
+        }
+
         $cleanModels = [];
-        $ignoredModels = ['universal', 'all models', 'n/a', 'none', 'all makes', 'all'];
+        $ignoredModels = ['universal', 'all models', 'n/a', 'none', 'all makes', 'all', '1200', 'touring'];
+
         foreach ($allRawModels as $rm) {
-            foreach (explode('/', $rm) as $p1) {
-                foreach (explode(',', $p1) as $p2) {
-                    $trimmed = trim($p2);
-                    if ($trimmed && !in_array(strtolower($trimmed), $ignoredModels) && !in_array($trimmed, $cleanModels)) {
-                        $cleanModels[] = $trimmed;
+            $currentMake = $targetMakeCanonical;
+            $parts = explode('/', $rm);
+            foreach ($parts as $part) {
+                $subParts = explode(',', $part);
+                foreach ($subParts as $sp) {
+                    $trimmed = trim($sp);
+                    if (!$trimmed) continue;
+
+                    $trimmedLower = strtolower($trimmed);
+                    if (in_array($trimmedLower, $ignoredModels)) continue;
+
+                    $detectedMake = null;
+                    $modelWithoutMake = $trimmed;
+                    foreach ($validOemMakesMap as $key => $canonical) {
+                        if (preg_match('/^' . preg_quote($key, '/') . '(\s+|$)/i', $trimmedLower)) {
+                            $detectedMake = $canonical;
+                            $modelWithoutMake = trim(preg_replace('/^' . preg_quote($key, '/') . '\s*/i', '', $trimmed));
+                            break;
+                        }
+                    }
+
+                    $activeMake = $detectedMake ?: $currentMake;
+
+                    if ($targetMakeCanonical) {
+                        if ($activeMake && $activeMake !== $targetMakeCanonical) {
+                            continue;
+                        }
+
+                        $belongsToOtherMake = false;
+                        foreach ($exclusiveModelsByMake as $otherMake => $sigList) {
+                            if ($otherMake === $targetMakeCanonical) continue;
+                            foreach ($sigList as $sig) {
+                                if ($trimmedLower === $sig || str_contains($trimmedLower, $sig)) {
+                                    $belongsToOtherMake = true;
+                                    break 2;
+                                }
+                            }
+                        }
+                        if ($belongsToOtherMake) continue;
+                    }
+
+                    $finalModelName = $modelWithoutMake ?: $trimmed;
+                    // Clean trailing parens or weird chars
+                    $finalModelName = rtrim($finalModelName, ')');
+                    $finalModelName = trim($finalModelName);
+
+                    if ($finalModelName && !in_array(strtolower($finalModelName), array_map('strtolower', $cleanModels))) {
+                        $cleanModels[] = $finalModelName;
                     }
                 }
             }
@@ -243,7 +310,7 @@ class ProductController extends Controller
         return response()->json([
             'years' => $years,
             'makes' => $cleanMakes,
-            'models' => $cleanModels,
+            'models' => array_values($cleanModels),
             'types' => $typesSet,
         ]);
     }
