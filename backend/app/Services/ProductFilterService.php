@@ -120,10 +120,7 @@ class ProductFilterService
                 // Fallback: check columns on products table
                 $q->orWhere(function ($textQ) use ($year, $make, $model) {
                     if (!empty($make)) {
-                        $textQ->where(function($mkQ) use ($make) {
-                            $mkQ->where('compatible_makes', 'like', "%{$make}%")
-                                ->orWhere('brand', 'like', "%{$make}%");
-                        });
+                        $textQ->where('compatible_makes', 'like', "%{$make}%");
                     }
                     if (!empty($model)) {
                         $textQ->where('compatible_models', 'like', "%{$model}%");

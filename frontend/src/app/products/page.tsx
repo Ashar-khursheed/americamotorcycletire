@@ -31,6 +31,17 @@ import { SeoHead } from '@/components/SeoHead';
 function ProductsContent() {
   const searchParams = useSearchParams();
 
+  const getInitialParam = (key: string) => searchParams?.get(key) || '';
+
+  const initialYear = getInitialParam('year');
+  const initialMake = getInitialParam('make');
+  const initialModel = getInitialParam('model');
+  const initialType = getInitialParam('type') || getInitialParam('vehicle_type') || getInitialParam('product_type');
+  const initialVType = getInitialParam('vehicle_type') || getInitialParam('type');
+  const initialBrand = getInitialParam('brand');
+  const initialQ = getInitialParam('search');
+  const initialPage = getInitialParam('page') ? Number(getInitialParam('page')) : 1;
+
   const [products, setProducts] = useState<any[]>([]);
   const [availableFilters, setAvailableFilters] = useState<any>({});
   const [loading, setLoading] = useState(true);
@@ -39,21 +50,21 @@ function ProductsContent() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage > 0 ? initialPage : 1);
   const [lastPage, setLastPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const [perPage, setPerPage] = useState(24);
 
   // Filters State
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialQ);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedVehicleType, setSelectedVehicleType] = useState<string[]>([]);
+  const [selectedType, setSelectedType] = useState(initialType);
+  const [selectedVehicleType, setSelectedVehicleType] = useState<string[]>(initialVType ? initialVType.split(',') : []);
   const [selectedProductType, setSelectedProductType] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedYear, setSelectedYear] = useState('');
-  const [selectedMake, setSelectedMake] = useState('');
-  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(initialBrand ? initialBrand.split(',') : []);
+  const [selectedYear, setSelectedYear] = useState(initialYear);
+  const [selectedMake, setSelectedMake] = useState(initialMake);
+  const [selectedModel, setSelectedModel] = useState(initialModel);
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
@@ -68,25 +79,25 @@ function ProductsContent() {
 
   const addItem = useCartStore((state) => state.addItem);
 
-  // Initialize filters from searchParams
+  // Update state when searchParams change dynamically (e.g. client navigation)
   useEffect(() => {
     if (searchParams) {
-      const year = searchParams.get('year');
-      const make = searchParams.get('make');
-      const model = searchParams.get('model');
-      const type = searchParams.get('type') || searchParams.get('vehicle_type') || searchParams.get('product_type');
-      const vType = searchParams.get('vehicle_type') || searchParams.get('type');
-      const brand = searchParams.get('brand');
-      const q = searchParams.get('search');
+      const year = searchParams.get('year') || '';
+      const make = searchParams.get('make') || '';
+      const model = searchParams.get('model') || '';
+      const type = searchParams.get('type') || searchParams.get('vehicle_type') || searchParams.get('product_type') || '';
+      const vType = searchParams.get('vehicle_type') || searchParams.get('type') || '';
+      const brand = searchParams.get('brand') || '';
+      const q = searchParams.get('search') || '';
       const p = searchParams.get('page');
 
-      if (year) setSelectedYear(year);
-      if (make) setSelectedMake(make);
-      if (model) setSelectedModel(model);
-      if (type) setSelectedType(type);
-      if (vType) setSelectedVehicleType(vType.split(','));
-      if (brand) setSelectedBrands(brand.split(','));
-      if (q) setSearch(q);
+      setSelectedYear(year);
+      setSelectedMake(make);
+      setSelectedModel(model);
+      setSelectedType(type);
+      setSelectedVehicleType(vType ? vType.split(',') : []);
+      setSelectedBrands(brand ? brand.split(',') : []);
+      setSearch(q);
       if (p && !isNaN(Number(p)) && Number(p) > 0) {
         setCurrentPage(Number(p));
       }
@@ -95,6 +106,7 @@ function ProductsContent() {
 
   // Fetch dynamic fitment options from backend when Type/Year/Make/Model change
   useEffect(() => {
+    let isCurrent = true;
     const params: Record<string, string> = {};
     if (selectedType) params.type = selectedType;
     if (selectedYear) params.year = selectedYear;
@@ -104,6 +116,7 @@ function ProductsContent() {
     api
       .get('/fitments/options', { params })
       .then((res) => {
+        if (!isCurrent) return;
         if (res.data) {
           setYearsList(res.data.years || []);
           setMakesList(res.data.makes || []);
@@ -112,6 +125,10 @@ function ProductsContent() {
         }
       })
       .catch(() => {});
+
+    return () => {
+      isCurrent = false;
+    };
   }, [selectedType, selectedYear, selectedMake, selectedModel]);
 
   // Reset pagination on filter changes
@@ -140,6 +157,7 @@ function ProductsContent() {
 
   // Fetch Products & Filters from API
   useEffect(() => {
+    let isCurrent = true;
     setLoading(true);
     const params: Record<string, any> = { page: currentPage, per_page: perPage, sort };
 
@@ -158,6 +176,7 @@ function ProductsContent() {
 
     fetchProducts(params)
       .then((prodRes) => {
+        if (!isCurrent) return;
         if (prodRes) {
           const itemsList = Array.isArray(prodRes.data)
             ? prodRes.data
@@ -184,10 +203,17 @@ function ProductsContent() {
         }
       })
       .catch((err) => {
+        if (!isCurrent) return;
         console.error(err);
         setProducts([]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (isCurrent) setLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
   }, [
     currentPage,
     perPage,
