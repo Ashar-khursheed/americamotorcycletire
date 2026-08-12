@@ -374,34 +374,125 @@ export default function ProductDetailPage() {
 
                     {/* Dynamic Attributes */}
                     {(() => {
-                      let rawAttrs = product?.custom_attributes;
-                      if (typeof rawAttrs === 'string') {
+                      if (!product) return null;
+
+                      let raw = product.custom_attributes;
+
+                      if (typeof raw === 'string' && raw.trim()) {
                         try {
-                          rawAttrs = JSON.parse(rawAttrs);
+                          raw = JSON.parse(raw);
                         } catch (e) {
-                          rawAttrs = [];
+                          try {
+                            raw = JSON.parse(raw.replace(/'/g, '"'));
+                          } catch (err) {
+                            raw = null;
+                          }
                         }
                       }
 
-                      const effectiveAttributes = (Array.isArray(rawAttrs) && rawAttrs.length > 0)
-                        ? rawAttrs
-                        : [
-                          { name: 'Wheel Location', options: 'Front, Rear' },
-                          { name: 'Tire Size', options: 'Front MT90B16 72H TL NWS, 130/90B16 73H TL, 180/65B16 81H TL' }
-                        ];
+                      const attrsList: { name: string; options: string[] }[] = [];
 
-                      if (effectiveAttributes.length === 0) return null;
+                      const splitOptions = (val: any): string[] => {
+                        if (Array.isArray(val)) {
+                          return val.map((v) => String(v).trim()).filter(Boolean);
+                        }
+                        if (typeof val === 'string' && val.trim()) {
+                          return val
+                            .split(/[,;]/)
+                            .map((s) => s.trim())
+                            .filter(Boolean);
+                        }
+                        return [];
+                      };
+
+                      const addOrUpdate = (name: string, rawOptions: any) => {
+                        const cleanName = name.trim().replace(/:$/, '');
+                        const options = splitOptions(rawOptions);
+                        if (options.length === 0) return;
+
+                        const uniqueOptions = Array.from(new Set(options));
+
+                        const existing = attrsList.find(
+                          (a) => a.name.toLowerCase() === cleanName.toLowerCase()
+                        );
+                        if (existing) {
+                          const merged = Array.from(new Set([...existing.options, ...uniqueOptions]));
+                          existing.options = merged;
+                        } else {
+                          attrsList.push({ name: cleanName, options: uniqueOptions });
+                        }
+                      };
+
+                      if (Array.isArray(raw)) {
+                        raw.forEach((item) => {
+                          if (item && typeof item === 'object') {
+                            const name = item.name || item.title || item.label;
+                            if (name) {
+                              addOrUpdate(name, item.options);
+                            }
+                          }
+                        });
+                      } else if (raw && typeof raw === 'object') {
+                        Object.entries(raw).forEach(([k, v]) => {
+                          addOrUpdate(k, v);
+                        });
+                      }
+
+                      // Fallbacks using direct product fields if attributes missing
+                      const hasWheelLocation = attrsList.some(
+                        (a) => a.name.toLowerCase() === 'wheel location' || a.name.toLowerCase() === 'wheel locations'
+                      );
+                      if (!hasWheelLocation && product.wheel_locations) {
+                        addOrUpdate('Wheel Location', product.wheel_locations);
+                      }
+
+                      const hasTireSize = attrsList.some(
+                        (a) =>
+                          a.name.toLowerCase().includes('tire size') ||
+                          a.name.toLowerCase() === 'size' ||
+                          a.name.toLowerCase() === 'sizes'
+                      );
+                      if (!hasTireSize) {
+                        if (product.available_sizes) {
+                          addOrUpdate('Tire Size', product.available_sizes);
+                        } else {
+                          const fallbackSizes: string[] = [];
+                          if (product.front_tire_fitment) fallbackSizes.push(`Front ${product.front_tire_fitment}`);
+                          if (product.rear_tire_fitment) fallbackSizes.push(`Rear ${product.rear_tire_fitment}`);
+                          if (fallbackSizes.length > 0) {
+                            addOrUpdate('Tire Size', fallbackSizes);
+                          }
+                        }
+                      }
+
+                      // Filter out static spec metadata attributes that only have 1 single option and are not selectable product variants
+                      const selectableAttributes = attrsList.filter((attr) => {
+                        const nameLower = attr.name.toLowerCase();
+                        const isSelectableKey = [
+                          'wheel location',
+                          'wheel locations',
+                          'tire size',
+                          'size',
+                          'sizes',
+                          'location',
+                          'color',
+                          'style',
+                        ].includes(nameLower);
+
+                        if (isSelectableKey) return true;
+                        if (['make', 'model', 'brand', 'product type', 'type', 'vehicle type'].includes(nameLower)) {
+                          return false;
+                        }
+                        return attr.options.length > 1;
+                      });
+
+                      if (selectableAttributes.length === 0) return null;
 
                       return (
                         <div className="space-y-4 my-6 pt-5 border-t border-[#222]">
-                          {effectiveAttributes.map((attr: any, idx: number) => {
-                            const attrName = attr.name || attr.title || 'Option';
-                            const rawOpts = attr.options;
-                            const optsList: string[] = Array.isArray(rawOpts)
-                              ? rawOpts
-                              : (typeof rawOpts === 'string' ? rawOpts.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
-
-                            if (optsList.length === 0) return null;
+                          {selectableAttributes.map((attr, idx) => {
+                            const attrName = attr.name;
+                            const optsList = attr.options;
 
                             return (
                               <div key={idx} className="space-y-1.5">
@@ -411,7 +502,18 @@ export default function ProductDetailPage() {
                                 <div className="relative">
                                   <select
                                     value={selectedAttributes[attrName] || ''}
-                                    onChange={(e) => setSelectedAttributes({ ...selectedAttributes, [attrName]: e.target.value })}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setSelectedAttributes((prev) => {
+                                        const next = { ...prev };
+                                        if (val) {
+                                          next[attrName] = val;
+                                        } else {
+                                          delete next[attrName];
+                                        }
+                                        return next;
+                                      });
+                                    }}
                                     className="w-full bg-[#121212] border border-[#333] rounded-md px-3.5 py-3 text-xs text-white uppercase font-semibold focus:outline-none focus:border-[#BF8647] appearance-none cursor-pointer pr-10 shadow-sm"
                                   >
                                     <option value="">Select {attrName}</option>
