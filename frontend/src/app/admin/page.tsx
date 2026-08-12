@@ -2383,7 +2383,7 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div className="space-y-3">
-                    safeParseArray(editingProduct.custom_attributes).map((attrItem: any, aIdx: number) => (
+                    {safeParseArray(editingProduct.custom_attributes).map((attrItem: any, aIdx: number) => (
                       <div key={aIdx} className={`p-3.5 rounded-lg border flex flex-col sm:flex-row gap-3 items-start sm:items-center ${isDarkMode ? 'bg-[#181818] border-[#2B2B2B]' : 'bg-gray-50 border-gray-200'}`}>
                         <div className="w-full sm:w-1/3">
                           <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Option Name</label>
