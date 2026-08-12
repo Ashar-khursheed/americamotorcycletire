@@ -52,30 +52,40 @@ import axios from 'axios';
 
 const safeParseArray = (val: any): any[] => {
   if (!val) return [];
-  if (Array.isArray(val)) return val;
-  if (typeof val === 'string') {
+  let raw: any[] = [];
+  if (Array.isArray(val)) {
+    raw = val;
+  } else if (typeof val === 'string') {
     try {
       const clean = val.replace(/'/g, '"');
       const parsed = JSON.parse(clean);
-      if (Array.isArray(parsed)) return parsed;
-      if (parsed && typeof parsed === 'object') {
+      if (Array.isArray(parsed)) raw = parsed;
+      else if (parsed && typeof parsed === 'object') {
         return Object.entries(parsed).map(([k, v]) => ({
           name: k,
           options: Array.isArray(v) ? v.join(', ') : String(v)
         }));
-      }
-      return [val];
+      } else raw = [val];
     } catch (e) {
-      return [val];
+      raw = [val];
     }
-  }
-  if (typeof val === 'object') {
+  } else if (typeof val === 'object') {
     return Object.entries(val).map(([k, v]) => ({
       name: k,
       options: Array.isArray(v) ? v.join(', ') : String(v)
     }));
   }
-  return [];
+
+  const cleanList: any[] = [];
+  raw.forEach((item) => {
+    if (typeof item === 'string' && item.trim()) {
+      const parts = item.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+      cleanList.push(...parts);
+    } else if (item) {
+      cleanList.push(item);
+    }
+  });
+  return cleanList;
 };
 
 interface ProductImageGalleryManagerProps {

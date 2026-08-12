@@ -175,33 +175,48 @@ export default function ProductDetailPage() {
 
   const displayImages = React.useMemo(() => {
     if (!product) return [];
-    let list: string[] = [];
 
-    if (Array.isArray(product.gallery_images) && product.gallery_images.length > 0) {
-      list = [...product.gallery_images];
-    } else if (typeof product.gallery_images === 'string' && product.gallery_images.trim()) {
-      try {
-        const parsed = JSON.parse(product.gallery_images);
-        if (Array.isArray(parsed)) list = parsed;
-      } catch (e) {
-        list = product.gallery_images.split(';').map((img: string) => img.trim()).filter(Boolean);
+    const extractUrls = (val: any): string[] => {
+      if (!val) return [];
+      let rawItems: any[] = [];
+      if (Array.isArray(val)) {
+        rawItems = val;
+      } else if (typeof val === 'string' && val.trim()) {
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) rawItems = parsed;
+          else rawItems = [val];
+        } catch (e) {
+          rawItems = [val];
+        }
       }
+
+      const result: string[] = [];
+      rawItems.forEach((item) => {
+        if (typeof item === 'string' && item.trim()) {
+          const split = item.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+          result.push(...split);
+        }
+      });
+      return result;
+    };
+
+    const list: string[] = [];
+
+    if (product.primary_image) {
+      list.push(...extractUrls(product.primary_image));
+    }
+    if (product.gallery_images) {
+      list.push(...extractUrls(product.gallery_images));
+    }
+    if (product.all_image_urls) {
+      list.push(...extractUrls(product.all_image_urls));
     }
 
-    if (list.length === 0 && product.all_image_urls) {
-      if (typeof product.all_image_urls === 'string') {
-        list = product.all_image_urls.split(';').map((img: string) => img.trim()).filter(Boolean);
-      } else if (Array.isArray(product.all_image_urls)) {
-        list = [...product.all_image_urls];
-      }
-    }
+    const uniqueList = Array.from(new Set(list));
 
-    if (product.primary_image && !list.includes(product.primary_image)) {
-      list.unshift(product.primary_image);
-    }
-
-    if (list.length > 0) {
-      return Array.from(new Set(list));
+    if (uniqueList.length > 0) {
+      return uniqueList;
     }
 
     return [

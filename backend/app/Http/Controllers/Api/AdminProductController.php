@@ -218,16 +218,46 @@ class AdminProductController extends Controller
 
     private function processGalleryImages($galleryImages)
     {
-        if (!is_array($galleryImages)) {
+        if (empty($galleryImages)) {
             return [];
         }
-        $processed = [];
-        foreach ($galleryImages as $img) {
-            if (!empty($img)) {
-                $processed[] = $this->downloadAndStoreImage($img);
+
+        $rawItems = [];
+        if (is_array($galleryImages)) {
+            $rawItems = $galleryImages;
+        } else if (is_string($galleryImages)) {
+            $decoded = json_decode($galleryImages, true);
+            if (is_array($decoded)) {
+                $rawItems = $decoded;
+            } else {
+                $rawItems = [$galleryImages];
             }
         }
-        return array_values(array_filter($processed));
+
+        $urls = [];
+        foreach ($rawItems as $item) {
+            if (empty($item)) continue;
+            if (is_string($item)) {
+                // Split any string containing semicolons, commas, or newlines
+                $split = preg_split('/[,;\n]+/', $item);
+                foreach ($split as $u) {
+                    $u = trim($u, " \t\n\r\0\x0B\"'");
+                    if (!empty($u)) {
+                        $urls[] = $u;
+                    }
+                }
+            }
+        }
+
+        $urls = array_values(array_unique($urls));
+        $processed = [];
+        foreach ($urls as $img) {
+            $stored = $this->downloadAndStoreImage($img);
+            if (!empty($stored)) {
+                $processed[] = $stored;
+            }
+        }
+        return array_values(array_unique($processed));
     }
 
     public function store(Request $request)
@@ -595,26 +625,7 @@ class AdminProductController extends Controller
 
                 // Parse & download Gallery Images into local storage
                 $galleryVal = $row['gallery_images'] ?? $row['Gallery Images'] ?? $row['All Image URLs'] ?? null;
-                $galleryRaw = [];
-                if (is_array($galleryVal)) {
-                    $galleryRaw = $galleryVal;
-                } else if (is_string($galleryVal) && !empty($galleryVal)) {
-                    $decoded = json_decode($galleryVal, true);
-                    if (is_array($decoded)) {
-                        $galleryRaw = $decoded;
-                    } else if (str_contains($galleryVal, ',')) {
-                        $galleryRaw = array_values(array_filter(array_map('trim', explode(',', $galleryVal))));
-                    } else {
-                        $galleryRaw = [$galleryVal];
-                    }
-                }
-
-                $galleryImages = [];
-                foreach ($galleryRaw as $gImg) {
-                    if (!empty($gImg)) {
-                        $galleryImages[] = $this->downloadAndStoreImage($gImg);
-                    }
-                }
+                $galleryImages = $this->processGalleryImages($galleryVal);
 
                 // Parse Custom Attributes into array if string
                 $customAttrVal = $row['custom_attributes'] ?? $row['Custom Attributes'] ?? null;
@@ -775,28 +786,54 @@ class AdminProductController extends Controller
 
     public function convertImagesToWebp()
     {
-        @set_time_limit(600);
-        $products = Product::whereNotNull('primary_image')->get();
+        @set_time_limit(900);
+        @ini_set('memory_limit', '512M');
+        $products = Product::all();
         $updatedCount = 0;
 
         foreach ($products as $product) {
-            $currentImg = $product->primary_image;
-            if (empty($currentImg)) continue;
+            $changed = false;
 
-            // Process any image that isn't already webp or local webp
-            if (!str_contains($currentImg, '.webp') || str_starts_with($currentImg, 'http://') || str_starts_with($currentImg, 'https://')) {
-                $newImg = $this->downloadAndStoreImage($currentImg);
-                if ($newImg && $newImg !== $currentImg) {
-                    $product->primary_image = $newImg;
-                    $product->save();
-                    $updatedCount++;
+            // Process Primary Image
+            if (!empty($product->primary_image)) {
+                $rawP = $product->primary_image;
+                if (str_contains($rawP, ';') || str_contains($rawP, ',')) {
+                    $splitP = preg_split('/[,;\n]+/', $rawP);
+                    $firstP = trim($splitP[0] ?? '', " \t\n\r\0\x0B\"'");
+                    if (!empty($firstP)) {
+                        $newP = $this->downloadAndStoreImage($firstP);
+                        if ($newP !== $product->primary_image) {
+                            $product->primary_image = $newP;
+                            $changed = true;
+                        }
+                    }
+                } else if (!str_contains($rawP, '/storage/products/') || str_starts_with($rawP, 'http://') || str_starts_with($rawP, 'https://')) {
+                    $newP = $this->downloadAndStoreImage($rawP);
+                    if ($newP !== $product->primary_image) {
+                        $product->primary_image = $newP;
+                        $changed = true;
+                    }
                 }
+            }
+
+            // Process Gallery Images
+            if (!empty($product->gallery_images)) {
+                $processedG = $this->processGalleryImages($product->gallery_images);
+                if ($processedG != $product->gallery_images) {
+                    $product->gallery_images = $processedG;
+                    $changed = true;
+                }
+            }
+
+            if ($changed) {
+                $product->save();
+                $updatedCount++;
             }
         }
 
         return response()->json([
             'status' => 'success',
-            'message' => "Successfully processed catalog! Converted {$updatedCount} product images to WebP format.",
+            'message' => "Successfully processed catalog! Converted & cleaned gallery images for {$updatedCount} products.",
             'updated_count' => $updatedCount
         ]);
     }
