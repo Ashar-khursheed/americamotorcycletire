@@ -123,17 +123,82 @@ class ProductController extends Controller
             });
         };
 
+        // Helper for vehicle type / category matching
+        $applyTypeMatchProduct = function ($q) use ($type) {
+            if (empty($type)) return;
+            $lowerT = strtolower(trim($type));
+            if ($lowerT === 'all types' || $lowerT === 'all') return;
+
+            if ($lowerT === 'sportbike') {
+                $q->where(function ($sub) {
+                    $sub->where('product_type', 'like', '%sportbike%')
+                        ->orWhere('product_type', 'like', '%hypersport%')
+                        ->orWhere('product_type', 'like', '%supersport%')
+                        ->orWhere('product_type', 'like', '%race%')
+                        ->orWhere('vehicle_type', 'like', '%street%')
+                        ->orWhere('vehicle_type', 'like', '%sport%')
+                        ->orWhere('name', 'like', '%sport%');
+                });
+            } elseif ($lowerT === 'cruiser') {
+                $q->where(function ($sub) {
+                    $sub->where('product_type', 'like', '%cruiser%')
+                        ->orWhere('product_type', 'like', '%v-twin%')
+                        ->orWhere('product_type', 'like', '%harley%')
+                        ->orWhere('vehicle_type', 'like', '%street%')
+                        ->orWhere('vehicle_type', 'like', '%cruiser%')
+                        ->orWhere('name', 'like', '%cruiser%');
+                });
+            } elseif ($lowerT === 'touring') {
+                $q->where(function ($sub) {
+                    $sub->where('product_type', 'like', '%touring%')
+                        ->orWhere('vehicle_type', 'like', '%street%')
+                        ->orWhere('vehicle_type', 'like', '%touring%')
+                        ->orWhere('name', 'like', '%touring%');
+                });
+            } elseif ($lowerT === 'dirt') {
+                $q->where(function ($sub) {
+                    $sub->where('vehicle_type', 'like', '%dirt%')
+                        ->orWhere('product_type', 'like', '%dirt%')
+                        ->orWhere('product_type', 'like', '%motocross%')
+                        ->orWhere('name', 'like', '%dirt%');
+                });
+            } elseif ($lowerT === 'dualsport' || $lowerT === 'dual sport') {
+                $q->where(function ($sub) {
+                    $sub->where('product_type', 'like', '%dual sport%')
+                        ->orWhere('product_type', 'like', '%adventure%')
+                        ->orWhere('vehicle_type', 'like', '%dirt%')
+                        ->orWhere('vehicle_type', 'like', '%dual sport%')
+                        ->orWhere('name', 'like', '%adventure%')
+                        ->orWhere('name', 'like', '%dual sport%');
+                });
+            } elseif ($lowerT === 'scooter') {
+                $q->where(function ($sub) {
+                    $sub->where('vehicle_type', 'like', '%scooter%')
+                        ->orWhere('product_type', 'like', '%scooter%')
+                        ->orWhere('name', 'like', '%scooter%');
+                });
+            } elseif ($lowerT === 'race') {
+                $q->where(function ($sub) {
+                    $sub->where('product_type', 'like', '%race%')
+                        ->orWhere('product_type', 'like', '%track%')
+                        ->orWhere('name', 'like', '%race%');
+                });
+            } else {
+                $q->where('vehicle_type', 'like', "%{$type}%");
+            }
+        };
+
         // 2. MAKES LIST
-        $fitmentMakesQ = ProductFitment::query()->whereHas('product', function ($q) use ($type) {
+        $fitmentMakesQ = ProductFitment::query()->whereHas('product', function ($q) use ($applyTypeMatchProduct) {
             $q->where('is_active', true);
-            if (!empty($type)) $q->where('vehicle_type', 'like', "%{$type}%");
+            $applyTypeMatchProduct($q);
         })->whereNotNull('make')->where('make', '!=', '');
         $applyYearMatchFitment($fitmentMakesQ);
         if (!empty($model)) $fitmentMakesQ->where('model', 'like', "%{$model}%");
         $rawMakes1 = $fitmentMakesQ->distinct()->pluck('make')->filter()->values();
 
         $prodMakesQ = Product::where('is_active', true)->whereNotNull('compatible_makes')->where('compatible_makes', '!=', '');
-        if (!empty($type)) $prodMakesQ->where('vehicle_type', 'like', "%{$type}%");
+        $applyTypeMatchProduct($prodMakesQ);
         $applyYearMatchProduct($prodMakesQ);
         if (!empty($model)) $prodMakesQ->where('compatible_models', 'like', "%{$model}%");
         $rawMakes2 = $prodMakesQ->distinct()->pluck('compatible_makes')->filter()->values();
@@ -198,9 +263,9 @@ class ProductController extends Controller
         sort($cleanMakes);
 
         // 3. MODELS LIST
-        $fitmentModelsQ = ProductFitment::query()->whereHas('product', function ($q) use ($type) {
+        $fitmentModelsQ = ProductFitment::query()->whereHas('product', function ($q) use ($applyTypeMatchProduct) {
             $q->where('is_active', true);
-            if (!empty($type)) $q->where('vehicle_type', 'like', "%{$type}%");
+            $applyTypeMatchProduct($q);
         })->whereNotNull('model')->where('model', '!=', '');
         $applyYearMatchFitment($fitmentModelsQ);
         if (!empty($make)) {
@@ -209,7 +274,7 @@ class ProductController extends Controller
         $rawModels1 = $fitmentModelsQ->distinct()->pluck('model')->filter()->values();
 
         $prodModelsQ = Product::where('is_active', true)->whereNotNull('compatible_models')->where('compatible_models', '!=', '');
-        if (!empty($type)) $prodModelsQ->where('vehicle_type', 'like', "%{$type}%");
+        $applyTypeMatchProduct($prodModelsQ);
         $applyYearMatchProduct($prodModelsQ);
         if (!empty($make)) {
             $prodModelsQ->where('compatible_makes', 'like', "%{$make}%");
