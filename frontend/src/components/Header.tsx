@@ -71,10 +71,13 @@ export function Header() {
                 } catch (e) { }
               }
               const bikeCategories = [
-                { label: 'SPORTBIKE', desc: 'Hypersport, Track & Race Tires', url: '/products?bike_category=sportbike', tag: 'Combined Race' },
-                { label: 'CRUISER', desc: 'Harley-Davidson & Custom V-Twin', url: '/products?bike_category=cruiser' },
-                { label: 'TOURING', desc: 'Long Distance & Baggers', url: '/products?bike_category=touring' },
-                { label: 'DIRT', desc: 'Motocross, Enduro & Off-Road', url: '/products?bike_category=dirt' },
+                { label: 'SPORTBIKE', desc: 'Hypersport & Street', url: '/products?bike_category=sportbike', img: '/images/categories/sportbike.png' },
+                { label: 'CRUISER', desc: 'Harley-Davidson & Custom', url: '/products?bike_category=cruiser', img: '/images/categories/cruiser.png' },
+                { label: 'DUAL SPORT', desc: 'Adventure & Enduro', url: '/products?bike_category=dualsport', img: '/images/categories/dualsport.png' },
+                { label: 'TOURING', desc: 'Long Distance & Baggers', url: '/products?bike_category=touring', img: '/images/categories/touring.png' },
+                { label: 'DIRT', desc: 'Motocross & MX Off-Road', url: '/products?bike_category=dirt', img: '/images/categories/dirt.png' },
+                { label: 'RACE', desc: 'Track & Slick Performance', url: '/products?bike_category=race', img: '/images/categories/race.png' },
+                { label: 'SCOOTER', desc: 'Urban Commuter & Moped', url: '/products?bike_category=scooter', img: '/images/categories/scooter.png' },
               ];
 
               return menuList.map((item: any, idx: number) => {
@@ -94,19 +97,22 @@ export function Header() {
                       </Link>
 
                       {/* Dropdown Menu */}
-                      <div className="absolute top-full left-0 w-80 bg-[#121212] border border-[#2B2B2B] rounded-xl shadow-2xl p-3 space-y-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="absolute top-full left-0 w-80 bg-[#121212] border border-[#2B2B2B] rounded-xl shadow-2xl p-3 space-y-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 max-h-[480px] overflow-y-auto">
                         <div className="px-3 py-1.5 border-b border-[#222] mb-1">
                           <span className="text-[10px] font-black uppercase text-[#BF8647] tracking-widest block">
-                            BIKE CATEGORIES
+                            CYCLE GEAR TIRE CATEGORIES
                           </span>
                         </div>
                         {bikeCategories.map((cat, cIdx) => (
                           <Link
                             key={cIdx}
                             href={cat.url}
-                            className="flex items-center justify-between p-2.5 rounded-lg hover:bg-[#1A1A1A] hover:border-[#BF8647]/50 border border-transparent transition-all group/cat"
+                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#1A1A1A] hover:border-[#BF8647]/50 border border-transparent transition-all group/cat"
                           >
-                            <div>
+                            <div className="w-10 h-10 bg-[#EAEAEA] rounded p-1 flex items-center justify-center shrink-0">
+                              <img src={cat.img} alt={cat.label} className="max-h-full max-w-full object-contain" />
+                            </div>
+                            <div className="flex-1">
                               <div className="text-xs font-black text-white group-hover/cat:text-[#BF8647] transition-colors tracking-wide">
                                 {cat.label}
                               </div>
@@ -114,11 +120,6 @@ export function Header() {
                                 {cat.desc}
                               </div>
                             </div>
-                            {cat.tag && (
-                              <span className="text-[9px] bg-[#BF8647]/20 text-[#BF8647] font-bold px-1.5 py-0.5 rounded border border-[#BF8647]/40 uppercase">
-                                {cat.tag}
-                              </span>
-                            )}
                           </Link>
                         ))}
                         <div className="pt-1 border-t border-[#222]">

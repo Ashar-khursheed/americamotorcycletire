@@ -225,6 +225,7 @@ function ProductsContent() {
     perPage,
     search,
     selectedCategory,
+    selectedBikeCategory,
     selectedType,
     selectedVehicleType,
     selectedProductType,
@@ -259,6 +260,20 @@ function ProductsContent() {
       setSelectedProductType(selectedProductType.filter((item) => item !== pt));
     } else {
       setSelectedProductType([...selectedProductType, pt]);
+    }
+  };
+
+  const handleBikeCategorySelect = (catId: string) => {
+    setSelectedBikeCategory(catId);
+    setCurrentPage(1);
+    if (typeof window !== 'undefined') {
+      const newUrl = new URL(window.location.href);
+      if (catId) {
+        newUrl.searchParams.set('bike_category', catId);
+      } else {
+        newUrl.searchParams.delete('bike_category');
+      }
+      window.history.pushState({}, '', newUrl.toString());
     }
   };
 
@@ -565,35 +580,94 @@ function ProductsContent() {
               MOTORCYCLE TIRES & SPECIFIC FITMENT CATALOG
             </h1>
 
-            {/* Primary Bike Category Bar */}
+            {/* Cycle Gear Style Visual Tire Category Selector (All 7 Categories) */}
             <div className="pt-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">
-                FILTER BY BIKE CATEGORY
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#BF8647] flex items-center gap-1.5 font-heading">
+                  <Sparkles className="w-3.5 h-3.5 text-[#BF8647]" /> SHOP BY TIRE CATEGORY (CYCLE GEAR STYLE)
+                </span>
+                {selectedBikeCategory && (
+                  <button
+                    onClick={() => handleBikeCategorySelect('')}
+                    className="text-[10px] text-gray-400 hover:text-[#BF8647] uppercase font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Show All Categories
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
                 {[
-                  { id: '', label: 'ALL BIKE TYPES', desc: 'Full Catalog' },
-                  { id: 'sportbike', label: 'SPORTBIKE', desc: 'Includes Race' },
-                  { id: 'cruiser', label: 'CRUISER', desc: 'Harley & V-Twin' },
-                  { id: 'touring', label: 'TOURING', desc: 'Grand Touring' },
-                  { id: 'dirt', label: 'DIRT', desc: 'Motocross & Off-Road' },
+                  {
+                    id: 'sportbike',
+                    label: 'Sportbike',
+                    image: '/images/categories/sportbike.png',
+                  },
+                  {
+                    id: 'cruiser',
+                    label: 'Cruiser',
+                    image: '/images/categories/cruiser.png',
+                  },
+                  {
+                    id: 'dualsport',
+                    label: 'Dual Sport',
+                    image: '/images/categories/dualsport.png',
+                  },
+                  {
+                    id: 'touring',
+                    label: 'Touring',
+                    image: '/images/categories/touring.png',
+                  },
+                  {
+                    id: 'dirt',
+                    label: 'Dirt',
+                    image: '/images/categories/dirt.png',
+                  },
+                  {
+                    id: 'race',
+                    label: 'Race',
+                    image: '/images/categories/race.png',
+                  },
+                  {
+                    id: 'scooter',
+                    label: 'Scooter',
+                    image: '/images/categories/scooter.png',
+                  },
                 ].map((cat) => {
-                  const isActive = selectedBikeCategory.toLowerCase() === cat.id;
+                  const isActive = selectedBikeCategory.toLowerCase() === cat.id.toLowerCase();
                   return (
                     <button
                       key={cat.id}
-                      onClick={() => setSelectedBikeCategory(cat.id)}
-                      className={`p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+                      onClick={() => handleBikeCategorySelect(cat.id)}
+                      className={`group flex flex-col items-center justify-between bg-[#161616] p-2 sm:p-2.5 rounded-xl border transition-all duration-300 cursor-pointer ${
                         isActive
-                          ? 'bg-[#BF8647] text-black border-[#BF8647] shadow-lg shadow-[#BF8647]/30 scale-[1.02]'
-                          : 'bg-[#181818] text-white border-[#2A2A2A] hover:border-[#BF8647]/60 hover:bg-[#202020]'
+                          ? 'border-[#BF8647] ring-2 ring-[#BF8647]/60 shadow-lg shadow-[#BF8647]/30 scale-[1.04]'
+                          : 'border-[#262626] hover:border-[#BF8647]/60 hover:bg-[#1C1C1C]'
                       }`}
                     >
-                      <div className={`text-xs font-black uppercase font-heading tracking-wide ${isActive ? 'text-black' : 'text-white'}`}>
-                        {cat.label}
+                      {/* Cycle Gear Style White/Grey Image Frame */}
+                      <div className="w-full h-24 sm:h-28 bg-[#EAEAEA] rounded-lg p-1.5 flex items-center justify-center overflow-hidden relative shadow-inner">
+                        <img
+                          src={cat.image}
+                          alt={cat.label}
+                          className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                        />
+                        {isActive && (
+                          <div className="absolute top-1 right-1 bg-[#BF8647] text-black p-0.5 rounded-full shadow">
+                            <Check className="w-3 h-3 stroke-[3]" />
+                          </div>
+                        )}
                       </div>
-                      <div className={`text-[10px] font-medium tracking-normal mt-0.5 ${isActive ? 'text-black/80' : 'text-gray-400'}`}>
-                        {cat.desc}
+
+                      {/* Label Text below */}
+                      <div className="mt-2 text-center w-full">
+                        <span
+                          className={`text-xs font-black uppercase font-heading tracking-wide transition-colors ${
+                            isActive ? 'text-[#BF8647]' : 'text-white group-hover:text-[#BF8647]'
+                          }`}
+                        >
+                          {cat.label}
+                        </span>
                       </div>
                     </button>
                   );

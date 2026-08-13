@@ -101,11 +101,33 @@ class ProductFilterService
                     if (empty($trimT)) continue;
 
                     $lowerT = strtolower($trimT);
-                    if (in_array($lowerT, ['sportbike', 'sportbikes', 'race'])) {
+                    if (in_array($lowerT, ['sportbike', 'sportbikes'])) {
                         $q->orWhere('product_type', 'like', '%sportbike%')
                           ->orWhere('product_type', 'like', '%hypersport%')
                           ->orWhere('product_type', 'like', '%race%')
                           ->orWhere('product_type', 'like', '%supermoto%');
+                    } elseif (in_array($lowerT, ['race', 'track'])) {
+                        $q->orWhere('product_type', 'like', '%race%')
+                          ->orWhere('product_type', 'like', '%hypersport%')
+                          ->orWhere('product_type', 'like', '%slick%');
+                    } elseif (in_array($lowerT, ['cruiser', 'cruisers'])) {
+                        $q->orWhere('vehicle_type', 'like', '%cruiser%')
+                          ->orWhere('product_type', 'like', '%cruiser%')
+                          ->orWhere('product_type', 'like', '%custom%');
+                    } elseif (in_array($lowerT, ['dualsport', 'dual sport', 'adventure'])) {
+                        $q->orWhere('product_type', 'like', '%dual sport%')
+                          ->orWhere('product_type', 'like', '%adventure%')
+                          ->orWhere('vehicle_type', 'like', '%dual sport%');
+                    } elseif (in_array($lowerT, ['touring'])) {
+                        $q->orWhere('product_type', 'like', '%touring%')
+                          ->orWhere('vehicle_type', 'like', '%touring%');
+                    } elseif (in_array($lowerT, ['dirt', 'motocross', 'offroad', 'off-road'])) {
+                        $q->orWhere('vehicle_type', 'like', '%dirt%')
+                          ->orWhere('product_type', 'like', '%dirt%')
+                          ->orWhere('product_type', 'like', '%motocross%');
+                    } elseif (in_array($lowerT, ['scooter', 'scooters'])) {
+                        $q->orWhere('vehicle_type', 'like', '%scooter%')
+                          ->orWhere('product_type', 'like', '%scooter%');
                     } else {
                         $q->orWhere('vehicle_type', 'like', "%{$trimT}%")
                           ->orWhere('product_type', 'like', "%{$trimT}%");
