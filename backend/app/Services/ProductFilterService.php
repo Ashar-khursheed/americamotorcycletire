@@ -173,18 +173,51 @@ class ProductFilterService
             });
         }
 
-        // 3. Vehicle Type Filter
+        // 3. Vehicle Type Filter (Only apply strict vehicle_type for 'Street Bike', 'Dirt Bike', 'UTV/ATV' or non-category terms)
         if ($request->filled('vehicle_type')) {
             $vTypes = is_array($request->input('vehicle_type'))
                 ? $request->input('vehicle_type')
                 : explode(',', $request->input('vehicle_type'));
             
             $query->where(function ($q) use ($vTypes) {
-                foreach ($vTypes as $idx => $vt) {
+                foreach ($vTypes as $vt) {
                     $trimVt = trim($vt);
                     if (empty($trimVt)) continue;
-                    if ($idx === 0) {
-                        $q->where('vehicle_type', 'like', "%{$trimVt}%");
+
+                    $lowerVt = strtolower($trimVt);
+                    if (in_array($lowerVt, ['sportbike', 'sportbikes', 'cruiser', 'cruisers', 'touring', 'dualsport', 'dual sport', 'adventure', 'dirt', 'scooter', 'scooters', 'race'])) {
+                        // These are bike categories handled by Section 2; match flexibly across vehicle_type, product_type, and name
+                        $q->orWhere(function ($sub) use ($lowerVt) {
+                            if (in_array($lowerVt, ['sportbike', 'sportbikes'])) {
+                                $sub->where('product_type', 'like', '%sportbike%')
+                                    ->orWhere('product_type', 'like', '%hypersport%')
+                                    ->orWhere('product_type', 'like', '%supersport%')
+                                    ->orWhere('vehicle_type', 'like', '%street%')
+                                    ->orWhere('name', 'like', '%sport%');
+                            } elseif (in_array($lowerVt, ['cruiser', 'cruisers'])) {
+                                $sub->where('product_type', 'like', '%cruiser%')
+                                    ->orWhere('product_type', 'like', '%harley%')
+                                    ->orWhere('vehicle_type', 'like', '%street%')
+                                    ->orWhere('name', 'like', '%cruiser%');
+                            } elseif ($lowerVt === 'touring') {
+                                $sub->where('product_type', 'like', '%touring%')
+                                    ->orWhere('vehicle_type', 'like', '%street%')
+                                    ->orWhere('name', 'like', '%touring%');
+                            } elseif (in_array($lowerVt, ['dirt', 'motocross'])) {
+                                $sub->where('vehicle_type', 'like', '%dirt%')
+                                    ->orWhere('product_type', 'like', '%dirt%')
+                                    ->orWhere('name', 'like', '%dirt%');
+                            } elseif (in_array($lowerVt, ['dualsport', 'dual sport', 'adventure'])) {
+                                $sub->where('product_type', 'like', '%dual sport%')
+                                    ->orWhere('product_type', 'like', '%adventure%')
+                                    ->orWhere('vehicle_type', 'like', '%dirt%')
+                                    ->orWhere('name', 'like', '%adventure%');
+                            } elseif (in_array($lowerVt, ['scooter', 'scooters'])) {
+                                $sub->where('vehicle_type', 'like', '%scooter%')
+                                    ->orWhere('product_type', 'like', '%scooter%')
+                                    ->orWhere('name', 'like', '%scooter%');
+                            }
+                        });
                     } else {
                         $q->orWhere('vehicle_type', 'like', "%{$trimVt}%");
                     }

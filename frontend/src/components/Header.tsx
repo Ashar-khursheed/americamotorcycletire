@@ -71,13 +71,10 @@ export function Header() {
                 } catch (e) { }
               }
               const bikeCategories = [
-                { label: 'SPORTBIKE', desc: 'Hypersport & Street', url: '/products?bike_category=sportbike', img: '/images/categories/sportbike.png' },
-                { label: 'CRUISER', desc: 'Harley-Davidson & Custom', url: '/products?bike_category=cruiser', img: '/images/categories/cruiser.png' },
-                { label: 'DUAL SPORT', desc: 'Adventure & Enduro', url: '/products?bike_category=dualsport', img: '/images/categories/dualsport.png' },
-                { label: 'TOURING', desc: 'Long Distance & Baggers', url: '/products?bike_category=touring', img: '/images/categories/touring.png' },
-                { label: 'DIRT', desc: 'Motocross & MX Off-Road', url: '/products?bike_category=dirt', img: '/images/categories/dirt.png' },
+                { label: 'SPORTBIKE', desc: 'Hypersport & Street Performance', url: '/products?bike_category=sportbike', img: '/images/categories/sportbike.png' },
+                { label: 'CRUISER', desc: 'Harley-Davidson & Custom V-Twin', url: '/products?bike_category=cruiser', img: '/images/categories/cruiser.png' },
+                { label: 'DIRT', desc: 'Motocross & Off-Road MX', url: '/products?bike_category=dirt', img: '/images/categories/dirt.png' },
                 { label: 'RACE', desc: 'Track & Slick Performance', url: '/products?bike_category=race', img: '/images/categories/race.png' },
-                { label: 'SCOOTER', desc: 'Urban Commuter & Moped', url: '/products?bike_category=scooter', img: '/images/categories/scooter.png' },
               ];
 
               return menuList.map((item: any, idx: number) => {

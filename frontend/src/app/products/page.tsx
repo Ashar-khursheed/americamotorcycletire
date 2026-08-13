@@ -580,11 +580,11 @@ function ProductsContent() {
               MOTORCYCLE TIRES & SPECIFIC FITMENT CATALOG
             </h1>
 
-            {/* Cycle Gear Style Visual Tire Category Selector (All 7 Categories) */}
+            {/* Cycle Gear Style Visual Tire Category Selector (Always Visible) */}
             <div className="pt-2">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[11px] font-black uppercase tracking-widest text-[#BF8647] flex items-center gap-1.5 font-heading">
-                  <Sparkles className="w-3.5 h-3.5 text-[#BF8647]" /> SHOP BY TIRE CATEGORY (CYCLE GEAR STYLE)
+                  <Sparkles className="w-3.5 h-3.5 text-[#BF8647]" /> SHOP BY TIRE CATEGORY
                 </span>
                 {selectedBikeCategory && (
                   <button
@@ -596,7 +596,7 @@ function ProductsContent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2.5 sm:gap-4">
                 {[
                   {
                     id: 'sportbike',
@@ -609,16 +609,6 @@ function ProductsContent() {
                     image: '/images/categories/cruiser.png',
                   },
                   {
-                    id: 'dualsport',
-                    label: 'Dual Sport',
-                    image: '/images/categories/dualsport.png',
-                  },
-                  {
-                    id: 'touring',
-                    label: 'Touring',
-                    image: '/images/categories/touring.png',
-                  },
-                  {
                     id: 'dirt',
                     label: 'Dirt',
                     image: '/images/categories/dirt.png',
@@ -627,11 +617,6 @@ function ProductsContent() {
                     id: 'race',
                     label: 'Race',
                     image: '/images/categories/race.png',
-                  },
-                  {
-                    id: 'scooter',
-                    label: 'Scooter',
-                    image: '/images/categories/scooter.png',
                   },
                 ].map((cat) => {
                   const isActive = selectedBikeCategory.toLowerCase() === cat.id.toLowerCase();
@@ -679,103 +664,108 @@ function ProductsContent() {
 
         {/* Top Fitment & Search Toolbar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4">
-          <div className="bg-[#141414] border border-[#BF8647]/40 p-3.5 sm:p-5 rounded-xl shadow-lg">
-            <div className="flex items-center justify-between mb-3 border-b border-[#222] pb-2.5">
-              <div className="flex items-center gap-2 text-[11px] sm:text-xs font-extrabold text-[#BF8647] uppercase tracking-wider">
-                <Bike className="w-4 h-4 shrink-0" /> BIKE FITMENT SEARCH
+          {/* Bike Fitment Search Box (Only displayed when fitment parameters exist) */}
+          {(selectedYear || selectedMake || selectedModel || selectedType) && (
+            <div className="bg-[#141414] border border-[#BF8647]/40 p-3.5 sm:p-5 rounded-xl shadow-lg">
+              <div className="flex items-center justify-between mb-3 border-b border-[#222] pb-2.5">
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs font-extrabold text-[#BF8647] uppercase tracking-wider">
+                  <Bike className="w-4 h-4 shrink-0" /> BIKE FITMENT SEARCH
+                </div>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={resetAllFilters}
+                    className="text-[10px] sm:text-[11px] text-gray-400 hover:text-[#BF8647] uppercase font-bold flex items-center gap-1 transition-colors"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Clear Filters ({activeFilterCount})
+                  </button>
+                )}
               </div>
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={resetAllFilters}
-                  className="text-[10px] sm:text-[11px] text-gray-400 hover:text-[#BF8647] uppercase font-bold flex items-center gap-1 transition-colors"
-                >
-                  <RotateCcw className="w-3 h-3" /> Clear Filters ({activeFilterCount})
-                </button>
-              )}
+
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 text-xs uppercase font-semibold">
+                {/* Type */}
+                <div>
+                  <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">TYPE / CATEGORY</label>
+                  <select
+                    value={selectedType}
+                    onChange={(e) => {
+                      setSelectedType(e.target.value);
+                      setSelectedYear('');
+                      setSelectedMake('');
+                      setSelectedModel('');
+                    }}
+                    className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
+                  >
+                    <option value="">ALL TYPES</option>
+                    {(typesList.length > 0 ? typesList : ['Street Bike', 'Dirt Bike', 'UTV/ATV'])
+                      .filter((t) => ['Street Bike', 'Dirt Bike', 'Dirt', 'UTV/ATV', 'Street'].includes(t))
+                      .map((t) => (
+                        <option key={t} value={t}>
+                          {t.toLowerCase().includes('dirt') ? 'Dirt Bike' : t.toLowerCase().includes('street') ? 'Street Bike' : t}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                {/* Year */}
+                <div>
+                  <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">YEAR</label>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => {
+                      setSelectedYear(e.target.value);
+                      setSelectedMake('');
+                      setSelectedModel('');
+                    }}
+                    className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
+                  >
+                    <option value="">ALL YEARS</option>
+                    {yearsList.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Make */}
+                <div>
+                  <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">MAKE</label>
+                  <select
+                    value={selectedMake}
+                    onChange={(e) => {
+                      setSelectedMake(e.target.value);
+                      setSelectedModel('');
+                    }}
+                    className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
+                  >
+                    <option value="">ALL MAKES</option>
+                    {makesList.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Model */}
+                <div>
+                  <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">MODEL</label>
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
+                  >
+                    <option value="">ALL MODELS</option>
+                    {modelsList.map((mod) => (
+                      <option key={mod} value={mod}>
+                        {mod}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 text-xs uppercase font-semibold">
-              {/* Type */}
-              <div>
-                <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">TYPE / CATEGORY</label>
-                <select
-                  value={selectedType}
-                  onChange={(e) => {
-                    setSelectedType(e.target.value);
-                    setSelectedYear('');
-                    setSelectedMake('');
-                    setSelectedModel('');
-                  }}
-                  className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
-                >
-                  <option value="">ALL TYPES</option>
-                  {typesList.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Year */}
-              <div>
-                <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">YEAR</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => {
-                    setSelectedYear(e.target.value);
-                    setSelectedMake('');
-                    setSelectedModel('');
-                  }}
-                  className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
-                >
-                  <option value="">ALL YEARS</option>
-                  {yearsList.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Make */}
-              <div>
-                <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">MAKE</label>
-                <select
-                  value={selectedMake}
-                  onChange={(e) => {
-                    setSelectedMake(e.target.value);
-                    setSelectedModel('');
-                  }}
-                  className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
-                >
-                  <option value="">ALL MAKES</option>
-                  {makesList.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Model */}
-              <div>
-                <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">MODEL</label>
-                <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
-                >
-                  <option value="">ALL MODELS</option>
-                  {modelsList.map((mod) => (
-                    <option key={mod} value={mod}>
-                      {mod}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Search & Sort Row */}
           <div className="bg-[#141414] border border-[#222] p-3.5 sm:p-4 rounded-xl flex flex-col lg:flex-row gap-3 items-stretch">

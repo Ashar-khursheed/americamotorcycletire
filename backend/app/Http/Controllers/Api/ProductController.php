@@ -370,7 +370,7 @@ class ProductController extends Controller
         sort($cleanModels);
 
         // 4. Clean Vehicle Types list
-        $typesSet = ['Sportbike', 'Cruiser', 'Touring', 'Dirt', 'Street Bike', 'UTV/ATV'];
+        $typesSet = ['Street Bike', 'Dirt Bike', 'UTV/ATV'];
 
         return response()->json([
             'years' => $years,

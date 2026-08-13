@@ -206,17 +206,13 @@ export function HeroBanner() {
                     className="w-full bg-[#1A1A1A] border border-[#333] text-white rounded px-3 py-2.5 text-xs font-semibold uppercase focus:border-[#BF8647] focus:outline-none cursor-pointer"
                   >
                     <option value="">-- SELECT TYPE --</option>
-                    {types.length > 0
-                      ? types.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))
-                      : ['Sportbike', 'Cruiser', 'Touring', 'Dirt', 'Street Bike', 'UTV/ATV'].map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
+                    {(types.length > 0 ? types : ['Street Bike', 'Dirt Bike', 'UTV/ATV'])
+                      .filter((t) => ['Street Bike', 'Dirt Bike', 'Dirt', 'UTV/ATV', 'Street'].includes(t))
+                      .map((t) => (
+                        <option key={t} value={t}>
+                          {t.toLowerCase().includes('dirt') ? 'Dirt Bike' : t.toLowerCase().includes('street') ? 'Street Bike' : t}
+                        </option>
+                      ))}
                   </select>
                 </div>
 

@@ -299,17 +299,13 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
                   className="w-full bg-[#1A1A1A] border border-[#333] rounded-lg px-3.5 py-3 text-xs text-white uppercase font-bold focus:outline-none focus:border-[#BF8647] disabled:opacity-50 cursor-pointer"
                 >
                   <option value="">-- SELECT BIKE TYPE --</option>
-                  {typesList.length > 0
-                    ? typesList.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))
-                    : ['Sportbike', 'Cruiser', 'Touring', 'Dirt', 'Street Bike', 'UTV/ATV'].map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
+                  {(typesList.length > 0 ? typesList : ['Street Bike', 'Dirt Bike', 'UTV/ATV'])
+                    .filter((t) => ['Street Bike', 'Dirt Bike', 'Dirt', 'UTV/ATV', 'Street'].includes(t))
+                    .map((t) => (
+                      <option key={t} value={t}>
+                        {t.toLowerCase().includes('dirt') ? 'Dirt Bike' : t.toLowerCase().includes('street') ? 'Street Bike' : t}
+                      </option>
+                    ))}
                 </select>
               </div>
 
