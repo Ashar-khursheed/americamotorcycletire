@@ -39,16 +39,21 @@ export const getImageUrl = (url?: string | null): string => {
 
   let cleanUrl = url.trim();
 
-  if (cleanUrl.startsWith('http://127.0.0.1:8000') || cleanUrl.startsWith('http://localhost:8000')) {
-    cleanUrl = cleanUrl.replace(/^http:\/\/(127\.0\.0\.1|localhost):8000/, 'https://americaapi.kaafifoods.com');
+  // Convert extension to .webp for local storage assets
+  cleanUrl = cleanUrl.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+
+  const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, '') || 'http://127.0.0.1:8000';
+
+  if (apiOrigin.includes('127.0.0.1') || apiOrigin.includes('localhost')) {
+    cleanUrl = cleanUrl.replace(/^https?:\/\/americaapi\.kaafifoods\.com/, apiOrigin);
   }
 
   if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
     const relativePath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
     if (!relativePath.startsWith('/storage/')) {
-      return `https://americaapi.kaafifoods.com/storage${relativePath}`;
+      return `${apiOrigin}/storage${relativePath}`;
     }
-    return `https://americaapi.kaafifoods.com${relativePath}`;
+    return `${apiOrigin}${relativePath}`;
   }
 
   return cleanUrl;
