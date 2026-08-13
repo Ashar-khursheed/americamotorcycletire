@@ -40,6 +40,7 @@ function ProductsContent() {
   const initialVType = getInitialParam('vehicle_type') || getInitialParam('type');
   const initialBrand = getInitialParam('brand');
   const initialQ = getInitialParam('search');
+  const initialBikeCategory = getInitialParam('bike_category');
   const initialPage = getInitialParam('page') ? Number(getInitialParam('page')) : 1;
 
   const [products, setProducts] = useState<any[]>([]);
@@ -58,6 +59,7 @@ function ProductsContent() {
   // Filters State
   const [search, setSearch] = useState(initialQ);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedBikeCategory, setSelectedBikeCategory] = useState(initialBikeCategory);
   const [selectedType, setSelectedType] = useState(initialType);
   const [selectedVehicleType, setSelectedVehicleType] = useState<string[]>(initialVType ? initialVType.split(',') : []);
   const [selectedProductType, setSelectedProductType] = useState<string[]>([]);
@@ -88,6 +90,7 @@ function ProductsContent() {
       const type = searchParams.get('type') || searchParams.get('vehicle_type') || searchParams.get('product_type') || '';
       const vType = searchParams.get('vehicle_type') || searchParams.get('type') || '';
       const brand = searchParams.get('brand') || '';
+      const bikeCat = searchParams.get('bike_category') || '';
       const q = searchParams.get('search') || '';
       const p = searchParams.get('page');
 
@@ -95,6 +98,7 @@ function ProductsContent() {
       setSelectedMake(make);
       setSelectedModel(model);
       setSelectedType(type);
+      setSelectedBikeCategory(bikeCat);
       setSelectedVehicleType(vType ? vType.split(',') : []);
       setSelectedBrands(brand ? brand.split(',') : []);
       setSearch(q);
@@ -142,6 +146,7 @@ function ProductsContent() {
   }, [
     search,
     selectedCategory,
+    selectedBikeCategory,
     selectedType,
     selectedVehicleType,
     selectedProductType,
@@ -163,6 +168,7 @@ function ProductsContent() {
 
     if (search) params.search = search;
     if (selectedCategory) params.category = selectedCategory;
+    if (selectedBikeCategory) params.bike_category = selectedBikeCategory;
     if (selectedType) params.type = selectedType;
     if (selectedVehicleType.length > 0) params.vehicle_type = selectedVehicleType.join(',');
     if (selectedProductType.length > 0) params.product_type = selectedProductType.join(',');
@@ -259,6 +265,7 @@ function ProductsContent() {
   const resetAllFilters = () => {
     setSearch('');
     setSelectedCategory('');
+    setSelectedBikeCategory('');
     setSelectedType('');
     setSelectedVehicleType([]);
     setSelectedProductType([]);
@@ -554,9 +561,45 @@ function ProductsContent() {
             <span className="text-[#BF8647] font-bold text-[10px] sm:text-xs uppercase tracking-widest block mb-1 sm:mb-2">
               AMERICA MOTORCYCLE TIRE • OFFICIAL INVENTORY CATALOGUE
             </span>
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold uppercase text-white tracking-tight">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold uppercase text-white tracking-tight mb-4">
               MOTORCYCLE TIRES & SPECIFIC FITMENT CATALOG
             </h1>
+
+            {/* Primary Bike Category Bar */}
+            <div className="pt-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">
+                FILTER BY BIKE CATEGORY
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+                {[
+                  { id: '', label: 'ALL BIKE TYPES', desc: 'Full Catalog' },
+                  { id: 'sportbike', label: 'SPORTBIKE', desc: 'Includes Race' },
+                  { id: 'cruiser', label: 'CRUISER', desc: 'Harley & V-Twin' },
+                  { id: 'touring', label: 'TOURING', desc: 'Grand Touring' },
+                  { id: 'dirt', label: 'DIRT', desc: 'Motocross & Off-Road' },
+                ].map((cat) => {
+                  const isActive = selectedBikeCategory.toLowerCase() === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedBikeCategory(cat.id)}
+                      className={`p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer ${
+                        isActive
+                          ? 'bg-[#BF8647] text-black border-[#BF8647] shadow-lg shadow-[#BF8647]/30 scale-[1.02]'
+                          : 'bg-[#181818] text-white border-[#2A2A2A] hover:border-[#BF8647]/60 hover:bg-[#202020]'
+                      }`}
+                    >
+                      <div className={`text-xs font-black uppercase font-heading tracking-wide ${isActive ? 'text-black' : 'text-white'}`}>
+                        {cat.label}
+                      </div>
+                      <div className={`text-[10px] font-medium tracking-normal mt-0.5 ${isActive ? 'text-black/80' : 'text-gray-400'}`}>
+                        {cat.desc}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 

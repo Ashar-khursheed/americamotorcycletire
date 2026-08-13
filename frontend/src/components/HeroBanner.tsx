@@ -212,7 +212,7 @@ export function HeroBanner() {
                             {t}
                           </option>
                         ))
-                      : ['Street Bike', 'Dirt Bike', 'UTV/ATV'].map((t) => (
+                      : ['Sportbike', 'Cruiser', 'Touring', 'Dirt', 'Street Bike', 'UTV/ATV'].map((t) => (
                           <option key={t} value={t}>
                             {t}
                           </option>

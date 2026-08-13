@@ -54,12 +54,12 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Desktop Dynamic Nav */}
+          {/* Desktop Dynamic Nav with Tires Mega Menu */}
           <nav className="hidden md:flex items-center gap-6 text-[13px] font-medium tracking-widest text-gray-300 uppercase font-heading">
             {(() => {
               let menuList = [
                 { label: 'Home', url: '/' },
-                { label: 'Shop Tires', url: '/products' },
+                { label: 'Shop Tires', url: '/products', isDropdown: true },
                 { label: 'Repair & Service', url: '/services' },
                 { label: 'About Us', url: '/about' },
                 { label: 'Contact', url: '/contact' },
@@ -70,16 +70,81 @@ export function Header() {
                   if (Array.isArray(parsed) && parsed.length > 0) menuList = parsed;
                 } catch (e) { }
               }
-              return menuList.map((item: any, idx: number) => (
-                <Link
-                  key={idx}
-                  href={item.url || '/'}
-                  className="relative py-1 hover:text-[#BF8647] transition-colors duration-200 group font-heading text-[13px] tracking-widest font-medium"
-                >
-                  <span className="font-heading tracking-widest">{item.label}</span>
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#BF8647] transition-all duration-300 group-hover:w-full"></span>
-                </Link>
-              ));
+              const bikeCategories = [
+                { label: 'SPORTBIKE', desc: 'Hypersport, Track & Race Tires', url: '/products?bike_category=sportbike', tag: 'Combined Race' },
+                { label: 'CRUISER', desc: 'Harley-Davidson & Custom V-Twin', url: '/products?bike_category=cruiser' },
+                { label: 'TOURING', desc: 'Long Distance & Baggers', url: '/products?bike_category=touring' },
+                { label: 'DIRT', desc: 'Motocross, Enduro & Off-Road', url: '/products?bike_category=dirt' },
+              ];
+
+              return menuList.map((item: any, idx: number) => {
+                const isTiresLink = item.label.toLowerCase().includes('tire') || item.isDropdown;
+                if (isTiresLink) {
+                  return (
+                    <div key={idx} className="relative group">
+                      <Link
+                        href={item.url || '/products'}
+                        className="py-6 inline-flex items-center gap-1 hover:text-[#BF8647] transition-colors duration-200 font-heading text-[13px] tracking-widest font-medium"
+                      >
+                        <span className="font-heading tracking-widest">{item.label}</span>
+                        <svg className="w-3 h-3 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                        <span className="absolute bottom-4 left-0 w-0 h-0.5 bg-[#BF8647] transition-all duration-300 group-hover:w-full"></span>
+                      </Link>
+
+                      {/* Dropdown Menu */}
+                      <div className="absolute top-full left-0 w-80 bg-[#121212] border border-[#2B2B2B] rounded-xl shadow-2xl p-3 space-y-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <div className="px-3 py-1.5 border-b border-[#222] mb-1">
+                          <span className="text-[10px] font-black uppercase text-[#BF8647] tracking-widest block">
+                            BIKE CATEGORIES
+                          </span>
+                        </div>
+                        {bikeCategories.map((cat, cIdx) => (
+                          <Link
+                            key={cIdx}
+                            href={cat.url}
+                            className="flex items-center justify-between p-2.5 rounded-lg hover:bg-[#1A1A1A] hover:border-[#BF8647]/50 border border-transparent transition-all group/cat"
+                          >
+                            <div>
+                              <div className="text-xs font-black text-white group-hover/cat:text-[#BF8647] transition-colors tracking-wide">
+                                {cat.label}
+                              </div>
+                              <div className="text-[10px] text-gray-400 font-medium normal-case">
+                                {cat.desc}
+                              </div>
+                            </div>
+                            {cat.tag && (
+                              <span className="text-[9px] bg-[#BF8647]/20 text-[#BF8647] font-bold px-1.5 py-0.5 rounded border border-[#BF8647]/40 uppercase">
+                                {cat.tag}
+                              </span>
+                            )}
+                          </Link>
+                        ))}
+                        <div className="pt-1 border-t border-[#222]">
+                          <Link
+                            href="/products"
+                            className="block text-center text-[11px] font-bold uppercase text-gray-300 hover:text-[#BF8647] py-1.5 transition-colors"
+                          >
+                            VIEW ALL TIRES CATALOGUE &rarr;
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={idx}
+                    href={item.url || '/'}
+                    className="relative py-1 hover:text-[#BF8647] transition-colors duration-200 group font-heading text-[13px] tracking-widest font-medium"
+                  >
+                    <span className="font-heading tracking-widest">{item.label}</span>
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#BF8647] transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
+                );
+              });
             })()}
           </nav>
 
@@ -165,6 +230,47 @@ export function Header() {
               <Bike className="w-4 h-4" />
               <span>SHOP YOUR RIDE (SELECT BIKE)</span>
             </button>
+
+            {/* Mobile Bike Categories Section */}
+            <div className="bg-[#1A1A1A] p-3 rounded-lg border border-[#262626] my-2 space-y-2">
+              <span className="text-[10px] font-black uppercase text-[#BF8647] tracking-widest block border-b border-[#2B2B2B] pb-1">
+                TIRES BY BIKE CATEGORY
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <Link
+                  href="/products?bike_category=sportbike"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="bg-[#121212] p-2 rounded border border-[#333] text-white hover:border-[#BF8647] text-left font-bold"
+                >
+                  <div className="text-[11px] text-[#BF8647]">SPORTBIKE</div>
+                  <div className="text-[9px] text-gray-400 font-normal lowercase">sport & race</div>
+                </Link>
+                <Link
+                  href="/products?bike_category=cruiser"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="bg-[#121212] p-2 rounded border border-[#333] text-white hover:border-[#BF8647] text-left font-bold"
+                >
+                  <div className="text-[11px] text-[#BF8647]">CRUISER</div>
+                  <div className="text-[9px] text-gray-400 font-normal lowercase">harley & v-twin</div>
+                </Link>
+                <Link
+                  href="/products?bike_category=touring"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="bg-[#121212] p-2 rounded border border-[#333] text-white hover:border-[#BF8647] text-left font-bold"
+                >
+                  <div className="text-[11px] text-[#BF8647]">TOURING</div>
+                  <div className="text-[9px] text-gray-400 font-normal lowercase">long distance</div>
+                </Link>
+                <Link
+                  href="/products?bike_category=dirt"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="bg-[#121212] p-2 rounded border border-[#333] text-white hover:border-[#BF8647] text-left font-bold"
+                >
+                  <div className="text-[11px] text-[#BF8647]">DIRT</div>
+                  <div className="text-[9px] text-gray-400 font-normal lowercase">motocross & mx</div>
+                </Link>
+              </div>
+            </div>
 
             {(() => {
               let menuList = [

@@ -39,16 +39,77 @@ class ProductFilterService
             });
         }
 
-        // 2. Type Filter ('type' or 'product_type' - searches both vehicle_type and product_type)
+        // 2. Bike Category & Type Filter ('bike_category', 'type', or 'product_type')
+        $bikeCategory = strtolower(trim($request->input('bike_category') ?? ''));
         $typeParam = $request->input('type') ?: $request->input('product_type');
-        if (!empty($typeParam)) {
+
+        if (!empty($bikeCategory)) {
+            $query->where(function ($q) use ($bikeCategory) {
+                if (in_array($bikeCategory, ['sportbike', 'sportbikes', 'race', 'sportbike / race', 'sportbike/race'])) {
+                    // Combine Sportbikes + Race tires
+                    $q->where(function ($subQ) {
+                        $subQ->where('product_type', 'like', '%sportbike%')
+                             ->orWhere('product_type', 'like', '%hypersport%')
+                             ->orWhere('product_type', 'like', '%race%')
+                             ->orWhere('product_type', 'like', '%track%')
+                             ->orWhere('product_type', 'like', '%supermoto%')
+                             ->orWhere('product_type', 'like', '%supersport%')
+                             ->orWhere('vehicle_type', 'like', '%sport%')
+                             ->orWhere('name', 'like', '%sport%')
+                             ->orWhere('name', 'like', '%race%')
+                             ->orWhere('name', 'like', '%hypersport%');
+                    });
+                } elseif ($bikeCategory === 'cruiser') {
+                    $q->where(function ($subQ) {
+                        $subQ->where('product_type', 'like', '%cruiser%')
+                             ->orWhere('product_type', 'like', '%harley%')
+                             ->orWhere('product_type', 'like', '%v-twin%')
+                             ->orWhere('product_type', 'like', '%custom%')
+                             ->orWhere('product_type', 'like', '%whitewall%')
+                             ->orWhere('name', 'like', '%cruiser%')
+                             ->orWhere('name', 'like', '%harley%')
+                             ->orWhere('name', 'like', '%commander%')
+                             ->orWhere('name', 'like', '%cobra chrome%');
+                    });
+                } elseif ($bikeCategory === 'touring') {
+                    $q->where(function ($subQ) {
+                        $subQ->where('product_type', 'like', '%touring%')
+                             ->orWhere('name', 'like', '%touring%')
+                             ->orWhere('name', 'like', '%road attack%')
+                             ->orWhere('name', 'like', '%marathon%');
+                    });
+                } elseif ($bikeCategory === 'dirt') {
+                    $q->where(function ($subQ) {
+                        $subQ->where('vehicle_type', 'like', '%dirt%')
+                             ->orWhere('product_type', 'like', '%dirt%')
+                             ->orWhere('product_type', 'like', '%motocross%')
+                             ->orWhere('product_type', 'like', '%off road%')
+                             ->orWhere('product_type', 'like', '%enduro%')
+                             ->orWhere('product_type', 'like', '%soft terrain%')
+                             ->orWhere('product_type', 'like', '%intermediate terrain%')
+                             ->orWhere('product_type', 'like', '%hard terrain%')
+                             ->orWhere('product_type', 'like', '%sand%')
+                             ->orWhere('product_type', 'like', '%mud%');
+                    });
+                }
+            });
+        } elseif (!empty($typeParam)) {
             $types = is_array($typeParam) ? $typeParam : explode(',', $typeParam);
             $query->where(function ($q) use ($types) {
                 foreach ($types as $t) {
                     $trimT = trim($t);
                     if (empty($trimT)) continue;
-                    $q->orWhere('vehicle_type', 'like', "%{$trimT}%")
-                      ->orWhere('product_type', 'like', "%{$trimT}%");
+
+                    $lowerT = strtolower($trimT);
+                    if (in_array($lowerT, ['sportbike', 'sportbikes', 'race'])) {
+                        $q->orWhere('product_type', 'like', '%sportbike%')
+                          ->orWhere('product_type', 'like', '%hypersport%')
+                          ->orWhere('product_type', 'like', '%race%')
+                          ->orWhere('product_type', 'like', '%supermoto%');
+                    } else {
+                        $q->orWhere('vehicle_type', 'like', "%{$trimT}%")
+                          ->orWhere('product_type', 'like', "%{$trimT}%");
+                    }
                 }
             });
         }
@@ -136,6 +197,20 @@ class ProductFilterService
                     }
                 });
             });
+
+            // Enforce vehicle model category compatibility (e.g. Cruiser models exclude Scooter / Dirt / Pure Sportbike)
+            $modelLower = strtolower($model);
+            $makeLower  = strtolower($make);
+
+            $isCruiserVehicle = str_contains($makeLower, 'harley') || str_contains($modelLower, 'street glide') || str_contains($modelLower, 'road glide') || str_contains($modelLower, 'softail') || str_contains($modelLower, 'fat boy') || str_contains($modelLower, 'dyna') || str_contains($modelLower, 'sportster') || str_contains($modelLower, 'vulcan') || str_contains($modelLower, 'boulevard') || str_contains($modelLower, 'shadow');
+
+            if ($isCruiserVehicle) {
+                // Cruiser bike selected: exclude Scooter, UTV/ATV, Dirt, and pure Hypersport/Race tires
+                $query->where('vehicle_type', '!=', 'UTV/ATV')
+                      ->where('product_type', 'not like', '%scooter%')
+                      ->where('product_type', 'not like', '%hypersport%')
+                      ->where('product_type', 'not like', '%dirt bike%');
+            }
         }
 
         // 7. Price Range Filter
