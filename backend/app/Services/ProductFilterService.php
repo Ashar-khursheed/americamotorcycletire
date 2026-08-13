@@ -476,15 +476,15 @@ class ProductFilterService
 
     public function getCategoryCounts(Request $request)
     {
-        $baseReq = clone $request;
-        $baseReq->query->remove('bike_category');
-        $baseReq->request->remove('bike_category');
+        $queryParams = $request->query();
+        unset($queryParams['bike_category']);
 
         $counts = [];
         foreach (['sportbike', 'cruiser', 'dirt', 'race'] as $cat) {
-            $catReq = clone $baseReq;
-            $catReq->merge(['bike_category' => $cat]);
-            $counts[$cat] = $this->getFilteredProducts($catReq)->count();
+            $catParams = array_merge($queryParams, ['bike_category' => $cat]);
+            $catReq = Request::create($request->path(), $request->method(), $catParams);
+            $res = $this->getFilteredProducts($catReq);
+            $counts[$cat] = method_exists($res, 'total') ? $res->total() : (is_countable($res) ? count($res) : 0);
         }
         return $counts;
     }

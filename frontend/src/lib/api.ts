@@ -74,6 +74,7 @@ export const fetchProducts = async (params?: Record<string, any>) => {
 
   if (raw && raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)) {
     return {
+      ...raw,
       ...raw.data,
       data: Array.isArray(raw.data.data) ? raw.data.data.map(sanitizeProduct) : [],
     };
