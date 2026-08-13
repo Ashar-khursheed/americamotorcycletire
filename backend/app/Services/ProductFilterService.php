@@ -51,8 +51,15 @@ class ProductFilterService
                              ->orWhere('product_type', 'like', '%hypersport%')
                              ->orWhere('product_type', 'like', '%supersport%')
                              ->orWhere('product_type', 'like', '%supermoto%')
+                             ->orWhere('product_type', 'like', '%scooter%')
+                             ->orWhere('product_type', 'like', '%moped%')
+                             ->orWhere('product_type', 'like', '%street%')
+                             ->orWhere('product_type', 'like', '%sport touring%')
+                             ->orWhere('product_type', 'like', '%dot tire%')
                              ->orWhere('vehicle_type', 'like', '%sport%')
+                             ->orWhere('vehicle_type', 'like', '%street%')
                              ->orWhere('name', 'like', '%sport%')
+                             ->orWhere('name', 'like', '%scooter%')
                              ->orWhere('name', 'like', '%hypersport%');
                     });
                 } elseif (in_array($bikeCategory, ['race', 'track'])) {
@@ -60,6 +67,8 @@ class ProductFilterService
                         $subQ->where('product_type', 'like', '%race%')
                              ->orWhere('product_type', 'like', '%track%')
                              ->orWhere('product_type', 'like', '%slick%')
+                             ->orWhere('product_type', 'like', '%hypersport%')
+                             ->orWhere('product_type', 'like', '%supersport%')
                              ->orWhere('name', 'like', '%race%')
                              ->orWhere('name', 'like', '%slick%')
                              ->orWhere('name', 'like', '%supercorsa%')
@@ -72,61 +81,36 @@ class ProductFilterService
                              ->orWhere('product_type', 'like', '%v-twin%')
                              ->orWhere('product_type', 'like', '%custom%')
                              ->orWhere('product_type', 'like', '%whitewall%')
+                             ->orWhere('product_type', 'like', '%touring%')
+                             ->orWhere('product_type', 'like', '%vintage%')
+                             ->orWhere('vehicle_type', 'like', '%cruiser%')
                              ->orWhere('name', 'like', '%cruiser%')
                              ->orWhere('name', 'like', '%harley%')
                              ->orWhere('name', 'like', '%commander%')
+                             ->orWhere('name', 'like', '%touring%')
                              ->orWhere('name', 'like', '%cobra chrome%');
                     });
-                } elseif (in_array($bikeCategory, ['dualsport', 'dual sport', 'adventure'])) {
-                    $q->where(function ($subQ) {
-                        $subQ->where('product_type', 'like', '%dual sport%')
-                             ->orWhere('product_type', 'like', '%dualsport%')
-                             ->orWhere('product_type', 'like', '%adventure%')
-                             ->orWhere('product_type', 'like', '%enduro%')
-                             ->orWhere('vehicle_type', 'like', '%dual sport%')
-                             ->orWhere('name', 'like', '%dual sport%')
-                             ->orWhere('name', 'like', '%dualsport%')
-                             ->orWhere('name', 'like', '%adventure%')
-                             ->orWhere('name', 'like', '%trail%')
-                             ->orWhere('name', 'like', '%anakee%')
-                             ->orWhere('name', 'like', '%trailmax%')
-                             ->orWhere('name', 'like', '%tkc%');
-                    });
-                } elseif ($bikeCategory === 'touring') {
-                    $q->where(function ($subQ) {
-                        $subQ->where('product_type', 'like', '%touring%')
-                             ->orWhere('vehicle_type', 'like', '%touring%')
-                             ->orWhere('name', 'like', '%touring%')
-                             ->orWhere('name', 'like', '%road attack%')
-                             ->orWhere('name', 'like', '%marathon%');
-                    });
-                } elseif ($bikeCategory === 'dirt') {
+                } elseif (in_array($bikeCategory, ['dualsport', 'dual sport', 'adventure', 'dirt'])) {
                     $q->where(function ($subQ) {
                         $subQ->where('vehicle_type', 'like', '%dirt%')
                              ->orWhere('product_type', 'like', '%dirt%')
                              ->orWhere('product_type', 'like', '%motocross%')
                              ->orWhere('product_type', 'like', '%off road%')
                              ->orWhere('product_type', 'like', '%enduro%')
+                             ->orWhere('product_type', 'like', '%dual sport%')
+                             ->orWhere('product_type', 'like', '%dualsport%')
+                             ->orWhere('product_type', 'like', '%adventure%')
                              ->orWhere('product_type', 'like', '%soft terrain%')
                              ->orWhere('product_type', 'like', '%intermediate terrain%')
                              ->orWhere('product_type', 'like', '%hard terrain%')
                              ->orWhere('product_type', 'like', '%sand%')
                              ->orWhere('product_type', 'like', '%mud%')
+                             ->orWhere('product_type', 'like', '%trials%')
                              ->orWhere('name', 'like', '%dirt%')
                              ->orWhere('name', 'like', '%motocross%')
                              ->orWhere('name', 'like', '%mx%')
                              ->orWhere('name', 'like', '%starcross%')
                              ->orWhere('name', 'like', '%geomax%');
-                    });
-                } elseif (in_array($bikeCategory, ['scooter', 'scooters', 'moped'])) {
-                    $q->where(function ($subQ) {
-                        $subQ->where('vehicle_type', 'like', '%scooter%')
-                             ->orWhere('product_type', 'like', '%scooter%')
-                             ->orWhere('product_type', 'like', '%moped%')
-                             ->orWhere('name', 'like', '%scooter%')
-                             ->orWhere('name', 'like', '%moped%')
-                             ->orWhere('name', 'like', '%city grip%')
-                             ->orWhere('name', 'like', '%bopper%');
                     });
                 }
             });
@@ -488,5 +472,20 @@ class ProductFilterService
                 'models' => $models,
             ],
         ];
+    }
+
+    public function getCategoryCounts(Request $request)
+    {
+        $baseReq = clone $request;
+        $baseReq->query->remove('bike_category');
+        $baseReq->request->remove('bike_category');
+
+        $counts = [];
+        foreach (['sportbike', 'cruiser', 'dirt', 'race'] as $cat) {
+            $catReq = clone $baseReq;
+            $catReq->merge(['bike_category' => $cat]);
+            $counts[$cat] = $this->getFilteredProducts($catReq)->count();
+        }
+        return $counts;
     }
 }

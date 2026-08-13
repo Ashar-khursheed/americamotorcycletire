@@ -78,6 +78,7 @@ function ProductsContent() {
   const [makesList, setMakesList] = useState<string[]>([]);
   const [modelsList, setModelsList] = useState<string[]>([]);
   const [typesList, setTypesList] = useState<string[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
   const addItem = useCartStore((state) => state.addItem);
 
@@ -195,6 +196,9 @@ function ProductsContent() {
 
           if (prodRes.available_filters) {
             setAvailableFilters(prodRes.available_filters);
+          }
+          if (prodRes.category_counts) {
+            setCategoryCounts(prodRes.category_counts);
           }
 
           const curPage = prodRes.current_page ?? prodRes.data?.current_page;
@@ -632,26 +636,35 @@ function ProductsContent() {
                     >
                       {/* Cycle Gear Style White/Grey Image Frame */}
                       <div className="w-full h-24 sm:h-28 bg-[#EAEAEA] rounded-lg p-1.5 flex items-center justify-center overflow-hidden relative shadow-inner">
+                        {/* Category Count Badge */}
+                        <div className="absolute top-1.5 left-1.5 z-10 bg-black/85 backdrop-blur-md text-[#BF8647] text-[10px] font-black px-2 py-0.5 rounded border border-[#BF8647]/50 shadow flex items-center gap-1">
+                          <span>{categoryCounts[cat.id] ?? 0}</span>
+                          <span className="text-[8px] text-gray-300 font-bold uppercase tracking-wider">TIRES</span>
+                        </div>
+
                         <img
                           src={cat.image}
                           alt={cat.label}
                           className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
                         />
                         {isActive && (
-                          <div className="absolute top-1 right-1 bg-[#BF8647] text-black p-0.5 rounded-full shadow">
+                          <div className="absolute top-1 right-1 z-10 bg-[#BF8647] text-black p-0.5 rounded-full shadow">
                             <Check className="w-3 h-3 stroke-[3]" />
                           </div>
                         )}
                       </div>
 
-                      {/* Label Text below */}
+                      {/* Label Text & Count below */}
                       <div className="mt-2 text-center w-full">
                         <span
-                          className={`text-xs font-black uppercase font-heading tracking-wide transition-colors ${
+                          className={`text-xs font-black uppercase font-heading tracking-wide block transition-colors ${
                             isActive ? 'text-[#BF8647]' : 'text-white group-hover:text-[#BF8647]'
                           }`}
                         >
                           {cat.label}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-bold tracking-wider block mt-0.5">
+                          {categoryCounts[cat.id] ?? 0} Products
                         </span>
                       </div>
                     </button>

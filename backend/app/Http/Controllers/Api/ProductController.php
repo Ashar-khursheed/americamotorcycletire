@@ -21,10 +21,12 @@ class ProductController extends Controller
     {
         $products = $this->filterService->getFilteredProducts($request);
         $filters = $this->filterService->getAvailableFilters($request);
+        $categoryCounts = $this->filterService->getCategoryCounts($request);
 
         return response()->json([
             'status' => 'success',
             'data' => $products,
+            'category_counts' => $categoryCounts,
             'available_filters' => $filters,
         ]);
     }
