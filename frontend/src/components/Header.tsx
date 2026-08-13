@@ -78,7 +78,9 @@ export function Header() {
               ];
 
               return menuList.map((item: any, idx: number) => {
-                const isTiresLink = item.label.toLowerCase().includes('tire') || item.isDropdown;
+                // Change SHOW_TIRES_DROPDOWN to true to unhide the categories dropdown menu
+                const SHOW_TIRES_DROPDOWN = false;
+                const isTiresLink = SHOW_TIRES_DROPDOWN && (item.label.toLowerCase().includes('tire') || item.isDropdown);
                 if (isTiresLink) {
                   return (
                     <div key={idx} className="relative group">
