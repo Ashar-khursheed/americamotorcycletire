@@ -27,6 +27,7 @@ export default function ProductDetailPage() {
   const slug = params?.slug as string;
 
   const [product, setProduct] = useState<any>(null);
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -44,11 +45,15 @@ export default function ProductDetailPage() {
       setLoading(true);
       setSelectedImage('');
       setSelectedAttributes({});
+      setSelectedVariant(null);
       setQuantity(1);
       fetchProductBySlug(slug)
         .then((res) => {
           const prod = res?.data || res;
           setProduct(prod);
+          if (Array.isArray(prod?.variants) && prod.variants.length > 0) {
+            setSelectedVariant(prod.variants[0]);
+          }
           if (prod?.primary_image) {
             setSelectedImage(prod.primary_image);
           } else if (Array.isArray(prod?.gallery_images) && prod.gallery_images.length > 0) {
@@ -146,8 +151,11 @@ export default function ProductDetailPage() {
   };
 
   const calculateCalculatedUnitPrice = () => {
-    const rawPrice = product?.price;
-    const baseP = typeof rawPrice === 'number' ? rawPrice : parseFloat(String(rawPrice || '249.95').replace(/[^0-9.]/g, '')) || 249.95;
+    let baseP = selectedVariant ? Number(selectedVariant.price) : 0;
+    if (!baseP || isNaN(baseP)) {
+      const rawPrice = product?.price;
+      baseP = typeof rawPrice === 'number' ? rawPrice : parseFloat(String(rawPrice || '249.95').replace(/[^0-9.]/g, '')) || 249.95;
+    }
     const addOnP = getFormattedGlobalSelections().reduce((sum, opt) => sum + opt.price, 0);
     return baseP + addOnP;
   };
@@ -155,7 +163,9 @@ export default function ProductDetailPage() {
   const handleAddToCart = () => {
     if (product) {
       const selections = getFormattedGlobalSelections();
-      const attrStr = Object.entries(selectedAttributes).map(([k, v]) => `${k}: ${v}`).join(', ');
+      const variantStr = selectedVariant ? `Size Option: ${selectedVariant.position || ''} ${selectedVariant.tire_size || selectedVariant.name || ''}`.trim() : '';
+      const customAttrStr = Object.entries(selectedAttributes).map(([k, v]) => `${k}: ${v}`).join(', ');
+      const attrStr = [variantStr, customAttrStr].filter(Boolean).join(' | ');
       const unitP = calculateCalculatedUnitPrice();
       addItem(product, quantity, attrStr, selections, unitP);
       setAdded(true);
@@ -166,7 +176,9 @@ export default function ProductDetailPage() {
   const handleBuyNow = () => {
     if (product) {
       const selections = getFormattedGlobalSelections();
-      const attrStr = Object.entries(selectedAttributes).map(([k, v]) => `${k}: ${v}`).join(', ');
+      const variantStr = selectedVariant ? `Size Option: ${selectedVariant.position || ''} ${selectedVariant.tire_size || selectedVariant.name || ''}`.trim() : '';
+      const customAttrStr = Object.entries(selectedAttributes).map(([k, v]) => `${k}: ${v}`).join(', ');
+      const attrStr = [variantStr, customAttrStr].filter(Boolean).join(' | ');
       const unitP = calculateCalculatedUnitPrice();
       addItem(product, quantity, attrStr, selections, unitP);
       router.push('/checkout');
@@ -386,6 +398,58 @@ export default function ProductDetailPage() {
                         <span>Snell & DOT compliant heavy duty casing structure</span>
                       </div>
                     </div>
+
+                    {/* Dynamic Size & Position Variant Selector */}
+                    {product.variants && product.variants.length > 0 && (
+                      <div className="space-y-3 my-6 pt-5 border-t border-[#222]">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-black uppercase text-[#BF8647] tracking-wider block">
+                            AVAILABLE TIRE OPTIONS & SIZES
+                          </label>
+                          <span className="text-[10px] text-[#BF8647] bg-[#BF8647]/10 border border-[#BF8647]/30 px-2 py-0.5 rounded font-bold uppercase">
+                            {product.variants.length} Options Available
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {product.variants.map((v: any, vIdx: number) => {
+                            const isSel = selectedVariant?.id === v.id || selectedVariant?.sku === v.sku || (!selectedVariant && vIdx === 0);
+                            const posLower = (v.position || '').toLowerCase();
+
+                            return (
+                              <button
+                                key={v.id || vIdx}
+                                type="button"
+                                onClick={() => setSelectedVariant(v)}
+                                className={`p-3 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between ${isSel
+                                  ? 'bg-[#1F1912] border-[#BF8647] ring-1 ring-[#BF8647]'
+                                  : 'bg-[#121212] border-[#2A2A2A] hover:border-gray-500'
+                                  }`}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${posLower === 'front' ? 'bg-sky-950 text-sky-400 border border-sky-800/40' :
+                                    posLower === 'rear' ? 'bg-amber-950 text-amber-400 border border-amber-800/40' :
+                                      'bg-zinc-800 text-gray-300'
+                                    }`}>
+                                    {v.position || 'Option'}
+                                  </span>
+                                  <span className="text-xs font-mono font-black text-[#BF8647]">
+                                    ${Number(v.price).toFixed(2)}
+                                  </span>
+                                </div>
+                                <div className="text-xs font-bold text-white uppercase mt-2 line-clamp-1">
+                                  {v.tire_size || v.name}
+                                </div>
+                                {(v.item_number || v.sku) && (
+                                  <div className="text-[9px] text-gray-500 font-mono uppercase mt-0.5">
+                                    SKU: {v.item_number || v.sku}
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Dynamic Attributes */}
                     {(() => {

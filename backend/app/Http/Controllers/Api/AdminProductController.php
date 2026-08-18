@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductFitment;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +17,7 @@ class AdminProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'fitments']);
+        $query = Product::with(['category', 'fitments', 'variants']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -71,7 +72,7 @@ class AdminProductController extends Controller
 
     public function show($id)
     {
-        $product = Product::with(['category', 'fitments'])->findOrFail($id);
+        $product = Product::with(['category', 'fitments', 'variants'])->findOrFail($id);
 
         return response()->json([
             'status' => 'success',
@@ -353,10 +354,36 @@ class AdminProductController extends Controller
             }
         }
 
+        $variants = $request->input('variants', $request->input('product_variants', []));
+        if (is_array($variants) && count($variants) > 0) {
+            foreach ($variants as $idx => $v) {
+                $vStyle = trim($v['name'] ?? $v['style'] ?? '');
+                $vPos = trim($v['position'] ?? 'Universal');
+                $vSize = trim($v['tire_size'] ?? $v['size'] ?? '');
+                $vPrice = (float)($v['price'] ?? $validated['price']);
+                $vSku = trim($v['sku'] ?? ($sku . '-VAR-' . ($idx + 1)));
+
+                ProductVariant::create([
+                    'product_id' => $product->id,
+                    'sku' => $vSku,
+                    'name' => $vStyle ?: "{$vPos} {$vSize}",
+                    'position' => $vPos,
+                    'tire_size' => $vSize,
+                    'item_number' => $v['item_number'] ?? null,
+                    'store_sku' => $v['store_sku'] ?? null,
+                    'mfr_part_number' => $v['mfr_part_number'] ?? null,
+                    'price' => $vPrice,
+                    'compare_at_price' => isset($v['compare_at_price']) ? (float)$v['compare_at_price'] : null,
+                    'stock_quantity' => isset($v['stock_quantity']) ? (int)$v['stock_quantity'] : 25,
+                    'is_active' => true,
+                ]);
+            }
+        }
+
         return response()->json([
             'status' => 'success',
-            'message' => 'Product created with gallery images and fitments successfully!',
-            'data' => $product->load('fitments'),
+            'message' => 'Product created with gallery images, fitments, and options successfully!',
+            'data' => $product->load(['fitments', 'variants']),
         ], 201);
     }
 
@@ -459,10 +486,39 @@ class AdminProductController extends Controller
             }
         }
 
+        if ($request->has('variants') || $request->has('product_variants')) {
+            $variants = $request->input('variants', $request->input('product_variants', []));
+            if (is_array($variants)) {
+                ProductVariant::where('product_id', $product->id)->delete();
+                foreach ($variants as $idx => $v) {
+                    $vStyle = trim($v['name'] ?? $v['style'] ?? '');
+                    $vPos = trim($v['position'] ?? 'Universal');
+                    $vSize = trim($v['tire_size'] ?? $v['size'] ?? '');
+                    $vPrice = (float)($v['price'] ?? $product->price);
+                    $vSku = trim($v['sku'] ?? ($product->sku . '-VAR-' . ($idx + 1)));
+
+                    ProductVariant::create([
+                        'product_id' => $product->id,
+                        'sku' => $vSku,
+                        'name' => $vStyle ?: "{$vPos} {$vSize}",
+                        'position' => $vPos,
+                        'tire_size' => $vSize,
+                        'item_number' => $v['item_number'] ?? null,
+                        'store_sku' => $v['store_sku'] ?? null,
+                        'mfr_part_number' => $v['mfr_part_number'] ?? null,
+                        'price' => $vPrice,
+                        'compare_at_price' => isset($v['compare_at_price']) ? (float)$v['compare_at_price'] : null,
+                        'stock_quantity' => isset($v['stock_quantity']) ? (int)$v['stock_quantity'] : 25,
+                        'is_active' => true,
+                    ]);
+                }
+            }
+        }
+
         return response()->json([
             'status' => 'success',
-            'message' => 'Product and fitment specs updated successfully!',
-            'data' => $product->load('fitments'),
+            'message' => 'Product, options, and fitment specs updated successfully!',
+            'data' => $product->load(['fitments', 'variants']),
         ]);
     }
 

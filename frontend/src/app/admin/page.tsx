@@ -846,6 +846,8 @@ export default function AdminDashboardPage() {
       const parsedCustomAttr = safeParseArray(fullProd.custom_attributes);
       const parsedFitments = safeParseArray(fullProd.fitments);
 
+      const parsedVariants = Array.isArray(fullProd.variants) ? fullProd.variants : (Array.isArray(fullProd.product_variants) ? fullProd.product_variants : []);
+
       setEditingProduct({
         ...fullProd,
         images: imagesList,
@@ -853,6 +855,7 @@ export default function AdminDashboardPage() {
         primary_image: fullProd.primary_image || (imagesList[0] || ''),
         custom_attributes: parsedCustomAttr,
         fitments: parsedFitments,
+        variants: parsedVariants,
       });
       setActiveTab('edit_product');
     } catch (err) {
@@ -861,6 +864,7 @@ export default function AdminDashboardPage() {
       const imagesList = parsedGallery.length > 0 ? parsedGallery : (p.primary_image ? [p.primary_image] : []);
       const parsedCustomAttr = safeParseArray(p.custom_attributes);
       const parsedFitments = safeParseArray(p.fitments);
+      const parsedVariants = Array.isArray(p.variants) ? p.variants : (Array.isArray(p.product_variants) ? p.product_variants : []);
 
       setEditingProduct({
         ...p,
@@ -869,6 +873,7 @@ export default function AdminDashboardPage() {
         primary_image: p.primary_image || (imagesList[0] || ''),
         custom_attributes: parsedCustomAttr,
         fitments: parsedFitments,
+        variants: parsedVariants,
       });
       setActiveTab('edit_product');
     } finally {
@@ -899,6 +904,7 @@ export default function AdminDashboardPage() {
         is_active: true,
         is_featured: true,
         fitments: newProd.fitments || [],
+        variants: newProd.variants || [],
         custom_attributes: newProd.custom_attributes || [],
       });
 
@@ -918,6 +924,7 @@ export default function AdminDashboardPage() {
         fitments: [
           { year: '2023', make: 'Harley-Davidson', model: 'FLHT Road Glide', position: 'Front' }
         ],
+        variants: [],
         custom_attributes: [
           { name: 'Wheel Location', options: 'Front, Rear' },
           { name: 'Tire Size', options: '' }
@@ -954,6 +961,7 @@ export default function AdminDashboardPage() {
         primary_image: mainCover,
         gallery_images: imagesList,
         fitments,
+        variants: editingProduct.variants || [],
         custom_attributes: editingProduct.custom_attributes || [],
       });
       alert('Product gallery, attributes & specifications updated successfully!');
@@ -2239,6 +2247,141 @@ export default function AdminDashboardPage() {
                     }}
                     isDarkMode={isDarkMode}
                   />
+
+                  {/* 1.5 TIRE OPTIONS & PRICE MANAGEMENT SECTION */}
+                  <div className={`p-6 rounded-xl space-y-4 border ${isDarkMode ? 'bg-[#101010] border-[#222]' : 'bg-white border-gray-200 shadow-sm'}`}>
+                    <div className="flex justify-between items-center border-b border-[#222] pb-3">
+                      <div>
+                        <h3 className="text-sm font-extrabold uppercase text-[#BF8647] tracking-wider font-heading flex items-center gap-2">
+                          <Tag className="w-4 h-4" /> TIRE OPTIONS & PRICE MANAGEMENT SECTION
+                        </h3>
+                        <p className="text-[11px] text-gray-400">Manage individual Front vs Rear tire size options and their specific retail prices</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const curVars = editingProduct.variants || [];
+                          setEditingProduct({
+                            ...editingProduct,
+                            variants: [
+                              ...curVars,
+                              {
+                                position: 'Front',
+                                tire_size: '',
+                                sku: `${editingProduct.sku || 'SKU'}-VAR-${curVars.length + 1}`,
+                                price: editingProduct.price || 149.95,
+                                stock_quantity: 25,
+                              }
+                            ]
+                          });
+                        }}
+                        className="bg-[#1C1C1C] hover:bg-[#BF8647] text-[#BF8647] hover:text-black border border-[#2B2B2B] px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                      >
+                        + Add Tire Option / Size
+                      </button>
+                    </div>
+
+                    {(!editingProduct.variants || editingProduct.variants.length === 0) ? (
+                      <div className="text-center py-6 border border-dashed border-[#222] rounded-lg text-xs text-gray-500">
+                        No specific size options added. Click "+ Add Tire Option / Size" above to add front/rear options with individual prices.
+                      </div>
+                    ) : (
+                      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                        {editingProduct.variants.map((varItem: any, vIdx: number) => (
+                          <div key={vIdx} className={`p-3.5 rounded-xl border flex flex-col md:flex-row items-center gap-3 transition-all ${isDarkMode ? 'bg-[#161616] border-[#2B2B2B] hover:border-[#BF8647]/50' : 'bg-gray-50 border-gray-200 hover:border-[#BF8647]/50'}`}>
+                            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 flex-1 w-full">
+                              <div>
+                                <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Position</label>
+                                <select
+                                  value={varItem.position || 'Front'}
+                                  onChange={(e) => {
+                                    const updated = [...(editingProduct.variants || [])];
+                                    updated[vIdx].position = e.target.value;
+                                    setEditingProduct({ ...editingProduct, variants: updated });
+                                  }}
+                                  className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#0D0D0D] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                                >
+                                  <option value="Front">Front</option>
+                                  <option value="Rear">Rear</option>
+                                  <option value="Universal">Universal</option>
+                                  <option value="Front/Rear">Front/Rear</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Tire Size</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. 120/70ZR17 58W"
+                                  value={varItem.tire_size || varItem.name || ''}
+                                  onChange={(e) => {
+                                    const updated = [...(editingProduct.variants || [])];
+                                    updated[vIdx].tire_size = e.target.value;
+                                    updated[vIdx].name = `${updated[vIdx].position} / ${e.target.value}`;
+                                    setEditingProduct({ ...editingProduct, variants: updated });
+                                  }}
+                                  className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#0D0D0D] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">SKU / Item #</label>
+                                <input
+                                  type="text"
+                                  placeholder="SKU Code"
+                                  value={varItem.sku || varItem.item_number || ''}
+                                  onChange={(e) => {
+                                    const updated = [...(editingProduct.variants || [])];
+                                    updated[vIdx].sku = e.target.value;
+                                    setEditingProduct({ ...editingProduct, variants: updated });
+                                  }}
+                                  className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold font-mono ${isDarkMode ? 'bg-[#0D0D0D] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold uppercase text-[#BF8647] block mb-1">Option Price ($)</label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="188.89"
+                                  value={varItem.price || ''}
+                                  onChange={(e) => {
+                                    const updated = [...(editingProduct.variants || [])];
+                                    updated[vIdx].price = e.target.value;
+                                    setEditingProduct({ ...editingProduct, variants: updated });
+                                  }}
+                                  className={`w-full rounded px-2.5 py-1.5 text-xs font-black text-[#BF8647] ${isDarkMode ? 'bg-[#0D0D0D] border border-[#BF8647]/50' : 'bg-white border border-gray-300'}`}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Stock</label>
+                                <input
+                                  type="number"
+                                  placeholder="25"
+                                  value={varItem.stock_quantity ?? 25}
+                                  onChange={(e) => {
+                                    const updated = [...(editingProduct.variants || [])];
+                                    updated[vIdx].stock_quantity = e.target.value;
+                                    setEditingProduct({ ...editingProduct, variants: updated });
+                                  }}
+                                  className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#0D0D0D] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                                />
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = (editingProduct.variants || []).filter((_: any, idx: number) => idx !== vIdx);
+                                setEditingProduct({ ...editingProduct, variants: updated });
+                              }}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-950/40 p-2 rounded-lg cursor-pointer transition-colors self-end md:self-center"
+                              title="Remove Option Variant"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   <div>
                     <label className="text-xs font-bold uppercase text-gray-400 block mb-1">Description & Overview</label>

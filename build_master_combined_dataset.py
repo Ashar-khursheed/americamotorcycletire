@@ -2,6 +2,7 @@ import openpyxl
 import re
 import json
 import pandas as pd
+import mysql.connector
 
 BASE_DOMAIN = "https://americaapi.kaafifoods.com"
 
@@ -55,319 +56,306 @@ def sanitize_make(make_val, name='', brand=''):
         if key in text:
             return canonical
 
-    return 'Harley-Davidson' # Default valid motorcycle OEM make
+    return 'Harley-Davidson'
 
 def map_vehicle_type(val, name=''):
     text = f"{val or ''} {name or ''}".lower()
     if any(k in text for k in ['utv', 'atv', 'sxs', 'side by side', 'quad']):
         return 'UTV/ATV'
-    if any(k in text for k in ['dirt', 'off-road', 'offroad', 'motocross', 'enduro', 'dual sport', 'adventure', 'trials', 'mx']):
-        return 'Dirt Bike'
-    if any(k in text for k in ['street', 'sport', 'sportbike', 'cruiser', 'v-twin', 'harley', 'touring', 'scooter', 'chopper', 'custom', 'audio', 'speaker']):
-        return 'Street Bike'
-    return 'Street Bike'
+    if any(k in text for k in ['dirt', 'off-road', 'offroad', 'motocross', 'enduro', 'trials', 'mx']):
+        return 'DIRT BIKE'
+    return 'STREET BIKE'
+
+def map_category_name(cat_val, v_type, prod_type, name=''):
+    text = f"{cat_val or ''} {v_type or ''} {prod_type or ''} {name or ''}".lower()
+    if any(k in text for k in ['race', 'track', 'slick', 'corsa', 'dot race', 'competition']):
+        return 'RACE'
+    if any(k in text for k in ['dirt', 'off-road', 'motocross', 'enduro', 'mx', 'atv', 'utv', 'quad', 'sxs']):
+        return 'DIRT'
+    if any(k in text for k in ['cruiser', 'v-twin', 'vtwin', 'harley', 'custom', 'touring', 'chopper', 'bagger']):
+        return 'CRUISER'
+    return 'SPORTBIKE'
+
+def parse_price(val):
+    if not val or pd.isna(val):
+        return 149.95, None
+    s = str(val).strip()
+    matches = re.findall(r'\$?([\d,]+\.?\d*)', s)
+    if not matches:
+        return 149.95, None
+    nums = [float(m.replace(',', '')) for m in matches if float(m.replace(',', '')) > 0]
+    if not nums:
+        return 149.95, None
+    if len(nums) == 1:
+        return nums[0], None
+    return min(nums), max(nums)
 
 def convert_to_full_url(url):
-    if not url or not str(url).strip() or str(url).strip() in ('N/A', 'None', 'null'):
+    if not url or not str(url).strip() or str(url).strip() in ('N/A', 'None', 'null', 'nan'):
         return ''
     url = str(url).strip()
-    
     base_name = url.split('/')[-1].split('?')[0]
     if '.' in base_name:
         name_part = '.'.join(base_name.split('.')[:-1])
     else:
         name_part = base_name
-    
     clean_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', name_part)
     if not clean_name:
         clean_name = 'prod_img'
-    
     webp_filename = f"{clean_name}.webp"
     return f"{BASE_DOMAIN}/storage/products/{webp_filename}"
 
-def parse_sql_line(line):
-    line = line.strip().rstrip(',;')
-    if line.startswith('(') and line.endswith(')'):
-        line = line[1:-1]
-    
-    fields = []
-    in_quote = False
-    cur = ""
-    i = 0
-    n = len(line)
-    while i < n:
-        c = line[i]
-        if c == "'" and (i == 0 or line[i-1] != '\\'):
-            if in_quote and i + 1 < n and line[i+1] == "'":
-                cur += "'"
-                i += 2
-                continue
-            in_quote = not in_quote
-            cur += c
-        elif c == ',' and not in_quote:
-            fields.append(cur.strip())
-            cur = ""
-        else:
-            cur += c
-        i += 1
-    if cur:
-        fields.append(cur.strip())
+def parse_style(style_str):
+    s = str(style_str or '').strip()
+    pos = 'Universal'
+    size = s
+    if '/' in s:
+        parts = s.split('/', 1)
+        prefix = parts[0].strip().lower()
+        if prefix in ['front', 'rear', 'front or rear', 'front/rear']:
+            if prefix == 'front': pos = 'Front'
+            elif prefix == 'rear': pos = 'Rear'
+            else: pos = 'Front/Rear'
+            size = parts[1].strip()
+    return pos, size
 
-    cleaned = []
-    for f in fields:
-        if f.startswith("'") and f.endswith("'"):
-            val = f[1:-1].replace("''", "'").replace("\\'", "'").replace("\\\\", "\\")
-            cleaned.append(val)
-        elif f == 'NULL':
-            cleaned.append(None)
-        else:
-            cleaned.append(f)
-    return cleaned
-
-def parse_sql_file():
-    print("Parsing products.sql...")
-    with open('products.sql', 'r', encoding='utf-8', errors='ignore') as f:
-        content = f.read()
-
-    idx = content.find("VALUES")
-    if idx == -1:
-        return []
-    sub = content[idx+6:]
-    lines = sub.split('\n')
-
-    products = []
-    for line in lines:
-        line_s = line.strip()
-        if line_s.startswith('('):
-            fields = parse_sql_line(line_s)
-            if len(fields) >= 15:
-                products.append(fields)
-
-    print(f"Successfully extracted {len(products)} products from products.sql!")
-    return products
+def esc(v):
+    if v is None: return "NULL"
+    return "'" + str(v).replace("\\", "\\\\").replace("'", "''") + "'"
 
 def main():
-    print("Reading fin.xlsx...")
-    wb = openpyxl.load_workbook('fin.xlsx', data_only=True)
-    sheet1_name = wb.sheetnames[0]
-    rows = list(wb[sheet1_name].iter_rows(values_only=True))
-    headers = [str(h).strip() if h else '' for h in rows[0]]
+    print("Loading cyclegear_final.xlsx...")
+    xl = pd.ExcelFile('f:/americamotorcycletire/cyclegear_final.xlsx')
+    s1 = xl.parse('All Scraped Products')
+    s2 = xl.parse('Part Numbers & SKUs')
+    s3 = xl.parse('Size Breakdown & Fitments')
 
-    fin_products_dict = {}
+    print(f"Loaded Sheet 1 ({len(s1)} products), Sheet 2 ({len(s2)} SKUs), Sheet 3 ({len(s3)} fitments).")
 
-    for idx, row in enumerate(rows[1:], start=1):
-        row_dict = dict(zip(headers, row))
-        p_name = str(row_dict.get('Product Name') or '').strip()
-        if not p_name:
+    # Map category names to IDs (1: SPORTBIKE, 2: CRUISER, 3: DIRT, 4: RACE)
+    category_id_map = {
+        'SPORTBIKE': 1,
+        'CRUISER': 2,
+        'DIRT': 3,
+        'RACE': 4
+    }
+
+    s1['clean_name'] = s1['Product Name'].astype(str).str.strip()
+    s2['clean_name'] = s2['Product Name'].astype(str).str.strip()
+    s3['clean_name'] = s3['Product Name'].astype(str).str.strip()
+
+    sql_statements = [
+        "SET FOREIGN_KEY_CHECKS=0;",
+        "TRUNCATE TABLE product_variants;",
+        "TRUNCATE TABLE product_fitments;",
+        "TRUNCATE TABLE products;",
+        "TRUNCATE TABLE categories;",
+        "INSERT INTO categories (id, name, slug, is_active, created_at, updated_at) VALUES (1, 'SPORTBIKE', 'sportbike', 1, NOW(), NOW());",
+        "INSERT INTO categories (id, name, slug, is_active, created_at, updated_at) VALUES (2, 'CRUISER', 'cruiser', 1, NOW(), NOW());",
+        "INSERT INTO categories (id, name, slug, is_active, created_at, updated_at) VALUES (3, 'DIRT', 'dirt', 1, NOW(), NOW());",
+        "INSERT INTO categories (id, name, slug, is_active, created_at, updated_at) VALUES (4, 'RACE', 'race', 1, NOW(), NOW());\n"
+    ]
+
+    total_products = 0
+    total_variants = 0
+    total_fitments = 0
+
+    seen_skus = set()
+
+    for idx, row in s1.iterrows():
+        p_name = str(row.get('Product Name') or '').strip()
+        if not p_name or p_name.lower() == 'nan':
             continue
-        sku = str(row_dict.get('SKU Number') or '').strip()
-        brand_name = str(row_dict.get('Brand') or '').strip() or 'Generic'
-        v_type_raw = str(row_dict.get('Vehicle Type') or '').strip()
-        v_type = map_vehicle_type(v_type_raw, p_name)
-        product_type = str(row_dict.get('Specific Product Type') or '').strip() or 'Tires'
-        
-        raw_makes = str(row_dict.get('Compatible Bike Makes') or '').strip()
-        makes = sanitize_make(raw_makes, p_name, brand_name)
 
-        models = str(row_dict.get('Compatible Bike Models') or '').strip() or p_name
-        year_range = str(row_dict.get('Fitment Year / Range') or '').strip() or '1995 - 2025'
+        raw_sku = str(row.get('SKU Number') or '').strip()
+        if not raw_sku or raw_sku.lower() in ('nan', 'none', 'n/a'):
+            raw_sku = f"SKU-{idx+1:05d}"
 
-        raw_primary = str(row_dict.get('Primary Image URL') or '').strip() or None
-        raw_all_imgs = str(row_dict.get('All Image URLs') or '').strip()
+        # Ensure unique product SKU
+        sku = raw_sku
+        sku_counter = 1
+        while sku.lower() in seen_skus:
+            sku = f"{raw_sku}-{sku_counter}"
+            sku_counter += 1
+        seen_skus.add(sku.lower())
+
+        slug = re.sub(r'[^a-z0-9]+', '-', p_name.lower()).strip('-') + f"-{sku.lower()}"
+        brand = str(row.get('Brand') or '').strip() or 'BMG'
+        v_type = map_vehicle_type(row.get('Vehicle Type'), p_name)
+        cat_name = map_category_name(row.get('Category'), row.get('Vehicle Type'), row.get('Specific Product Type'), p_name)
+        cat_id = category_id_map.get(cat_name, 1)
+
+        product_type = str(row.get('Specific Product Type') or '').strip() or 'Tires'
+        raw_makes = str(row.get('Compatible Bike Makes') or '').strip()
+        makes = sanitize_make(raw_makes, p_name, brand)
+        models = str(row.get('Compatible Bike Models') or '').strip() or p_name
+        year_range = str(row.get('Fitment Year / Range') or '').strip() or '1998 - 2025'
+        item_number = str(row.get('Item Number') or '').strip()
+
+        # Parse prices
+        p_min, p_max = parse_price(row.get('Retail Price'))
+        was_p_min, was_p_max = parse_price(row.get('Was Price / MSRP'))
+
+        price = p_min
+        was_price = was_p_max if was_p_max else (p_max if (p_max is not None and p_max > p_min) else None)
+
+        savings = str(row.get('Savings') or '').strip()
+        rating = float(row.get('Rating') or 4.8) if not pd.isna(row.get('Rating')) else 4.8
+        review_count = int(row.get('Review Count') or 12) if not pd.isna(row.get('Review Count')) else 12
+
+        front_fitment = str(row.get('Front Tire Fitment') or '').strip()
+        rear_fitment = str(row.get('Rear Tire Fitment') or '').strip()
+        wheel_loc = str(row.get('Wheel Locations') or '').strip()
+        avail_sizes = str(row.get('Available Sizes') or '').strip()
+        avail_sizes_count = int(row.get('Available Sizes Count') or 0) if not pd.isna(row.get('Available Sizes Count')) else 0
+        total_parts = int(row.get('Total Part Numbers') or 0) if not pd.isna(row.get('Total Part Numbers')) else 0
+
+        raw_primary = str(row.get('Primary Image URL') or '').strip()
+        raw_all_imgs = str(row.get('All Image URLs') or '').strip()
 
         primary_full = convert_to_full_url(raw_primary)
-
-        gallery_full_list = []
+        gallery_list = []
         if raw_all_imgs:
-            parts = [p.strip() for p in re.split(r'[;,]', raw_all_imgs) if p.strip()]
-            for p in parts:
+            for p in re.split(r'[;,]', raw_all_imgs):
                 full_p = convert_to_full_url(p)
-                if full_p and full_p not in gallery_full_list:
-                    gallery_full_list.append(full_p)
+                if full_p and full_p not in gallery_list:
+                    gallery_list.append(full_p)
 
-        if primary_full and primary_full not in gallery_full_list:
-            gallery_full_list.insert(0, primary_full)
-        if not gallery_full_list and primary_full:
-            gallery_full_list = [primary_full]
+        if primary_full and primary_full not in gallery_list:
+            gallery_list.insert(0, primary_full)
+        if not gallery_list and primary_full:
+            gallery_list = [primary_full]
 
-        wheel_loc = str(row_dict.get('Wheel Locations') or '').strip()
-        avail_sizes = str(row_dict.get('Available Sizes') or '').strip()
+        desc = str(row.get('Description') or '').strip()
+        specs = str(row.get('Specs & Features') or '').strip()
+        fit_veh = str(row.get('Fitment Vehicle') or '').strip()
+        fit_disc = str(row.get('Fitment Disclaimer') or '').strip()
 
         custom_attr_dict = {
             "Wheel Location": wheel_loc or "Front, Rear",
             "Type": v_type,
             "Product Type": product_type,
             "Make": makes,
-            "Model": models or p_name,
+            "Model": models,
             "Tire Size": avail_sizes or "Standard"
         }
 
-        p_obj = {
-            'sku': sku,
-            'name': p_name,
-            'brand': brand_name,
-            'category_id': 1,
-            'vehicle_type': v_type,
-            'product_type': product_type,
-            'compatible_makes': makes,
-            'compatible_models': models,
-            'fitment_year_range': year_range,
-            'item_number': str(row_dict.get('Item Number') or '').strip(),
-            'primary_image': primary_full,
-            'gallery_images_list': gallery_full_list,
-            'custom_attr_dict': custom_attr_dict,
-            'source': 'fin.xlsx'
-        }
+        # Build SQL for product insert
+        gallery_json = json.dumps(gallery_list)
+        custom_attr_json = json.dumps(custom_attr_dict)
 
-        key = (sku or p_name).lower()
-        fin_products_dict[key] = p_obj
+        prod_id = idx + 1
+        ins_prod = (
+            f"INSERT INTO products (id, sku, name, slug, brand, category_id, vehicle_type, product_type, "
+            f"compatible_makes, compatible_models, fitment_year_range, item_number, price, was_price, compare_at_price, "
+            f"savings, rating, review_count, front_tire_fitment, rear_tire_fitment, wheel_locations, available_sizes_count, "
+            f"available_sizes, total_part_numbers, description, specs_and_features, fitment_vehicle, fitment_disclaimer, "
+            f"primary_image, gallery_images, custom_attributes, stock_quantity, is_active, is_featured, created_at, updated_at) VALUES ("
+            f"{prod_id}, {esc(sku)}, {esc(p_name)}, {esc(slug)}, {esc(brand)}, {cat_id}, {esc(v_type)}, {esc(product_type)}, "
+            f"{esc(makes)}, {esc(models)}, {esc(year_range)}, {esc(item_number)}, {price}, {esc(was_price)}, {esc(was_price)}, "
+            f"{esc(savings)}, {rating}, {review_count}, {esc(front_fitment)}, {esc(rear_fitment)}, {esc(wheel_loc)}, {avail_sizes_count}, "
+            f"{esc(avail_sizes)}, {total_parts}, {esc(desc)}, {esc(specs)}, {esc(fit_veh)}, {esc(fit_disc)}, "
+            f"{esc(primary_full)}, {esc(gallery_json)}, {esc(custom_attr_json)}, 50, 1, 1, NOW(), NOW());"
+        )
+        sql_statements.append(ins_prod)
+        total_products += 1
 
-    print(f"Loaded {len(fin_products_dict)} unique products from fin.xlsx!")
+        # Match variants from Sheet 2
+        s2_match = s2[s2['clean_name'] == p_name]
+        if not s2_match.empty:
+            for v_idx, v_row in s2_match.iterrows():
+                v_style = str(v_row.get('Product Style') or '').strip()
+                pos, tire_size = parse_style(v_style)
 
-    sql_products = parse_sql_file()
+                v_store_sku = str(v_row.get('Store SKU') or '').strip()
+                v_item_num = str(v_row.get('Item #') or '').strip()
+                v_mfr_num = str(v_row.get('Manufacturer Product #') or '').strip()
 
-    master_dict = {}
-    for k, v in fin_products_dict.items():
-        master_dict[k] = v
+                base_v_sku = v_store_sku if (v_store_sku and v_store_sku.lower() != 'nan') else (
+                    v_item_num if (v_item_num and v_item_num.lower() != 'nan') else f"{sku}-VAR-{v_idx+1}"
+                )
+                v_sku = base_v_sku
+                v_counter = 1
+                while v_sku.lower() in seen_skus:
+                    v_sku = f"{base_v_sku}-{prod_id}-{v_counter}"
+                    v_counter += 1
+                seen_skus.add(v_sku.lower())
 
-    added_sql = 0
-    for idx, f in enumerate(sql_products, start=1):
-        sku = f[1] if len(f) > 1 and f[1] else f"SKU-SQL-{idx:04d}"
-        name = f[2] if len(f) > 2 and f[2] else f"Product {idx}"
-        brand = f[4] if len(f) > 4 and f[4] else "Generic"
-        v_type = f[5] if len(f) > 5 and f[5] else map_vehicle_type('', name)
-        p_type = f[6] if len(f) > 6 and f[6] else 'Tires'
-        
-        raw_makes = f[7] if len(f) > 7 else ''
-        makes = sanitize_make(raw_makes, name, brand)
+                v_price, v_was = parse_price(v_row.get('Retail Price'))
 
-        models = f[8] if len(f) > 8 and f[8] else name
-        years = f[9] if len(f) > 9 and f[9] else '1995 - 2025'
-        item_num = f[10] if len(f) > 10 and f[10] else ''
-        
-        primary = convert_to_full_url(f[36] if len(f) > 36 else '')
-        custom_attr_raw = f[37] if len(f) > 37 else ''
-        gallery_raw = f[38] if len(f) > 38 else ''
+                ins_var = (
+                    f"INSERT INTO product_variants (product_id, sku, name, position, tire_size, item_number, store_sku, "
+                    f"mfr_part_number, price, compare_at_price, stock_quantity, is_active, created_at, updated_at) VALUES ("
+                    f"{prod_id}, {esc(v_sku)}, {esc(v_style)}, {esc(pos)}, {esc(tire_size)}, {esc(v_item_num)}, {esc(v_store_sku)}, "
+                    f"{esc(v_mfr_num)}, {v_price}, {esc(v_was)}, 25, 1, NOW(), NOW());"
+                )
+                sql_statements.append(ins_var)
+                total_variants += 1
 
-        g_list = []
-        if gallery_raw:
-            try:
-                parsed_g = json.loads(gallery_raw)
-                if isinstance(parsed_g, list):
-                    g_list = [convert_to_full_url(u) for u in parsed_g if u]
-            except:
-                pass
-        if primary and primary not in g_list:
-            g_list.insert(0, primary)
+        # Match fitments from Sheet 3 or create default fitment row
+        s3_match = s3[s3['clean_name'] == p_name]
+        if not s3_match.empty:
+            seen_fit_keys = set()
+            for f_idx, f_row in s3_match.iterrows():
+                f_size = str(f_row.get('Tire Size') or '').strip()
+                f_sku = str(f_row.get('SKU Number') or '').strip() or sku
+                f_item = str(f_row.get('Item Number') or '').strip() or item_number
 
-        c_attr = {}
-        if custom_attr_raw:
-            try:
-                c_attr = json.loads(custom_attr_raw)
-            except:
-                pass
+                fit_key = f"{year_range}|{makes}|{models}|{f_size}"
+                if fit_key in seen_fit_keys:
+                    continue
+                seen_fit_keys.add(fit_key)
 
-        if not c_attr:
-            c_attr = {
-                "Wheel Location": "Front, Rear",
-                "Type": v_type,
-                "Product Type": p_type,
-                "Make": makes,
-                "Model": models or name,
-                "Tire Size": "Standard"
-            }
-
-        key = (sku or name).lower()
-        if key in master_dict:
-            existing = master_dict[key]
-            for img in g_list:
-                if img and img not in existing['gallery_images_list']:
-                    existing['gallery_images_list'].append(img)
+                ins_fit = (
+                    f"INSERT INTO product_fitments (product_id, year, make, model, position, tire_size, sku_number, "
+                    f"item_number, vendor_part_number, created_at, updated_at) VALUES ("
+                    f"{prod_id}, {esc(year_range)}, {esc(makes)}, {esc(models)}, 'Front, Rear', {esc(f_size)}, "
+                    f"{esc(f_sku)}, {esc(f_item)}, {esc(f_sku)}, NOW(), NOW());"
+                )
+                sql_statements.append(ins_fit)
+                total_fitments += 1
         else:
-            master_dict[key] = {
-                'sku': sku,
-                'name': name,
-                'brand': brand,
-                'category_id': 1,
-                'vehicle_type': v_type,
-                'product_type': p_type,
-                'compatible_makes': makes,
-                'compatible_models': models,
-                'fitment_year_range': years,
-                'item_number': item_num,
-                'primary_image': primary or (g_list[0] if g_list else ''),
-                'gallery_images_list': g_list,
-                'custom_attr_dict': c_attr,
-                'source': 'products.sql'
-            }
-            added_sql += 1
+            ins_fit = (
+                f"INSERT INTO product_fitments (product_id, year, make, model, position, tire_size, sku_number, "
+                f"item_number, vendor_part_number, created_at, updated_at) VALUES ("
+                f"{prod_id}, {esc(year_range)}, {esc(makes)}, {esc(models)}, 'Front, Rear', {esc(avail_sizes)}, "
+                f"{esc(sku)}, {esc(item_number)}, {esc(sku)}, NOW(), NOW());"
+            )
+            sql_statements.append(ins_fit)
+            total_fitments += 1
 
-    print(f"Added {added_sql} new unique products from products.sql!")
-    print(f"TOTAL MASTER COMBINED PRODUCTS: {len(master_dict)}")
+    sql_statements.append("\nSET FOREIGN_KEY_CHECKS=1;")
 
-    csv_rows = []
-    sql_inserts = ["-- Master SQL File with ALL Combined Products\nSET FOREIGN_KEY_CHECKS=0;\nTRUNCATE TABLE products;\nTRUNCATE TABLE product_fitments;\n"]
+    output_sql = "MASTER_ALL_PRODUCTS_IMPORT.sql"
+    with open(output_sql, "w", encoding="utf-8") as f:
+        f.write("\n".join(sql_statements))
 
-    for idx, (k, p) in enumerate(master_dict.items(), start=1):
-        sku = p['sku'] if p['sku'] else f"SKU-{idx:05d}"
-        name = p['name']
-        brand = p['brand']
-        v_type = p['vehicle_type']
-        p_type = p['product_type']
-        makes = p['compatible_makes']
-        models = p['compatible_models']
-        years = p['fitment_year_range']
-        item_num = p['item_number']
-        primary = p['primary_image']
-        g_list = p['gallery_images_list']
-        if primary and primary not in g_list:
-            g_list.insert(0, primary)
-        
-        gallery_single_quote_str = "[" + ", ".join([f"'{url}'" for url in g_list]) + "]"
-        custom_attr_json_str = json.dumps(p['custom_attr_dict'])
+    print(f"\n=======================================================")
+    print(f"SUCCESS! Wrote '{output_sql}' with:")
+    print(f"  - {total_products} PRODUCTS")
+    print(f"  - {total_variants} PRODUCT VARIANTS (Front/Rear position & sizes & prices)")
+    print(f"  - {total_fitments} PRODUCT FITMENTS")
+    print(f"=======================================================\n")
 
-        r_dict = {
-            'sku': sku,
-            'name': name,
-            'brand': brand,
-            'category_id': 1,
-            'vehicle_type': v_type,
-            'product_type': p_type,
-            'compatible_makes': makes,
-            'compatible_models': models,
-            'fitment_year_range': years,
-            'item_number': item_num,
-            'primary_image': primary,
-            'gallery_images': gallery_single_quote_str,
-            'custom_attributes': custom_attr_json_str,
-            'Year': years,
-            'Make': makes,
-            'Model': models,
-            'Position': 'Front, Rear',
-            'Vendor Part Number': sku
-        }
-        csv_rows.append(r_dict)
-
-        def esc(v):
-            if v is None: return "NULL"
-            return "'" + str(v).replace("\\", "\\\\").replace("'", "''") + "'"
-
-        g_json_std = json.dumps(g_list)
-        ins = f"INSERT INTO products (sku, name, slug, brand, category_id, vehicle_type, product_type, compatible_makes, compatible_models, fitment_year_range, item_number, primary_image, gallery_images, custom_attributes, is_active, is_featured, created_at, updated_at) VALUES ({esc(sku)}, {esc(name)}, {esc(sku.lower())}, {esc(brand)}, 1, {esc(v_type)}, {esc(p_type)}, {esc(makes)}, {esc(models)}, {esc(years)}, {esc(item_num)}, {esc(primary)}, {esc(g_json_std)}, {esc(custom_attr_json_str)}, 1, 1, NOW(), NOW());"
-        sql_inserts.append(ins)
-
-        ins_fit = f"INSERT INTO product_fitments (product_id, year, make, model, position, sku_number, vendor_part_number, item_number, created_at, updated_at) VALUES (LAST_INSERT_ID(), {esc(years)}, {esc(makes)}, {esc(models)}, 'Front, Rear', {esc(sku)}, {esc(sku)}, {esc(item_num)}, NOW(), NOW());"
-        sql_inserts.append(ins_fit)
-
-    sql_inserts.append("\nSET FOREIGN_KEY_CHECKS=1;")
-
-    df = pd.DataFrame(csv_rows)
-    df.to_csv('MASTER_ALL_PRODUCTS_IMPORT.csv', index=False, encoding='utf-8')
-    print(f"Generated 'MASTER_ALL_PRODUCTS_IMPORT.csv' with {len(df)} DISTINCT PRODUCTS (100% WebP image URLs & Strict OEM Makes)!")
-
-    with open('MASTER_ALL_PRODUCTS_IMPORT.sql', 'w', encoding='utf-8') as f:
-        f.write('\n'.join(sql_inserts))
-    print(f"Generated 'MASTER_ALL_PRODUCTS_IMPORT.sql' with {len(master_dict)} DISTINCT PRODUCTS (100% WebP image URLs & Strict OEM Makes)!")
+    # Import into MySQL Database directly
+    print("Executing MySQL Import into database 'americamotor'...")
+    try:
+        conn = mysql.connector.connect(
+            host="127.0.0.1",
+            user="root",
+            password="",
+            database="americamotor"
+        )
+        cursor = conn.cursor()
+        for statement in sql_statements:
+            if statement.strip() and not statement.startswith('--'):
+                cursor.execute(statement)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        print("DATABASE IMPORT COMPLETED SUCCESSFULLY!")
+    except Exception as e:
+        print(f"Direct DB Import note: {e}")
 
 if __name__ == '__main__':
     main()
