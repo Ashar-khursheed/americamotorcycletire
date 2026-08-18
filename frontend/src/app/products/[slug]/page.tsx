@@ -135,6 +135,15 @@ export default function ProductDetailPage() {
       updateMeta('meta[property="og:title"]', 'content', pageTitle);
       updateMeta('meta[property="og:description"]', 'content', metaDescription);
       updateMeta('meta[property="og:url"]', 'content', canonicalUrl);
+
+      if (Array.isArray(product.variants) && product.variants.length > 0 && !selectedVariant) {
+        const first = product.variants[0];
+        setSelectedVariant(first);
+        const attrs: { [key: string]: string } = {};
+        if (first.position) attrs['Wheel Location'] = first.position;
+        if (first.tire_size || first.name) attrs['Tire Size'] = first.tire_size || first.name;
+        setSelectedAttributes(attrs);
+      }
     }
   }, [product, slug]);
 
@@ -409,7 +418,7 @@ export default function ProductDetailPage() {
                       <span className="text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2.5 py-1 rounded flex items-center gap-1.5 uppercase font-bold">
                         <CheckCircle2 className="w-3.5 h-3.5" /> In Stock ({product.stock_quantity ?? 25} Available)
                       </span>
-                      <span className="text-gray-500 uppercase">SKU: {product.sku}</span>
+                      <span className="text-gray-500 uppercase font-mono">SKU: {selectedVariant?.sku || selectedVariant?.item_number || product.sku}</span>
                     </div>
 
                     {/* Pricing Box */}
@@ -454,58 +463,6 @@ export default function ProductDetailPage() {
                         <span>Snell & DOT compliant heavy duty casing structure</span>
                       </div>
                     </div>
-
-                    {/* Dynamic Size & Position Variant Selector */}
-                    {product.variants && product.variants.length > 0 && (
-                      <div className="space-y-3 my-6 pt-5 border-t border-[#222]">
-                        <div className="flex items-center justify-between">
-                          <label className="text-xs font-black uppercase text-[#BF8647] tracking-wider block">
-                            AVAILABLE TIRE OPTIONS & SIZES
-                          </label>
-                          <span className="text-[10px] text-[#BF8647] bg-[#BF8647]/10 border border-[#BF8647]/30 px-2 py-0.5 rounded font-bold uppercase">
-                            {product.variants.length} Options Available
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          {product.variants.map((v: any, vIdx: number) => {
-                            const isSel = selectedVariant?.id === v.id || selectedVariant?.sku === v.sku || (!selectedVariant && vIdx === 0);
-                            const posLower = (v.position || '').toLowerCase();
-
-                            return (
-                              <button
-                                key={v.id || vIdx}
-                                type="button"
-                                onClick={() => selectVariantAndSync(v)}
-                                className={`p-3 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between ${isSel
-                                  ? 'bg-[#1F1912] border-[#BF8647] ring-1 ring-[#BF8647]'
-                                  : 'bg-[#121212] border-[#2A2A2A] hover:border-gray-500'
-                                  }`}
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${posLower === 'front' ? 'bg-sky-950 text-sky-400 border border-sky-800/40' :
-                                    posLower === 'rear' ? 'bg-amber-950 text-amber-400 border border-amber-800/40' :
-                                      'bg-zinc-800 text-gray-300'
-                                    }`}>
-                                    {v.position || 'Option'}
-                                  </span>
-                                  <span className="text-xs font-mono font-black text-[#BF8647]">
-                                    ${Number(v.price).toFixed(2)}
-                                  </span>
-                                </div>
-                                <div className="text-xs font-bold text-white uppercase mt-2 line-clamp-1">
-                                  {v.tire_size || v.name}
-                                </div>
-                                {(v.item_number || v.sku) && (
-                                  <div className="text-[9px] text-gray-500 font-mono uppercase mt-0.5">
-                                    SKU: {v.item_number || v.sku}
-                                  </div>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
 
                     {/* Dynamic Attributes */}
                     {(() => {
