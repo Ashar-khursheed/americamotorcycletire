@@ -157,8 +157,8 @@ class ProductFilterService
             });
         }
 
-        // 3. Vehicle Type Filter (Only apply strict vehicle_type for 'Street Bike', 'Dirt Bike', 'UTV/ATV' or non-category terms)
-        if ($request->filled('vehicle_type')) {
+        // 3. Vehicle Type Filter
+        if ($request->filled('vehicle_type') && empty($request->input('make'))) {
             $vTypes = is_array($request->input('vehicle_type'))
                 ? $request->input('vehicle_type')
                 : explode(',', $request->input('vehicle_type'));
@@ -170,7 +170,6 @@ class ProductFilterService
 
                     $lowerVt = strtolower($trimVt);
                     if (in_array($lowerVt, ['sportbike', 'sportbikes', 'cruiser', 'cruisers', 'touring', 'dualsport', 'dual sport', 'adventure', 'dirt', 'scooter', 'scooters', 'race'])) {
-                        // These are bike categories handled by Section 2; match flexibly across vehicle_type, product_type, and name
                         $q->orWhere(function ($sub) use ($lowerVt) {
                             if (in_array($lowerVt, ['sportbike', 'sportbikes'])) {
                                 $sub->where('product_type', 'like', '%sportbike%')
