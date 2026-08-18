@@ -160,6 +160,62 @@ export default function ProductDetailPage() {
     return baseP + addOnP;
   };
 
+  const selectVariantAndSync = (v: any) => {
+    setSelectedVariant(v);
+    if (!v) return;
+    setSelectedAttributes((prev) => {
+      const next = { ...prev };
+      if (v.position) {
+        const posKey = Object.keys(next).find((k) => k.toLowerCase().includes('location') || k.toLowerCase().includes('position')) || 'Wheel Location';
+        next[posKey] = v.position;
+      }
+      if (v.tire_size || v.name) {
+        const sizeKey = Object.keys(next).find((k) => k.toLowerCase().includes('size')) || 'Tire Size';
+        next[sizeKey] = v.tire_size || v.name;
+      }
+      return next;
+    });
+  };
+
+  const handleAttributeChange = (attrName: string, val: string) => {
+    const updatedAttrs = { ...selectedAttributes };
+    if (val) {
+      updatedAttrs[attrName] = val;
+    } else {
+      delete updatedAttrs[attrName];
+    }
+    setSelectedAttributes(updatedAttrs);
+
+    if (Array.isArray(product?.variants) && product.variants.length > 0) {
+      const selectedLoc = Object.entries(updatedAttrs).find(([k]) => k.toLowerCase().includes('location'))?.[1]?.toLowerCase() || '';
+      const selectedSize = Object.entries(updatedAttrs).find(([k]) => k.toLowerCase().includes('size'))?.[1]?.toLowerCase() || '';
+
+      const matched = product.variants.find((v: any) => {
+        const vPos = (v.position || '').toLowerCase();
+        const vSize = (v.tire_size || v.name || '').toLowerCase();
+
+        const matchLoc = !selectedLoc || vPos === selectedLoc || selectedLoc.includes(vPos) || vPos.includes(selectedLoc);
+        const matchSize = !selectedSize || vSize === selectedSize || selectedSize.includes(vSize) || vSize.includes(selectedSize);
+
+        return matchLoc && matchSize;
+      });
+
+      if (matched) {
+        setSelectedVariant(matched);
+      } else {
+        const partialMatched = product.variants.find((v: any) => {
+          const vPos = (v.position || '').toLowerCase();
+          const vSize = (v.tire_size || v.name || '').toLowerCase();
+          return (selectedSize && (vSize === selectedSize || selectedSize.includes(vSize))) ||
+                 (selectedLoc && (vPos === selectedLoc || selectedLoc.includes(vPos)));
+        });
+        if (partialMatched) {
+          setSelectedVariant(partialMatched);
+        }
+      }
+    }
+  };
+
   const handleAddToCart = () => {
     if (product) {
       const selections = getFormattedGlobalSelections();
@@ -419,7 +475,7 @@ export default function ProductDetailPage() {
                               <button
                                 key={v.id || vIdx}
                                 type="button"
-                                onClick={() => setSelectedVariant(v)}
+                                onClick={() => selectVariantAndSync(v)}
                                 className={`p-3 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between ${isSel
                                   ? 'bg-[#1F1912] border-[#BF8647] ring-1 ring-[#BF8647]'
                                   : 'bg-[#121212] border-[#2A2A2A] hover:border-gray-500'
@@ -581,18 +637,7 @@ export default function ProductDetailPage() {
                                 <div className="relative">
                                   <select
                                     value={selectedAttributes[attrName] || ''}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      setSelectedAttributes((prev) => {
-                                        const next = { ...prev };
-                                        if (val) {
-                                          next[attrName] = val;
-                                        } else {
-                                          delete next[attrName];
-                                        }
-                                        return next;
-                                      });
-                                    }}
+                                    onChange={(e) => handleAttributeChange(attrName, e.target.value)}
                                     className="w-full bg-[#121212] border border-[#333] rounded-md px-3.5 py-3 text-xs text-white uppercase font-semibold focus:outline-none focus:border-[#BF8647] appearance-none cursor-pointer pr-10 shadow-sm"
                                   >
                                     <option value="">Select {attrName}</option>

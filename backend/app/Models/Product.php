@@ -167,14 +167,17 @@ class Product extends Model
         $value = stripslashes(trim($value, " \t\n\r\0\x0B\"'[]"));
         if (empty($value)) return null;
 
-        $baseUrl = rtrim(config('app.url', 'https://americaapi.kaafifoods.com'), '/');
+        if (str_contains($value, 'americaapi.kaafifoods.com')) {
+            $value = str_replace('https://americaapi.kaafifoods.com/', '', $value);
+            $value = str_replace('http://americaapi.kaafifoods.com/', '', $value);
+        }
 
-        // Replace local dev host URL if present
+        $baseUrl = rtrim(config('app.url', 'http://localhost:8000'), '/');
+
         if (str_contains($value, '127.0.0.1:8000') || str_contains($value, 'localhost:8000')) {
             $value = preg_replace('#http://(127\.0\.0\.1|localhost):8000#i', $baseUrl, $value);
         }
 
-        // Handle relative storage paths e.g. storage/products/xxx.webp or /storage/products/xxx.webp
         if (!str_starts_with($value, 'http://') && !str_starts_with($value, 'https://')) {
             $path = ltrim($value, '/');
             if (!str_starts_with($path, 'storage/')) {

@@ -103,7 +103,7 @@ def convert_to_full_url(url):
     if not clean_name:
         clean_name = 'prod_img'
     webp_filename = f"{clean_name}.webp"
-    return f"{BASE_DOMAIN}/storage/products/{webp_filename}"
+    return f"storage/products/{webp_filename}"
 
 def parse_style(style_str):
     s = str(style_str or '').strip()
