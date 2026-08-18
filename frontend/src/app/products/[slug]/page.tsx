@@ -485,16 +485,20 @@ export default function ProductDetailPage() {
                       const attrsList: { name: string; options: string[] }[] = [];
 
                       const splitOptions = (val: any): string[] => {
+                        if (!val) return [];
+                        let rawItems: string[] = [];
                         if (Array.isArray(val)) {
-                          return val.map((v) => String(v).trim()).filter(Boolean);
-                        }
-                        if (typeof val === 'string' && val.trim()) {
-                          return val
+                          rawItems = val.map((v) => String(v).trim());
+                        } else if (typeof val === 'string' && val.trim()) {
+                          rawItems = val
                             .split(/[,;]/)
-                            .map((s) => s.trim())
-                            .filter(Boolean);
+                            .map((s) => s.trim());
                         }
-                        return [];
+                        return rawItems.filter(
+                          (item) =>
+                            item &&
+                            !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE', 'NO', 'STANDARD', ''].includes(item.toUpperCase())
+                        );
                       };
 
                       const addOrUpdate = (name: string, rawOptions: any) => {
@@ -557,25 +561,22 @@ export default function ProductDetailPage() {
                         }
                       }
 
-                      // Filter out static spec metadata attributes that only have 1 single option and are not selectable product variants
+                      // Filter out static spec metadata attributes & empty/redundant dropdowns
                       const selectableAttributes = attrsList.filter((attr) => {
-                        const nameLower = attr.name.toLowerCase();
-                        const isSelectableKey = [
-                          'wheel location',
-                          'wheel locations',
-                          'tire size',
-                          'size',
-                          'sizes',
-                          'location',
-                          'color',
-                          'style',
-                        ].includes(nameLower);
+                        if (!attr.options || attr.options.length === 0) return false;
 
-                        if (isSelectableKey) return true;
+                        const nameLower = attr.name.toLowerCase();
                         if (['make', 'model', 'brand', 'product type', 'type', 'vehicle type'].includes(nameLower)) {
                           return false;
                         }
-                        return attr.options.length > 1;
+
+                        // If variants cards are already displayed above, skip redundant size/location dropdowns
+                        const isVariantKey = ['wheel location', 'wheel locations', 'tire size', 'size', 'sizes'].includes(nameLower);
+                        if (product.variants && product.variants.length > 0 && isVariantKey) {
+                          return false;
+                        }
+
+                        return attr.options.length > 0;
                       });
 
                       if (selectableAttributes.length === 0) return null;
