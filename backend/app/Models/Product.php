@@ -172,10 +172,16 @@ class Product extends Model
             $value = str_replace('http://americaapi.kaafifoods.com/', '', $value);
         }
 
-        $baseUrl = rtrim(config('app.url', 'http://localhost:8000'), '/');
+        // Determine current base URL dynamically from request or env
+        if (function_exists('request') && request() && request()->hasHeader('host')) {
+            $baseUrl = rtrim(request()->schemeAndHttpHost(), '/');
+        } else {
+            $baseUrl = rtrim(env('APP_URL', config('app.url', 'http://localhost:8000')), '/');
+        }
 
-        if (str_contains($value, '127.0.0.1:8000') || str_contains($value, 'localhost:8000')) {
-            $value = preg_replace('#http://(127\.0\.0\.1|localhost):8000#i', $baseUrl, $value);
+        // Ensure port 8000 if running locally without port specified
+        if ($baseUrl === 'http://localhost' || $baseUrl === 'http://127.0.0.1') {
+            $baseUrl .= ':8000';
         }
 
         if (!str_starts_with($value, 'http://') && !str_starts_with($value, 'https://')) {
