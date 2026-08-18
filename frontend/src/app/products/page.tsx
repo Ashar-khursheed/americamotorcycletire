@@ -129,7 +129,7 @@ function ProductsContent() {
           setTypesList(res.data.types || []);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       isCurrent = false;
@@ -188,10 +188,10 @@ function ProductsContent() {
           const itemsList = Array.isArray(prodRes.data)
             ? prodRes.data
             : Array.isArray(prodRes.data?.data)
-            ? prodRes.data.data
-            : Array.isArray(prodRes)
-            ? prodRes
-            : [];
+              ? prodRes.data.data
+              : Array.isArray(prodRes)
+                ? prodRes
+                : [];
           setProducts(itemsList);
 
           if (prodRes.available_filters) {
@@ -549,11 +549,10 @@ function ProductsContent() {
             <button
               key={r.value}
               onClick={() => setMinRating(r.value)}
-              className={`w-full text-left px-2.5 py-1.5 rounded transition-colors flex items-center justify-between font-medium ${
-                minRating === r.value
+              className={`w-full text-left px-2.5 py-1.5 rounded transition-colors flex items-center justify-between font-medium ${minRating === r.value
                   ? 'bg-[#BF8647] text-black font-bold'
                   : 'hover:bg-[#1F1F1F] text-gray-300'
-              }`}
+                }`}
             >
               <span>{r.label}</span>
               {minRating === r.value && <Check className="w-3.5 h-3.5" />}
@@ -585,7 +584,7 @@ function ProductsContent() {
             </h1>
 
             {/* Cycle Gear Style Visual Tire Category Selector (Hidden: Change false to true to unhide) */}
-            {false && (
+            {true && (
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[11px] font-black uppercase tracking-widest text-[#BF8647] flex items-center gap-1.5 font-heading">
@@ -629,11 +628,10 @@ function ProductsContent() {
                       <button
                         key={cat.id}
                         onClick={() => handleBikeCategorySelect(cat.id)}
-                        className={`group flex flex-col items-center justify-between bg-[#161616] p-2 sm:p-2.5 rounded-xl border transition-all duration-300 cursor-pointer ${
-                          isActive
+                        className={`group flex flex-col items-center justify-between bg-[#161616] p-2 sm:p-2.5 rounded-xl border transition-all duration-300 cursor-pointer ${isActive
                             ? 'border-[#BF8647] ring-2 ring-[#BF8647]/60 shadow-lg shadow-[#BF8647]/30 scale-[1.04]'
                             : 'border-[#262626] hover:border-[#BF8647]/60 hover:bg-[#1C1C1C]'
-                        }`}
+                          }`}
                       >
                         {/* Cycle Gear Style White/Grey Image Frame */}
                         <div className="w-full h-24 sm:h-28 bg-[#EAEAEA] rounded-lg p-1.5 flex items-center justify-center overflow-hidden relative shadow-inner">
@@ -658,9 +656,8 @@ function ProductsContent() {
                         {/* Label Text & Count below */}
                         <div className="mt-2 text-center w-full">
                           <span
-                            className={`text-xs font-black uppercase font-heading tracking-wide block transition-colors ${
-                              isActive ? 'text-[#BF8647]' : 'text-white group-hover:text-[#BF8647]'
-                            }`}
+                            className={`text-xs font-black uppercase font-heading tracking-wide block transition-colors ${isActive ? 'text-[#BF8647]' : 'text-white group-hover:text-[#BF8647]'
+                              }`}
                           >
                             {cat.label}
                           </span>
@@ -1079,11 +1076,10 @@ function ProductsContent() {
                             ) : (
                               <button
                                 onClick={() => handlePageChange(num as number)}
-                                className={`min-w-[36px] h-[36px] px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all cursor-pointer ${
-                                  currentPage === num
+                                className={`min-w-[36px] h-[36px] px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all cursor-pointer ${currentPage === num
                                     ? 'bg-[#BF8647] text-black shadow-lg scale-105 font-black'
                                     : 'bg-[#1A1A1A] border border-[#333] text-gray-300 hover:text-[#BF8647] hover:border-[#BF8647]'
-                                }`}
+                                  }`}
                               >
                                 {num}
                               </button>

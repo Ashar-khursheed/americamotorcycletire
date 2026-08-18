@@ -30,7 +30,7 @@ export function Header() {
     try {
       const stored = localStorage.getItem('bmg_customer_user');
       if (stored) setCustomerUser(JSON.parse(stored));
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   return (
@@ -79,7 +79,7 @@ export function Header() {
 
               return menuList.map((item: any, idx: number) => {
                 // Change SHOW_TIRES_DROPDOWN to true to unhide the categories dropdown menu
-                const SHOW_TIRES_DROPDOWN = false;
+                const SHOW_TIRES_DROPDOWN = true;
                 const isTiresLink = SHOW_TIRES_DROPDOWN && (item.label.toLowerCase().includes('tire') || item.isDropdown);
                 if (isTiresLink) {
                   return (
