@@ -39,14 +39,13 @@ export const getImageUrl = (url?: string | null): string => {
 
   let cleanUrl = url.trim();
 
+  const apiOrigin = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api').replace(/\/api\/?$/, '');
+
+  // Unconditionally strip remote domain and route to local/current API origin
+  cleanUrl = cleanUrl.replace(/^https?:\/\/americaapi\.kaafifoods\.com\/?/i, `${apiOrigin}/`);
+
   // Convert extension to .webp for local storage assets
   cleanUrl = cleanUrl.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-
-  const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, '') || 'http://127.0.0.1:8000';
-
-  if (apiOrigin.includes('127.0.0.1') || apiOrigin.includes('localhost')) {
-    cleanUrl = cleanUrl.replace(/^https?:\/\/americaapi\.kaafifoods\.com/, apiOrigin);
-  }
 
   if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
     const relativePath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
