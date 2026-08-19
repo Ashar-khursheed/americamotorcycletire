@@ -353,30 +353,30 @@ export default function ProductDetailPage() {
   }, [product]);
 
   return (
-    <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between">
+    <main className="bg-[#0A0A0A] min-h-screen text-white flex flex-col justify-between overflow-x-hidden">
       <div>
         <Header />
 
         {/* Breadcrumb Bar */}
-        <div className="bg-[#121212] border-b border-[#1E1E1E] py-4">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs text-gray-400 flex items-center gap-2 uppercase font-semibold">
-            <Link href="/" className="hover:text-[#BF8647]">Home</Link>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
-            <Link href="/products" className="hover:text-[#BF8647]">Shop Tires</Link>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
-            <span className="text-white line-clamp-1">{product?.name || 'Product Details'}</span>
+        <div className="bg-[#121212] border-b border-[#1E1E1E] py-3 sm:py-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-xs text-gray-400 flex items-center gap-1.5 sm:gap-2 uppercase font-semibold overflow-x-auto scrollbar-none whitespace-nowrap">
+            <Link href="/" className="hover:text-[#BF8647] shrink-0">Home</Link>
+            <ChevronRight className="w-3.5 h-3.5 text-gray-600 shrink-0" />
+            <Link href="/products" className="hover:text-[#BF8647] shrink-0">Shop Tires</Link>
+            <ChevronRight className="w-3.5 h-3.5 text-gray-600 shrink-0" />
+            <span className="text-white truncate max-w-[180px] sm:max-w-none">{product?.name || 'Product Details'}</span>
           </div>
         </div>
 
         {/* PDP Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
           {loading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-[#121212] border border-[#222] p-8 rounded-lg animate-pulse">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 bg-[#121212] border border-[#222] p-4 sm:p-6 lg:p-8 rounded-xl animate-pulse">
               <div className="lg:col-span-6 space-y-4">
-                <div className="bg-[#1A1A1A] rounded-lg h-[420px] w-full" />
-                <div className="grid grid-cols-4 gap-3">
+                <div className="bg-[#1A1A1A] rounded-xl h-[260px] sm:h-[360px] lg:h-[420px] w-full" />
+                <div className="grid grid-cols-4 gap-2 sm:gap-3">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-[#1A1A1A] h-20 rounded" />
+                    <div key={i} className="bg-[#1A1A1A] h-16 sm:h-20 rounded-lg" />
                   ))}
                 </div>
               </div>
@@ -397,42 +397,42 @@ export default function ProductDetailPage() {
               </div>
             </div>
           ) : !product ? (
-            <div className="text-center py-20 bg-[#121212] rounded-lg border border-[#222]">
+            <div className="text-center py-16 sm:py-20 bg-[#121212] rounded-xl border border-[#222] px-4">
               <h2 className="text-xl font-bold uppercase mb-2">Product Not Found</h2>
-              <Link href="/products" className="bg-[#BF8647] text-black px-6 py-2.5 rounded text-xs font-bold uppercase">
+              <Link href="/products" className="bg-[#BF8647] text-black px-6 py-2.5 rounded text-xs font-bold uppercase inline-block">
                 Return to Shop
               </Link>
             </div>
           ) : (
-            <div className="space-y-16">
+            <div className="space-y-8 sm:space-y-12 lg:space-y-16">
 
               {/* Product Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-[#121212] border border-[#222] p-8 rounded-lg">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 bg-[#121212] border border-[#222] p-4 sm:p-6 lg:p-8 rounded-xl min-w-0">
 
-                {/* Left Column: Gallery (5 cols) */}
-                <div className="lg:col-span-6 space-y-4">
+                {/* Left Column: Gallery (6 cols) */}
+                <div className="lg:col-span-6 space-y-3 sm:space-y-4 min-w-0">
 
                   {/* Main Large Image */}
-                  <div className="bg-[#ffffff] border border-[#262626] rounded-lg h-[420px] p-8 flex items-center justify-center relative overflow-hidden group">
+                  <div className="bg-[#ffffff] border border-[#262626] rounded-xl h-[260px] sm:h-[360px] lg:h-[420px] p-4 sm:p-8 flex items-center justify-center relative overflow-hidden group">
                     <img
                       src={selectedImage || product.primary_image || displayImages[0]}
                       alt={product.name}
                       className="max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
                     />
                     {product.brand && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE'].includes(product.brand.trim().toUpperCase()) && (
-                      <span className="absolute top-4 left-4 bg-[#BF8647] text-black font-extrabold text-xs uppercase px-3 py-1 rounded">
+                      <span className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#BF8647] text-black font-extrabold text-[10px] sm:text-xs uppercase px-2.5 py-1 rounded shadow-md">
                         {product.brand}
                       </span>
                     )}
                   </div>
 
                   {/* Image Thumbnails */}
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-4 gap-2 sm:gap-3">
                     {displayImages.map((imgUrl: string, idx: number) => (
                       <button
                         key={idx}
                         onClick={() => setSelectedImage(imgUrl)}
-                        className={`bg-[#1A1A1A] border rounded p-2 h-20 flex items-center justify-center transition-all ${(selectedImage ? selectedImage === imgUrl : idx === 0) ? 'border-[#BF8647] ring-1 ring-[#BF8647]' : 'border-[#262626] hover:border-gray-500'
+                        className={`bg-[#1A1A1A] border rounded-lg p-1.5 sm:p-2 h-16 sm:h-20 flex items-center justify-center transition-all cursor-pointer ${(selectedImage ? selectedImage === imgUrl : idx === 0) ? 'border-[#BF8647] ring-1 ring-[#BF8647]' : 'border-[#262626] hover:border-gray-500'
                           }`}
                       >
                         <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="max-h-full object-contain" />
@@ -442,13 +442,13 @@ export default function ProductDetailPage() {
 
                 </div>
 
-                {/* Right Column: PDP Info & Actions (7 cols) */}
-                <div className="lg:col-span-6 space-y-6 flex flex-col justify-between">
+                {/* Right Column: PDP Info & Actions (6 cols) */}
+                <div className="lg:col-span-6 space-y-5 sm:space-y-6 flex flex-col justify-between min-w-0">
 
                   <div>
                     {/* Brand & Stars */}
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-[#BF8647] font-bold uppercase tracking-widest">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <span className="text-[11px] sm:text-xs text-[#BF8647] font-bold uppercase tracking-widest">
                         {product.brand && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE'].includes(product.brand.trim().toUpperCase()) ? `${product.brand} MOTORCYCLE TIRE` : 'MOTORCYCLE TIRE'}
                       </span>
                       <div className="flex items-center gap-1 text-[#BF8647]">
@@ -460,16 +460,18 @@ export default function ProductDetailPage() {
                     </div>
 
                     {/* Product Name */}
-                    <h1 className="text-3xl sm:text-4xl font-extrabold uppercase text-white leading-tight mb-4">
+                    <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold uppercase text-white leading-tight mb-3 sm:mb-4 tracking-tight break-words">
                       {product.name}
                     </h1>
 
                     {/* Stock Status & SKU */}
-                    <div className="flex items-center gap-4 text-xs font-semibold mb-6">
-                      <span className="text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2.5 py-1 rounded flex items-center gap-1.5 uppercase font-bold">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> In Stock ({product.stock_quantity ?? 25} Available)
+                    <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-xs font-semibold mb-4 sm:mb-6 min-w-0">
+                      <span className="text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2.5 py-1 rounded-md flex items-center gap-1.5 uppercase font-bold shrink-0 text-[11px] sm:text-xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" /> In Stock ({product.stock_quantity ?? 25} Available)
                       </span>
-                      <span className="text-gray-500 uppercase font-mono">SKU: {selectedVariant?.sku || selectedVariant?.item_number || product.sku}</span>
+                      <span className="text-gray-400 uppercase font-mono text-[11px] sm:text-xs break-all">
+                        SKU: <span className="text-gray-200">{selectedVariant?.sku || selectedVariant?.item_number || product.sku || 'N/A'}</span>
+                      </span>
                     </div>
 
                     {/* Pricing Box */}
@@ -481,16 +483,16 @@ export default function ProductDetailPage() {
                       const parsedCompare = rawCompare ? (typeof rawCompare === 'number' ? rawCompare : parseFloat(String(rawCompare).replace(/[^0-9.]/g, '')) || null) : null;
 
                       return (
-                        <div className="bg-[#181818] border border-[#262626] p-5 rounded-lg mb-6 flex items-baseline gap-4 animate-scale-in">
-                          <span className="text-3xl sm:text-4xl font-extrabold text-[#BF8647]">
+                        <div className="bg-[#181818] border border-[#262626] p-3.5 sm:p-5 rounded-xl mb-5 sm:mb-6 flex flex-wrap items-baseline gap-2.5 sm:gap-4 animate-scale-in">
+                          <span className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#BF8647]">
                             ${calculatedPrice.toFixed(2)}
                           </span>
                           {parsedCompare && parsedCompare > basePrice && (
                             <>
-                              <span className="text-lg text-gray-500 line-through">
+                              <span className="text-base sm:text-lg text-gray-500 line-through">
                                 ${parsedCompare.toFixed(2)}
                               </span>
-                              <span className="text-xs bg-red-950 text-red-400 border border-red-800/40 px-2 py-0.5 rounded uppercase font-bold">
+                              <span className="text-[11px] sm:text-xs bg-red-950 text-red-400 border border-red-800/40 px-2 py-0.5 rounded uppercase font-bold">
                                 Save ${(parsedCompare - basePrice).toFixed(2)}
                               </span>
                             </>
@@ -500,17 +502,17 @@ export default function ProductDetailPage() {
                     })()}
 
                     {/* Short Specs / Highlights */}
-                    <div className="space-y-2 text-xs text-gray-300 mb-6">
-                      <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-[#BF8647]" />
+                    <div className="space-y-2 text-xs text-gray-300 mb-5 sm:mb-6">
+                      <div className="flex items-start gap-2">
+                        <Check className="w-4 h-4 text-[#BF8647] shrink-0 mt-0.5" />
                         <span>Enhanced multi-compound technology for high-angle cornering grip</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-[#BF8647]" />
+                      <div className="flex items-start gap-2">
+                        <Check className="w-4 h-4 text-[#BF8647] shrink-0 mt-0.5" />
                         <span>Optimized tread siping for exceptional wet weather water evacuation</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-[#BF8647]" />
+                      <div className="flex items-start gap-2">
+                        <Check className="w-4 h-4 text-[#BF8647] shrink-0 mt-0.5" />
                         <span>Snell & DOT compliant heavy duty casing structure</span>
                       </div>
                     </div>
@@ -840,8 +842,8 @@ export default function ProductDetailPage() {
                       const curChoice = selectedGlobalOptions[gKey] || choices[0];
 
                       return (
-                        <div key={gKey} className="space-y-3 my-6 pt-5 border-t border-[#222]">
-                          <div className="flex items-center justify-between">
+                        <div key={gKey} className="space-y-3 my-5 sm:my-6 pt-4 sm:pt-5 border-t border-[#222]">
+                          <div className="flex flex-wrap items-center justify-between gap-1">
                             <label className="text-xs font-black uppercase text-[#BF8647] tracking-wider block">
                               {gItem.title || 'Global Product Option'}
                             </label>
@@ -857,21 +859,21 @@ export default function ProductDetailPage() {
                                 <label
                                   key={choice.id || choice.label}
                                   onClick={() => setSelectedGlobalOptions({ ...selectedGlobalOptions, [gKey]: choice })}
-                                  className={`flex items-center justify-between p-3.5 rounded-lg border cursor-pointer transition-all ${isSelected
+                                  className={`flex items-center justify-between p-3 sm:p-3.5 rounded-lg border cursor-pointer transition-all gap-2 min-w-0 ${isSelected
                                     ? 'bg-[#1F1912] border-[#BF8647] text-white ring-1 ring-[#BF8647]'
                                     : 'bg-[#121212] border-[#2B2B2B] text-gray-300 hover:border-gray-500'
                                     }`}
                                 >
-                                  <div className="flex items-center gap-3">
-                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#BF8647] bg-[#BF8647]' : 'border-gray-500'
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className={`w-4 h-4 rounded-full border shrink-0 flex items-center justify-center ${isSelected ? 'border-[#BF8647] bg-[#BF8647]' : 'border-gray-500'
                                       }`}>
                                       {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
                                     </div>
-                                    <span className="text-xs font-bold uppercase">
+                                    <span className="text-xs font-bold uppercase truncate">
                                       {choice.label}
                                     </span>
                                   </div>
-                                  <span className="text-xs font-black text-[#BF8647]">
+                                  <span className="text-xs font-black text-[#BF8647] shrink-0">
                                     {choicePrice > 0 ? `(+$${choicePrice.toFixed(2)})` : 'FREE'}
                                   </span>
                                 </label>
@@ -884,20 +886,20 @@ export default function ProductDetailPage() {
                   </div>
 
                   {/* Quantity & CTA Buttons */}
-                  <div className="space-y-4 pt-6 border-t border-[#222]">
+                  <div className="space-y-4 pt-5 sm:pt-6 border-t border-[#222]">
                     <div className="flex items-center gap-4">
                       <label className="text-xs font-bold uppercase text-gray-400">Qty:</label>
-                      <div className="flex items-center bg-[#1A1A1A] border border-[#333] rounded">
+                      <div className="flex items-center bg-[#1A1A1A] border border-[#333] rounded-lg">
                         <button
                           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="px-3 py-1.5 text-gray-400 hover:text-white font-bold"
+                          className="px-3.5 py-1.5 text-gray-400 hover:text-white font-bold cursor-pointer"
                         >
                           -
                         </button>
                         <span className="px-4 text-xs font-bold">{quantity}</span>
                         <button
                           onClick={() => setQuantity(quantity + 1)}
-                          className="px-3 py-1.5 text-gray-400 hover:text-white font-bold"
+                          className="px-3.5 py-1.5 text-gray-400 hover:text-white font-bold cursor-pointer"
                         >
                           +
                         </button>
@@ -907,7 +909,7 @@ export default function ProductDetailPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 uppercase text-xs font-bold">
                       <button
                         onClick={handleAddToCart}
-                        className="bg-[#BF8647] text-black py-4 rounded hover:bg-[#D49A50] transition-colors flex items-center justify-center gap-2"
+                        className="bg-[#BF8647] text-black py-3.5 sm:py-4 rounded-lg hover:bg-[#D49A50] transition-colors flex items-center justify-center gap-2 font-extrabold shadow-md active:scale-95 cursor-pointer"
                       >
                         {added ? (
                           <>
@@ -921,24 +923,24 @@ export default function ProductDetailPage() {
                       </button>
                       <button
                         onClick={handleBuyNow}
-                        className="bg-white text-black py-4 rounded hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                        className="bg-white text-black py-3.5 sm:py-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 font-extrabold shadow-md active:scale-95 cursor-pointer"
                       >
                         Buy Now
                       </button>
                     </div>
 
                     {/* Workshop Fitment Callout Banner */}
-                    <div className="bg-[#181510] border border-[#BF8647]/30 p-4 rounded flex items-center justify-between text-xs">
+                    <div className="bg-[#181510] border border-[#BF8647]/30 p-3.5 sm:p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-3">
                         <Wrench className="w-5 h-5 text-[#BF8647] shrink-0" />
                         <div>
-                          <div className="font-bold text-white uppercase">NEED PROFESSIONAL WORKSHOP FITMENT?</div>
+                          <div className="font-extrabold text-white uppercase text-xs">NEED PROFESSIONAL WORKSHOP FITMENT?</div>
                           <div className="text-gray-400 text-[11px]">We fit & balance tires same-day in Fremont, CA</div>
                         </div>
                       </div>
                       <a
                         href="tel:4085918484"
-                        className="hidden sm:flex items-center gap-1.5 bg-[#BF8647] text-black font-bold uppercase text-[11px] px-3 py-1.5 rounded hover:bg-[#D49A50]"
+                        className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#BF8647] text-black font-extrabold uppercase text-[11px] px-3.5 py-2 rounded-md hover:bg-[#D49A50] shrink-0 transition-colors"
                       >
                         <PhoneCall className="w-3.5 h-3.5" /> Book Service
                       </a>
@@ -1380,16 +1382,16 @@ export default function ProductDetailPage() {
               {/* Related Products */}
               {relatedProducts.length > 0 && (
                 <div>
-                  <h3 className="text-2xl font-bold uppercase text-white mb-6">
+                  <h3 className="text-xl sm:text-2xl font-bold uppercase text-white mb-4 sm:mb-6">
                     YOU MAY ALSO LIKE
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {relatedProducts.map((relP) => (
                       <div
                         key={relP.id}
-                        className="bg-[#121212] border border-[#222] rounded-lg p-5 flex flex-col justify-between hover:border-[#BF8647] transition-all group"
+                        className="bg-[#121212] border border-[#222] rounded-xl p-4 sm:p-5 flex flex-col justify-between hover:border-[#BF8647] transition-all group min-w-0"
                       >
-                        <div className="bg-[#ffffff] p-4 h-48 rounded flex items-center justify-center mb-4">
+                        <div className="bg-[#ffffff] p-3 sm:p-4 h-40 sm:h-48 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
                           <img
                             src={relP.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=400'}
                             alt={relP.name}
@@ -1397,18 +1399,20 @@ export default function ProductDetailPage() {
                           />
                         </div>
                         <div>
-                          <span className="text-[10px] bg-[#BF8647] text-black font-black uppercase px-2 py-0.5 rounded">
-                            {relP.brand}
-                          </span>
-                          <h4 className="text-sm font-bold text-white uppercase line-clamp-1 mt-2 mb-1">
+                          {relP.brand && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE'].includes(relP.brand.trim().toUpperCase()) && (
+                            <span className="text-[10px] bg-[#BF8647] text-black font-black uppercase px-2 py-0.5 rounded">
+                              {relP.brand}
+                            </span>
+                          )}
+                          <h4 className="text-xs sm:text-sm font-bold text-white uppercase line-clamp-1 mt-2 mb-1">
                             {relP.name}
                           </h4>
-                          <div className="text-lg font-bold text-[#BF8647] mb-3">
+                          <div className="text-base sm:text-lg font-bold text-[#BF8647] mb-3">
                             ${Number(relP.price).toFixed(2)}
                           </div>
                           <Link
                             href={`/products/${relP.slug}`}
-                            className="block text-center border border-[#333] hover:border-[#BF8647] text-white hover:text-[#BF8647] text-xs font-bold uppercase py-2 rounded transition-colors"
+                            className="block text-center border border-[#333] hover:border-[#BF8647] text-white hover:text-[#BF8647] text-xs font-bold uppercase py-2 rounded-lg transition-colors"
                           >
                             View Tire Details
                           </Link>
