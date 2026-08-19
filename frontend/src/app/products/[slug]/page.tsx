@@ -137,12 +137,16 @@ export default function ProductDetailPage() {
       updateMeta('meta[property="og:url"]', 'content', canonicalUrl);
 
       if (Array.isArray(product.variants) && product.variants.length > 0 && !selectedVariant) {
-        const first = product.variants[0];
-        setSelectedVariant(first);
-        const attrs: { [key: string]: string } = {};
-        if (first.position) attrs['Wheel Location'] = first.position;
-        if (first.tire_size || first.name) attrs['Tire Size'] = first.tire_size || first.name;
-        setSelectedAttributes(attrs);
+        // If all variants share the same position or no position exists, select default variant
+        const positions = Array.from(new Set(product.variants.map((v: any) => v.position).filter(Boolean)));
+        if (positions.length <= 1) {
+          const first = product.variants[0];
+          setSelectedVariant(first);
+          const attrs: { [key: string]: string } = {};
+          if (first.position) attrs['Wheel Location'] = first.position;
+          if (first.tire_size || first.name) attrs['Tire Size'] = first.tire_size || first.name;
+          setSelectedAttributes(attrs);
+        }
       }
     }
   }, [product, slug]);
@@ -187,39 +191,70 @@ export default function ProductDetailPage() {
   };
 
   const handleAttributeChange = (attrName: string, val: string) => {
+    const isLocAttr = attrName.toLowerCase().includes('location') || attrName.toLowerCase().includes('position');
+    
     const updatedAttrs = { ...selectedAttributes };
     if (val) {
       updatedAttrs[attrName] = val;
     } else {
       delete updatedAttrs[attrName];
     }
+
+    if (isLocAttr) {
+      if (!val) {
+        // If Wheel Location is cleared, clear Tire Size as well
+        const sizeKey = Object.keys(updatedAttrs).find((k) => k.toLowerCase().includes('size'));
+        if (sizeKey) delete updatedAttrs[sizeKey];
+        setSelectedVariant(null);
+      } else {
+        // Check if currently selected size fits this location
+        const sizeKey = Object.keys(updatedAttrs).find((k) => k.toLowerCase().includes('size'));
+        if (sizeKey && updatedAttrs[sizeKey]) {
+          const currentSize = updatedAttrs[sizeKey].toLowerCase();
+          const selectedLoc = val.toLowerCase();
+          const isValid = Array.isArray(product?.variants) && product.variants.some((v: any) => {
+            const vPos = (v.position || '').toLowerCase();
+            const vSize = (v.tire_size || v.name || '').toLowerCase();
+            const matchLoc = vPos === selectedLoc || selectedLoc.includes(vPos) || vPos.includes(selectedLoc);
+            const matchSize = vSize === currentSize || currentSize.includes(vSize) || vSize.includes(currentSize);
+            return matchLoc && matchSize;
+          });
+          if (!isValid) {
+            delete updatedAttrs[sizeKey];
+          }
+        }
+      }
+    }
+
     setSelectedAttributes(updatedAttrs);
 
     if (Array.isArray(product?.variants) && product.variants.length > 0) {
-      const selectedLoc = Object.entries(updatedAttrs).find(([k]) => k.toLowerCase().includes('location'))?.[1]?.toLowerCase() || '';
+      const selectedLoc = Object.entries(updatedAttrs).find(([k]) => k.toLowerCase().includes('location') || k.toLowerCase().includes('position'))?.[1]?.toLowerCase() || '';
       const selectedSize = Object.entries(updatedAttrs).find(([k]) => k.toLowerCase().includes('size'))?.[1]?.toLowerCase() || '';
 
-      const matched = product.variants.find((v: any) => {
-        const vPos = (v.position || '').toLowerCase();
-        const vSize = (v.tire_size || v.name || '').toLowerCase();
-
-        const matchLoc = !selectedLoc || vPos === selectedLoc || selectedLoc.includes(vPos) || vPos.includes(selectedLoc);
-        const matchSize = !selectedSize || vSize === selectedSize || selectedSize.includes(vSize) || vSize.includes(selectedSize);
-
-        return matchLoc && matchSize;
-      });
-
-      if (matched) {
-        setSelectedVariant(matched);
+      if (!selectedLoc && !selectedSize) {
+        setSelectedVariant(null);
       } else {
-        const partialMatched = product.variants.find((v: any) => {
+        const matched = product.variants.find((v: any) => {
           const vPos = (v.position || '').toLowerCase();
           const vSize = (v.tire_size || v.name || '').toLowerCase();
-          return (selectedSize && (vSize === selectedSize || selectedSize.includes(vSize))) ||
-                 (selectedLoc && (vPos === selectedLoc || selectedLoc.includes(vPos)));
+
+          const matchLoc = !selectedLoc || vPos === selectedLoc || selectedLoc.includes(vPos) || vPos.includes(selectedLoc);
+          const matchSize = !selectedSize || vSize === selectedSize || selectedSize.includes(vSize) || vSize.includes(selectedSize);
+
+          return matchLoc && matchSize;
         });
-        if (partialMatched) {
-          setSelectedVariant(partialMatched);
+
+        if (matched) {
+          setSelectedVariant(matched);
+        } else {
+          const partialMatched = product.variants.find((v: any) => {
+            const vPos = (v.position || '').toLowerCase();
+            const vSize = (v.tire_size || v.name || '').toLowerCase();
+            return (selectedSize && (vSize === selectedSize || selectedSize.includes(vSize))) ||
+                   (selectedLoc && (vPos === selectedLoc || selectedLoc.includes(vPos)));
+          });
+          setSelectedVariant(partialMatched || null);
         }
       }
     }
@@ -227,6 +262,14 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (product) {
+      const wheelLocKeyInAttrs = Object.keys(selectedAttributes).find((k) => k.toLowerCase().includes('location') || k.toLowerCase().includes('position'));
+      const wheelLocAttrInProduct = Array.isArray(product.variants) && product.variants.some((v: any) => v.position);
+      
+      if (wheelLocAttrInProduct && (!wheelLocKeyInAttrs || !selectedAttributes[wheelLocKeyInAttrs])) {
+        alert('Please select a Wheel Location (FRONT or REAR) before adding to cart.');
+        return;
+      }
+
       const selections = getFormattedGlobalSelections();
       const variantStr = selectedVariant ? `Size Option: ${selectedVariant.position || ''} ${selectedVariant.tire_size || selectedVariant.name || ''}`.trim() : '';
       const customAttrStr = Object.entries(selectedAttributes).map(([k, v]) => `${k}: ${v}`).join(', ');
@@ -240,6 +283,14 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     if (product) {
+      const wheelLocKeyInAttrs = Object.keys(selectedAttributes).find((k) => k.toLowerCase().includes('location') || k.toLowerCase().includes('position'));
+      const wheelLocAttrInProduct = Array.isArray(product.variants) && product.variants.some((v: any) => v.position);
+      
+      if (wheelLocAttrInProduct && (!wheelLocKeyInAttrs || !selectedAttributes[wheelLocKeyInAttrs])) {
+        alert('Please select a Wheel Location (FRONT or REAR) first.');
+        return;
+      }
+
       const selections = getFormattedGlobalSelections();
       const variantStr = selectedVariant ? `Size Option: ${selectedVariant.position || ''} ${selectedVariant.tire_size || selectedVariant.name || ''}`.trim() : '';
       const customAttrStr = Object.entries(selectedAttributes).map(([k, v]) => `${k}: ${v}`).join(', ');
@@ -534,7 +585,37 @@ export default function ProductDetailPage() {
                         });
                       }
 
-                      // Fallbacks using direct product fields if attributes missing
+                      // Fallbacks and variant options extraction
+                      if (Array.isArray(product.variants) && product.variants.length > 0) {
+                        const variantPositions = Array.from(
+                          new Set(
+                            product.variants
+                              .map((v: any) => (v.position || '').trim())
+                              .filter(
+                                (p: string) =>
+                                  p && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE', 'NO', 'STANDARD', ''].includes(p.toUpperCase())
+                              )
+                          )
+                        );
+                        const variantSizes = Array.from(
+                          new Set(
+                            product.variants
+                              .map((v: any) => (v.tire_size || v.name || '').trim())
+                              .filter(
+                                (s: string) =>
+                                  s && !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE', 'NO', 'STANDARD', ''].includes(s.toUpperCase())
+                              )
+                          )
+                        );
+
+                        if (variantPositions.length > 0) {
+                          addOrUpdate('Wheel Location', variantPositions);
+                        }
+                        if (variantSizes.length > 0) {
+                          addOrUpdate('Tire Size', variantSizes);
+                        }
+                      }
+
                       const hasWheelLocation = attrsList.some(
                         (a) => a.name.toLowerCase() === 'wheel location' || a.name.toLowerCase() === 'wheel locations'
                       );
@@ -561,51 +642,138 @@ export default function ProductDetailPage() {
                         }
                       }
 
-                      // Filter out static spec metadata attributes & empty/redundant dropdowns
+                      // Filter out static spec metadata attributes & single-option dropdowns (must have > 1 choice)
                       const selectableAttributes = attrsList.filter((attr) => {
-                        if (!attr.options || attr.options.length === 0) return false;
+                        if (!attr.options || attr.options.length <= 1) return false;
 
                         const nameLower = attr.name.toLowerCase();
                         if (['make', 'model', 'brand', 'product type', 'type', 'vehicle type'].includes(nameLower)) {
                           return false;
                         }
 
-                        // If variants cards are already displayed above, skip redundant size/location dropdowns
-                        const isVariantKey = ['wheel location', 'wheel locations', 'tire size', 'size', 'sizes'].includes(nameLower);
-                        if (product.variants && product.variants.length > 0 && isVariantKey) {
-                          return false;
-                        }
-
-                        return attr.options.length > 0;
+                        return attr.options.length > 1;
                       });
 
-                      if (selectableAttributes.length === 0) return null;
+                      // Sort selectableAttributes so Wheel Location is ALWAYS first, Tire Size second
+                      const isLocationAttr = (name: string) =>
+                        name.toLowerCase().includes('location') || name.toLowerCase().includes('position');
+                      const isSizeAttr = (name: string) =>
+                        name.toLowerCase().includes('size');
+
+                      selectableAttributes.sort((a, b) => {
+                        if (isLocationAttr(a.name)) return -1;
+                        if (isLocationAttr(b.name)) return 1;
+                        if (isSizeAttr(a.name)) return -1;
+                        if (isSizeAttr(b.name)) return 1;
+                        return 0;
+                      });
+
+                      const locationAttrObj = selectableAttributes.find((a) => isLocationAttr(a.name));
+                      const selectedLocationVal = locationAttrObj ? (selectedAttributes[locationAttrObj.name] || '') : '';
+
+                      const hasMultipleVariants = Array.isArray(product.variants) && product.variants.length > 1;
+
+                      if (selectableAttributes.length === 0 && !hasMultipleVariants) return null;
 
                       return (
                         <div className="space-y-4 my-6 pt-5 border-t border-[#222]">
+                          {hasMultipleVariants && selectableAttributes.length === 0 && (
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-black uppercase text-white tracking-wider block">
+                                Select Tire Specification / Option
+                              </label>
+                              <div className="relative">
+                                <select
+                                  value={selectedVariant?.id || selectedVariant?.sku || ''}
+                                  onChange={(e) => {
+                                    const matched = product.variants.find((v: any) => String(v.id) === e.target.value || String(v.sku) === e.target.value);
+                                    if (matched) selectVariantAndSync(matched);
+                                  }}
+                                  className="w-full bg-[#121212] border border-[#333] rounded-md px-3.5 py-3 text-xs text-white uppercase font-semibold focus:outline-none focus:border-[#BF8647] appearance-none cursor-pointer pr-10 shadow-sm"
+                                >
+                                  {product.variants.map((v: any, vIdx: number) => {
+                                    const labelParts = [];
+                                    if (v.position) labelParts.push(v.position);
+                                    if (v.tire_size || v.name) labelParts.push(v.tire_size || v.name);
+                                    const label = labelParts.join(' - ') || `Option ${vIdx + 1}`;
+                                    const p = Number(v.price);
+                                    const pStr = p && !isNaN(p) ? ` ($${p.toFixed(2)})` : '';
+                                    return (
+                                      <option key={v.id || vIdx} value={v.id || v.sku || vIdx} className="bg-[#121212] text-white">
+                                        {label}{pStr}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                           {selectableAttributes.map((attr, idx) => {
                             const attrName = attr.name;
-                            const optsList = attr.options;
+                            const isLoc = isLocationAttr(attrName);
+                            const isChildOfLocation = locationAttrObj && !isLoc;
+
+                            // Disable lower dropdown if Wheel Location exists but is not selected
+                            const isDisabled = Boolean(isChildOfLocation && !selectedLocationVal);
+
+                            let optsList = attr.options;
+
+                            // Filter sizes dynamically based on selected Wheel Location
+                            if (isSizeAttr(attrName) && selectedLocationVal && Array.isArray(product.variants)) {
+                              const filteredSizes: string[] = Array.from(
+                                new Set(
+                                  product.variants
+                                    .filter((v: any) => {
+                                      const vPos = (v.position || '').toLowerCase();
+                                      const locVal = selectedLocationVal.toLowerCase();
+                                      return vPos === locVal || locVal.includes(vPos) || vPos.includes(locVal);
+                                    })
+                                    .map((v: any) => (v.tire_size || v.name || '').trim())
+                                    .filter(Boolean)
+                                )
+                              );
+                              if (filteredSizes.length > 0) {
+                                optsList = filteredSizes;
+                              }
+                            }
 
                             return (
                               <div key={idx} className="space-y-1.5">
-                                <label className="text-xs font-black uppercase text-white tracking-wider block">
-                                  {attrName}
+                                <label className="text-xs font-black uppercase text-white tracking-wider flex items-center justify-between">
+                                  <span>{attrName}</span>
+                                  {isDisabled && (
+                                    <span className="text-[10px] text-[#BF8647] font-semibold normal-case">
+                                      (Select Wheel Location First)
+                                    </span>
+                                  )}
                                 </label>
                                 <div className="relative">
                                   <select
+                                    disabled={isDisabled}
                                     value={selectedAttributes[attrName] || ''}
                                     onChange={(e) => handleAttributeChange(attrName, e.target.value)}
-                                    className="w-full bg-[#121212] border border-[#333] rounded-md px-3.5 py-3 text-xs text-white uppercase font-semibold focus:outline-none focus:border-[#BF8647] appearance-none cursor-pointer pr-10 shadow-sm"
+                                    className={`w-full border rounded-md px-3.5 py-3 text-xs uppercase font-semibold focus:outline-none transition-all appearance-none pr-10 shadow-sm ${
+                                      isDisabled
+                                        ? 'bg-[#181818] border-[#222] text-gray-500 cursor-not-allowed opacity-60'
+                                        : 'bg-[#121212] border-[#333] text-white cursor-pointer focus:border-[#BF8647]'
+                                    }`}
                                   >
-                                    <option value="">Select {attrName}</option>
-                                    {optsList.map((optVal: string, oIdx: number) => (
-                                      <option key={oIdx} value={optVal} className="bg-[#121212] text-white">
-                                        {optVal}
-                                      </option>
-                                    ))}
+                                    <option value="" className="bg-[#121212] text-gray-400">
+                                      {isDisabled ? `SELECT WHEEL LOCATION FIRST` : `SELECT ${attrName.toUpperCase()}`}
+                                    </option>
+                                    {!isDisabled &&
+                                      optsList.map((optVal: string, oIdx: number) => (
+                                        <option key={oIdx} value={optVal} className="bg-[#121212] text-white">
+                                          {optVal}
+                                        </option>
+                                      ))}
                                   </select>
-                                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                                  <div className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 ${isDisabled ? 'text-gray-600' : 'text-gray-400'}`}>
                                     <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
                                       <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                                     </svg>
@@ -619,10 +787,13 @@ export default function ProductDetailPage() {
                           {Object.keys(selectedAttributes).some((k) => !!selectedAttributes[k]) && (
                             <button
                               type="button"
-                              onClick={() => setSelectedAttributes({})}
+                              onClick={() => {
+                                setSelectedAttributes({});
+                                setSelectedVariant(null);
+                              }}
                               className="text-[11px] text-gray-400 hover:text-white uppercase font-bold tracking-widest pt-1 transition-colors block cursor-pointer"
                             >
-                              CLEAR
+                              CLEAR SELECTION
                             </button>
                           )}
                         </div>
