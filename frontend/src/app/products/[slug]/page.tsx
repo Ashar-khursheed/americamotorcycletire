@@ -557,16 +557,27 @@ export default function ProductDetailPage() {
                         const options = splitOptions(rawOptions);
                         if (options.length === 0) return;
 
-                        const uniqueOptions = Array.from(new Set(options));
-
                         const existing = attrsList.find(
                           (a) => a.name.toLowerCase() === cleanName.toLowerCase()
                         );
                         if (existing) {
-                          const merged = Array.from(new Set([...existing.options, ...uniqueOptions]));
+                          const merged: string[] = [];
+                          [...existing.options, ...options].forEach((item) => {
+                            const trimmed = String(item).trim();
+                            if (trimmed && !merged.some((m) => m.toLowerCase() === trimmed.toLowerCase())) {
+                              merged.push(trimmed);
+                            }
+                          });
                           existing.options = merged;
                         } else {
-                          attrsList.push({ name: cleanName, options: uniqueOptions });
+                          const uniqueOpts: string[] = [];
+                          options.forEach((item) => {
+                            const trimmed = String(item).trim();
+                            if (trimmed && !uniqueOpts.some((u) => u.toLowerCase() === trimmed.toLowerCase())) {
+                              uniqueOpts.push(trimmed);
+                            }
+                          });
+                          attrsList.push({ name: cleanName, options: uniqueOpts });
                         }
                       };
 
@@ -584,6 +595,11 @@ export default function ProductDetailPage() {
                           addOrUpdate(k, v);
                         });
                       }
+
+                      const isLocationAttr = (name: string) =>
+                        name.toLowerCase().includes('location') || name.toLowerCase().includes('position');
+                      const isSizeAttr = (name: string) =>
+                        name.toLowerCase().includes('size');
 
                       // Fallbacks and variant options extraction
                       if (Array.isArray(product.variants) && product.variants.length > 0) {
@@ -616,50 +632,65 @@ export default function ProductDetailPage() {
                         }
                       }
 
-                      const hasWheelLocation = attrsList.some(
-                        (a) => a.name.toLowerCase() === 'wheel location' || a.name.toLowerCase() === 'wheel locations'
-                      );
-                      if (!hasWheelLocation && product.wheel_locations) {
-                        addOrUpdate('Wheel Location', product.wheel_locations);
-                      }
-
-                      const hasTireSize = attrsList.some(
-                        (a) =>
-                          a.name.toLowerCase().includes('tire size') ||
-                          a.name.toLowerCase() === 'size' ||
-                          a.name.toLowerCase() === 'sizes'
-                      );
-                      if (!hasTireSize) {
-                        if (product.available_sizes) {
-                          addOrUpdate('Tire Size', product.available_sizes);
-                        } else {
-                          const fallbackSizes: string[] = [];
-                          if (product.front_tire_fitment) fallbackSizes.push(`Front ${product.front_tire_fitment}`);
-                          if (product.rear_tire_fitment) fallbackSizes.push(`Rear ${product.rear_tire_fitment}`);
-                          if (fallbackSizes.length > 0) {
-                            addOrUpdate('Tire Size', fallbackSizes);
+                      // ALWAYS guarantee Wheel Location exists with clean case-insensitive deduplicated options (e.g. FRONT, REAR, UNIVERSAL)
+                      const existingLoc = attrsList.find((a) => isLocationAttr(a.name));
+                      if (existingLoc) {
+                        const cleanOpts: string[] = [];
+                        existingLoc.options.forEach((opt) => {
+                          const upper = String(opt || '').trim().toUpperCase();
+                          if (upper && !cleanOpts.includes(upper)) {
+                            cleanOpts.push(upper);
                           }
-                        }
+                        });
+                        ['FRONT', 'REAR'].forEach((req) => {
+                          if (!cleanOpts.includes(req)) cleanOpts.push(req);
+                        });
+                        existingLoc.options = cleanOpts;
+                      } else {
+                        attrsList.unshift({ name: 'Wheel Location', options: ['FRONT', 'REAR'] });
                       }
 
-                      // Filter out static spec metadata attributes & single-option dropdowns (must have > 1 choice)
-                      const selectableAttributes = attrsList.filter((attr) => {
-                        if (!attr.options || attr.options.length <= 1) return false;
+                      // ALWAYS guarantee Tire Size exists for ALL products
+                      const existingSize = attrsList.find((a) => isSizeAttr(a.name));
+                      if (!existingSize) {
+                        const fallbackSizes: string[] = Array.from(
+                          new Set(
+                            [
+                              ...(product.variants || []).map((v: any) => v.tire_size || v.name),
+                              product.front_tire_fitment,
+                              product.rear_tire_fitment,
+                              product.available_sizes,
+                            ]
+                              .flat()
+                              .map((s) => String(s || '').trim())
+                              .filter(
+                                (s) =>
+                                  s &&
+                                  !['NAN', 'NULL', 'UNDEFINED', 'N/A', 'NONE', 'NO', 'STANDARD', ''].includes(s.toUpperCase())
+                              )
+                          )
+                        );
 
+                        attrsList.push({
+                          name: 'Tire Size',
+                          options: fallbackSizes.length > 0 ? fallbackSizes : [product.name || 'Standard Fitment'],
+                        });
+                      }
+
+                      // Filter out static spec metadata attributes, keeping Wheel Location & Tire Size ALWAYS
+                      const selectableAttributes = attrsList.filter((attr) => {
                         const nameLower = attr.name.toLowerCase();
                         if (['make', 'model', 'brand', 'product type', 'type', 'vehicle type'].includes(nameLower)) {
                           return false;
                         }
 
-                        return attr.options.length > 1;
+                        // Always include Wheel Location and Tire Size for EVERY product
+                        if (isLocationAttr(attr.name) || isSizeAttr(attr.name)) return true;
+
+                        return attr.options && attr.options.length > 1;
                       });
 
                       // Sort selectableAttributes so Wheel Location is ALWAYS first, Tire Size second
-                      const isLocationAttr = (name: string) =>
-                        name.toLowerCase().includes('location') || name.toLowerCase().includes('position');
-                      const isSizeAttr = (name: string) =>
-                        name.toLowerCase().includes('size');
-
                       selectableAttributes.sort((a, b) => {
                         if (isLocationAttr(a.name)) return -1;
                         if (isLocationAttr(b.name)) return 1;
@@ -673,7 +704,7 @@ export default function ProductDetailPage() {
 
                       const hasMultipleVariants = Array.isArray(product.variants) && product.variants.length > 1;
 
-                      if (selectableAttributes.length === 0 && !hasMultipleVariants) return null;
+                      if (selectableAttributes.length === 0) return null;
 
                       return (
                         <div className="space-y-4 my-6 pt-5 border-t border-[#222]">
