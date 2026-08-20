@@ -92,6 +92,30 @@ class Product extends Model
         'is_featured',
     ];
 
+    protected $appends = ['min_price', 'max_price'];
+
+    public function getMinPriceAttribute()
+    {
+        if ($this->relationLoaded('variants') && $this->variants->isNotEmpty()) {
+            $prices = $this->variants->pluck('price')->map(fn($p) => (float)$p)->filter(fn($p) => $p > 0);
+            if ($prices->isNotEmpty()) {
+                return (float) $prices->min();
+            }
+        }
+        return (float) ($this->attributes['price'] ?? 0);
+    }
+
+    public function getMaxPriceAttribute()
+    {
+        if ($this->relationLoaded('variants') && $this->variants->isNotEmpty()) {
+            $prices = $this->variants->pluck('price')->map(fn($p) => (float)$p)->filter(fn($p) => $p > 0);
+            if ($prices->isNotEmpty()) {
+                return (float) $prices->max();
+            }
+        }
+        return (float) ($this->attributes['price'] ?? 0);
+    }
+
     protected $casts = [
         'gallery_images' => 'array',
         'custom_attributes' => 'array',

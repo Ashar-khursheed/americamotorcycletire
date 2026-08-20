@@ -132,15 +132,33 @@ export function FeaturedTires() {
 
                   <div>
                     {/* Price */}
-                    <div className="flex items-baseline gap-2 mb-4">
-                      <span className="text-2xl font-bold text-white">
-                        ${Number(product.price).toFixed(2)}
-                      </span>
-                      {product.compare_at_price && (
-                        <span className="text-sm text-gray-500 line-through">
-                          ${Number(product.compare_at_price).toFixed(2)}
-                        </span>
-                      )}
+                    <div className="flex items-baseline gap-2 mb-4 flex-wrap">
+                      {(() => {
+                        const minPriceVal = Number(product.min_price || product.price) || 0;
+                        const maxPriceVal = Number(product.max_price || product.price) || minPriceVal;
+                        const hasPriceRange = maxPriceVal > minPriceVal;
+                        const numWasPrice = Number(product.compare_at_price) || 0;
+                        const hasDiscount = numWasPrice > maxPriceVal;
+
+                        return (
+                          <>
+                            {hasPriceRange ? (
+                              <span className="text-xl font-extrabold text-white font-mono">
+                                ${minPriceVal.toFixed(2)} – ${maxPriceVal.toFixed(2)}
+                              </span>
+                            ) : (
+                              <span className="text-2xl font-bold text-white font-mono">
+                                ${minPriceVal.toFixed(2)}
+                              </span>
+                            )}
+                            {hasDiscount && (
+                              <span className="text-sm text-gray-500 line-through">
+                                ${numWasPrice.toFixed(2)}
+                              </span>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
 
                     {/* Action Buttons */}

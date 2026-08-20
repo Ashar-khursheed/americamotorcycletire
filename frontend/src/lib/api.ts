@@ -196,6 +196,8 @@ export interface Product {
   sku?: string;
   brand?: string;
   price: number | string;
+  min_price?: number | string;
+  max_price?: number | string;
   compare_at_price?: number | string;
   primary_image?: string;
   gallery_images?: string[];

@@ -15,7 +15,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addItem } = useCartStore();
 
   const primaryImage = product.primary_image || 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=600&auto=format&fit=crop';
-  const hasDiscount = product.compare_at_price && Number(product.compare_at_price) > Number(product.price);
+  const minPriceVal = Number(product.min_price || product.price) || 0;
+  const maxPriceVal = Number(product.max_price || product.price) || minPriceVal;
+  const hasPriceRange = maxPriceVal > minPriceVal;
+  const numWasPrice = Number(product.compare_at_price) || 0;
+  const hasDiscount = numWasPrice > maxPriceVal;
 
   return (
     <div className="group bg-slate-900/90 rounded-2xl border border-slate-800/80 hover:border-red-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-red-950/20 overflow-hidden flex flex-col justify-between">
@@ -82,13 +86,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* Footer & Pricing */}
       <div className="p-5 pt-0 border-t border-slate-800/50 mt-2 flex items-center justify-between gap-2">
         <div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-black text-white">
-              ${Number(product.price).toFixed(2)}
-            </span>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            {hasPriceRange ? (
+              <span className="text-base font-black text-white font-mono">
+                ${minPriceVal.toFixed(2)} – ${maxPriceVal.toFixed(2)}
+              </span>
+            ) : (
+              <span className="text-lg font-black text-white font-mono">
+                ${minPriceVal.toFixed(2)}
+              </span>
+            )}
             {hasDiscount && (
               <span className="text-xs text-slate-500 line-through">
-                ${Number(product.compare_at_price).toFixed(2)}
+                ${numWasPrice.toFixed(2)}
               </span>
             )}
           </div>

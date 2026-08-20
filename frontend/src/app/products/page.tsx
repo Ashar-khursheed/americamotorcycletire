@@ -941,9 +941,11 @@ function ProductsContent() {
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {products.map((product) => {
-                      const numPrice = Number(product.price) || 0;
+                      const minPriceVal = Number(product.min_price || product.price) || 0;
+                      const maxPriceVal = Number(product.max_price || product.price) || minPriceVal;
+                      const hasPriceRange = maxPriceVal > minPriceVal;
                       const numWasPrice = Number(product.was_price || product.compare_at_price) || 0;
-                      const hasDiscount = numWasPrice > numPrice;
+                      const hasDiscount = numWasPrice > maxPriceVal;
                       const numRating = typeof product.rating === 'number' ? product.rating : (parseFloat(String(product.rating || '0')) || 0);
 
                       return (
@@ -1011,8 +1013,16 @@ function ProductsContent() {
                             </div>
 
                             <div>
-                              <div className="flex items-baseline gap-2 mb-2.5">
-                                <span className="text-xl sm:text-2xl font-black text-white">${numPrice.toFixed(2)}</span>
+                              <div className="flex items-baseline gap-2 mb-2.5 flex-wrap">
+                                {hasPriceRange ? (
+                                  <span className="text-base sm:text-xl font-black text-white font-mono">
+                                    ${minPriceVal.toFixed(2)} – ${maxPriceVal.toFixed(2)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xl sm:text-2xl font-black text-white font-mono">
+                                    ${minPriceVal.toFixed(2)}
+                                  </span>
+                                )}
                                 {hasDiscount && (
                                   <span className="text-[11px] sm:text-xs text-gray-500 line-through">
                                     ${numWasPrice.toFixed(2)}
