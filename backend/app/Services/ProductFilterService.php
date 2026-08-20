@@ -22,11 +22,11 @@ class ProductFilterService
             $terms[] = trim($cleanModel);
         }
 
-        // Harley-Davidson Family Mappings (specific model family designations)
+        // Harley-Davidson Family Mappings (including database truncated stubs like 'ele', 'roa', 'str', 'her', 'fat', etc.)
         if (str_contains($modelLower, 'electra') || str_contains($modelLower, 'street glide') || str_contains($modelLower, 'road glide') || str_contains($modelLower, 'road king') || str_contains($modelLower, 'ultra') || str_contains($modelLower, 'cvo') || str_contains($modelLower, 'flh')) {
-            $terms = array_merge($terms, ['electra', 'street glide', 'road glide', 'road king', 'flh', 'ultra', 'cvo', 'flht', 'flhx', 'fltr']);
+            $terms = array_merge($terms, ['electra', 'ele', 'street glide', 'str', 'road glide', 'road king', 'roa', 'flh', 'ultra', 'cvo', 'flht', 'flhx', 'fltr']);
         } elseif (str_contains($modelLower, 'softail') || str_contains($modelLower, 'fat boy') || str_contains($modelLower, 'heritage') || str_contains($modelLower, 'deluxe') || str_contains($modelLower, 'slim') || str_contains($modelLower, 'breakout')) {
-            $terms = array_merge($terms, ['softail', 'fat boy', 'heritage', 'deluxe', 'slim', 'breakout', 'flst', 'fxst']);
+            $terms = array_merge($terms, ['softail', 'fat boy', 'fat', 'heritage', 'her', 'deluxe', 'del', 'deuce', 'deu', 'slim', 'breakout', 'night train', 'nig', 'flst', 'fxst']);
         } elseif (str_contains($modelLower, 'dyna') || str_contains($modelLower, 'low rider') || str_contains($modelLower, 'street bob') || str_contains($modelLower, 'fat bob') || str_contains($modelLower, 'wide glide')) {
             $terms = array_merge($terms, ['dyna', 'low rider', 'street bob', 'fat bob', 'wide glide', 'fxd']);
         } elseif (str_contains($modelLower, 'sportster') || str_contains($modelLower, 'iron') || str_contains($modelLower, 'forty-eight') || str_contains($modelLower, '72') || str_contains($modelLower, '1200') || str_contains($modelLower, '883')) {
@@ -440,7 +440,7 @@ class ProductFilterService
         }
 
         // 11. Sorting
-        $sort = $request->input('sort', 'newest');
+        $sort = $request->input('sort', 'featured');
         switch ($sort) {
             case 'price_asc':
                 $query->orderBy('price', 'asc');
@@ -458,8 +458,25 @@ class ProductFilterService
                 $query->orderBy('name', 'desc');
                 break;
             case 'newest':
-            default:
                 $query->orderBy('id', 'desc');
+                break;
+            case 'featured':
+            default:
+                $query->orderByRaw("CASE 
+                    WHEN name LIKE '%Shinko 777%' THEN 1 
+                    WHEN name LIKE '%Metzeler CruiseTec%' THEN 2 
+                    WHEN name LIKE '%Commander III%' THEN 3 
+                    WHEN name LIKE '%ME888%' THEN 4 
+                    WHEN name LIKE '%D402%' THEN 5 
+                    WHEN name LIKE '%Night Dragon%' THEN 6 
+                    WHEN name LIKE '%American Elite%' THEN 7 
+                    WHEN name LIKE '%AE2%' THEN 8 
+                    WHEN name LIKE '%D401%' THEN 9 
+                    WHEN name LIKE '%Cobra Chrome%' THEN 10 
+                    ELSE 100 END ASC")
+                      ->orderBy('is_featured', 'desc')
+                      ->orderBy('review_count', 'desc')
+                      ->orderBy('id', 'asc');
                 break;
         }
 
