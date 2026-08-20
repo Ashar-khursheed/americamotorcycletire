@@ -22,13 +22,13 @@ class ProductFilterService
             $terms[] = trim($cleanModel);
         }
 
-        // Harley-Davidson Family Mappings
-        if (str_contains($modelLower, 'electra') || str_contains($modelLower, 'street glide') || str_contains($modelLower, 'road glide') || str_contains($modelLower, 'road king') || str_contains($modelLower, 'ultra') || str_contains($modelLower, 'cvo') || str_contains($modelLower, 'flh') || str_contains($modelLower, 'touring')) {
-            $terms = array_merge($terms, ['electra', 'touring', 'street glide', 'road glide', 'road king', 'flh', 'cruiser', 'bagger']);
+        // Harley-Davidson Family Mappings (specific model family designations)
+        if (str_contains($modelLower, 'electra') || str_contains($modelLower, 'street glide') || str_contains($modelLower, 'road glide') || str_contains($modelLower, 'road king') || str_contains($modelLower, 'ultra') || str_contains($modelLower, 'cvo') || str_contains($modelLower, 'flh')) {
+            $terms = array_merge($terms, ['electra', 'street glide', 'road glide', 'road king', 'flh', 'ultra', 'cvo', 'flht', 'flhx', 'fltr']);
         } elseif (str_contains($modelLower, 'softail') || str_contains($modelLower, 'fat boy') || str_contains($modelLower, 'heritage') || str_contains($modelLower, 'deluxe') || str_contains($modelLower, 'slim') || str_contains($modelLower, 'breakout')) {
-            $terms = array_merge($terms, ['softail', 'fat boy', 'heritage', 'cruiser', 'flst', 'fxst']);
+            $terms = array_merge($terms, ['softail', 'fat boy', 'heritage', 'deluxe', 'slim', 'breakout', 'flst', 'fxst']);
         } elseif (str_contains($modelLower, 'dyna') || str_contains($modelLower, 'low rider') || str_contains($modelLower, 'street bob') || str_contains($modelLower, 'fat bob') || str_contains($modelLower, 'wide glide')) {
-            $terms = array_merge($terms, ['dyna', 'low rider', 'street bob', 'fat bob', 'cruiser', 'fxd']);
+            $terms = array_merge($terms, ['dyna', 'low rider', 'street bob', 'fat bob', 'wide glide', 'fxd']);
         } elseif (str_contains($modelLower, 'sportster') || str_contains($modelLower, 'iron') || str_contains($modelLower, 'forty-eight') || str_contains($modelLower, '72') || str_contains($modelLower, '1200') || str_contains($modelLower, '883')) {
             $terms = array_merge($terms, ['sportster', 'iron', 'forty-eight', '883', '1200', 'xl']);
         } elseif (str_contains($modelLower, 'v-rod') || str_contains($modelLower, 'v rod') || str_contains($modelLower, 'vrsc') || str_contains($modelLower, 'night rod')) {
@@ -37,38 +37,38 @@ class ProductFilterService
 
         // Honda Mappings
         if (str_contains($modelLower, 'goldwing') || str_contains($modelLower, 'gold wing') || str_contains($modelLower, 'f6b') || str_contains($modelLower, 'valkyrie')) {
-            $terms = array_merge($terms, ['goldwing', 'gold wing', 'f6b', 'touring']);
+            $terms = array_merge($terms, ['goldwing', 'gold wing', 'f6b', 'valkyrie']);
         } elseif (str_contains($modelLower, 'shadow') || str_contains($modelLower, 'phantom') || str_contains($modelLower, 'vt750') || str_contains($modelLower, 'vt1100')) {
-            $terms = array_merge($terms, ['shadow', 'vt750', 'vt1100', 'cruiser']);
+            $terms = array_merge($terms, ['shadow', 'phantom', 'vt750', 'vt1100']);
         } elseif (str_contains($modelLower, 'vtx')) {
-            $terms = array_merge($terms, ['vtx', 'cruiser']);
+            $terms = array_merge($terms, ['vtx', 'vtx1300', 'vtx1800']);
         }
 
         // Yamaha Mappings
         if (str_contains($modelLower, 'v-star') || str_contains($modelLower, 'vstar') || str_contains($modelLower, 'bolt') || str_contains($modelLower, 'dragstar') || str_contains($modelLower, 'stryker') || str_contains($modelLower, 'raider')) {
-            $terms = array_merge($terms, ['v-star', 'vstar', 'bolt', 'dragstar', 'cruiser']);
+            $terms = array_merge($terms, ['v-star', 'vstar', 'bolt', 'dragstar', 'stryker', 'raider']);
         }
 
         // Kawasaki Mappings
         if (str_contains($modelLower, 'vulcan') || str_contains($modelLower, 'vn')) {
-            $terms = array_merge($terms, ['vulcan', 'vn', 'cruiser']);
+            $terms = array_merge($terms, ['vulcan', 'vn', 'vn900', 'vn1500', 'vn1600', 'vn1700', 'vn2000']);
         }
 
         // Suzuki Mappings
         if (str_contains($modelLower, 'boulevard') || str_contains($modelLower, 'intruder') || str_contains($modelLower, 'c50') || str_contains($modelLower, 'm50') || str_contains($modelLower, 'm109r')) {
-            $terms = array_merge($terms, ['boulevard', 'intruder', 'c50', 'm50', 'm109r', 'cruiser']);
+            $terms = array_merge($terms, ['boulevard', 'intruder', 'c50', 'm50', 'm109r', 'vl800', 'vz800']);
         }
 
         // BMW Mappings
         if (str_contains($modelLower, 'gs') || str_contains($modelLower, 'r1200gs') || str_contains($modelLower, 'r1250gs')) {
-            $terms = array_merge($terms, ['gs', 'adventure', 'r1200gs', 'r1250gs']);
+            $terms = array_merge($terms, ['gs', 'r1200gs', 'r1250gs', 'r1200', 'r1250']);
         } elseif (str_contains($modelLower, 'rt') || str_contains($modelLower, 'k1600')) {
-            $terms = array_merge($terms, ['rt', 'k1600', 'touring']);
+            $terms = array_merge($terms, ['rt', 'k1600', 'r1200rt', 'r1250rt']);
         }
 
         // Indian Mappings
         if (str_contains($modelLower, 'scout') || str_contains($modelLower, 'chief') || str_contains($modelLower, 'chieftain') || str_contains($modelLower, 'roadmaster') || str_contains($modelLower, 'challenger')) {
-            $terms = array_merge($terms, ['scout', 'chief', 'chieftain', 'roadmaster', 'challenger', 'cruiser', 'bagger', 'touring']);
+            $terms = array_merge($terms, ['scout', 'chief', 'chieftain', 'roadmaster', 'challenger']);
         }
 
         return array_unique(array_filter($terms));
@@ -387,11 +387,18 @@ class ProductFilterService
                                 str_contains($modelLower, 'shadow');
 
             if ($isCruiserVehicle) {
-                // Cruiser bike selected: exclude Scooter, UTV/ATV, Dirt, and pure Hypersport/Race tires
+                // Cruiser bike selected: exclude Scooter, UTV/ATV, Dirt, Drag Slicks, Race, Flat Track, and Dual Sport tires
                 $query->where('vehicle_type', '!=', 'UTV/ATV')
                       ->where('product_type', 'not like', '%scooter%')
                       ->where('product_type', 'not like', '%hypersport%')
-                      ->where('product_type', 'not like', '%dirt bike%');
+                      ->where('product_type', 'not like', '%dirt bike%')
+                      ->where('product_type', 'not like', '%race%')
+                      ->where('product_type', 'not like', '%drag%')
+                      ->where('product_type', 'not like', '%slick%')
+                      ->where('product_type', 'not like', '%dual sport%')
+                      ->where('name', 'not like', '%drag%')
+                      ->where('name', 'not like', '%slick%')
+                      ->where('name', 'not like', '%track%');
             }
         }
 
