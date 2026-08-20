@@ -10,6 +10,70 @@ use Illuminate\Support\Facades\DB;
 
 class ProductFilterService
 {
+    private function getModelSearchTerms($model, $make = '')
+    {
+        if (empty($model)) return [];
+
+        $modelLower = strtolower(trim($model));
+        $terms = [$modelLower];
+
+        $cleanModel = preg_replace('/^(harley-davidson|harley|honda|yamaha|kawasaki|suzuki|bmw|ktm|ducati|triumph|indian|victory)\s+/i', '', $modelLower);
+        if ($cleanModel && $cleanModel !== $modelLower) {
+            $terms[] = trim($cleanModel);
+        }
+
+        // Harley-Davidson Family Mappings
+        if (str_contains($modelLower, 'electra') || str_contains($modelLower, 'street glide') || str_contains($modelLower, 'road glide') || str_contains($modelLower, 'road king') || str_contains($modelLower, 'ultra') || str_contains($modelLower, 'cvo') || str_contains($modelLower, 'flh') || str_contains($modelLower, 'touring')) {
+            $terms = array_merge($terms, ['electra', 'touring', 'street glide', 'road glide', 'road king', 'flh', 'cruiser', 'bagger']);
+        } elseif (str_contains($modelLower, 'softail') || str_contains($modelLower, 'fat boy') || str_contains($modelLower, 'heritage') || str_contains($modelLower, 'deluxe') || str_contains($modelLower, 'slim') || str_contains($modelLower, 'breakout')) {
+            $terms = array_merge($terms, ['softail', 'fat boy', 'heritage', 'cruiser', 'flst', 'fxst']);
+        } elseif (str_contains($modelLower, 'dyna') || str_contains($modelLower, 'low rider') || str_contains($modelLower, 'street bob') || str_contains($modelLower, 'fat bob') || str_contains($modelLower, 'wide glide')) {
+            $terms = array_merge($terms, ['dyna', 'low rider', 'street bob', 'fat bob', 'cruiser', 'fxd']);
+        } elseif (str_contains($modelLower, 'sportster') || str_contains($modelLower, 'iron') || str_contains($modelLower, 'forty-eight') || str_contains($modelLower, '72') || str_contains($modelLower, '1200') || str_contains($modelLower, '883')) {
+            $terms = array_merge($terms, ['sportster', 'iron', 'forty-eight', '883', '1200', 'xl']);
+        } elseif (str_contains($modelLower, 'v-rod') || str_contains($modelLower, 'v rod') || str_contains($modelLower, 'vrsc') || str_contains($modelLower, 'night rod')) {
+            $terms = array_merge($terms, ['v-rod', 'v rod', 'vrsc', 'night rod']);
+        }
+
+        // Honda Mappings
+        if (str_contains($modelLower, 'goldwing') || str_contains($modelLower, 'gold wing') || str_contains($modelLower, 'f6b') || str_contains($modelLower, 'valkyrie')) {
+            $terms = array_merge($terms, ['goldwing', 'gold wing', 'f6b', 'touring']);
+        } elseif (str_contains($modelLower, 'shadow') || str_contains($modelLower, 'phantom') || str_contains($modelLower, 'vt750') || str_contains($modelLower, 'vt1100')) {
+            $terms = array_merge($terms, ['shadow', 'vt750', 'vt1100', 'cruiser']);
+        } elseif (str_contains($modelLower, 'vtx')) {
+            $terms = array_merge($terms, ['vtx', 'cruiser']);
+        }
+
+        // Yamaha Mappings
+        if (str_contains($modelLower, 'v-star') || str_contains($modelLower, 'vstar') || str_contains($modelLower, 'bolt') || str_contains($modelLower, 'dragstar') || str_contains($modelLower, 'stryker') || str_contains($modelLower, 'raider')) {
+            $terms = array_merge($terms, ['v-star', 'vstar', 'bolt', 'dragstar', 'cruiser']);
+        }
+
+        // Kawasaki Mappings
+        if (str_contains($modelLower, 'vulcan') || str_contains($modelLower, 'vn')) {
+            $terms = array_merge($terms, ['vulcan', 'vn', 'cruiser']);
+        }
+
+        // Suzuki Mappings
+        if (str_contains($modelLower, 'boulevard') || str_contains($modelLower, 'intruder') || str_contains($modelLower, 'c50') || str_contains($modelLower, 'm50') || str_contains($modelLower, 'm109r')) {
+            $terms = array_merge($terms, ['boulevard', 'intruder', 'c50', 'm50', 'm109r', 'cruiser']);
+        }
+
+        // BMW Mappings
+        if (str_contains($modelLower, 'gs') || str_contains($modelLower, 'r1200gs') || str_contains($modelLower, 'r1250gs')) {
+            $terms = array_merge($terms, ['gs', 'adventure', 'r1200gs', 'r1250gs']);
+        } elseif (str_contains($modelLower, 'rt') || str_contains($modelLower, 'k1600')) {
+            $terms = array_merge($terms, ['rt', 'k1600', 'touring']);
+        }
+
+        // Indian Mappings
+        if (str_contains($modelLower, 'scout') || str_contains($modelLower, 'chief') || str_contains($modelLower, 'chieftain') || str_contains($modelLower, 'roadmaster') || str_contains($modelLower, 'challenger')) {
+            $terms = array_merge($terms, ['scout', 'chief', 'chieftain', 'roadmaster', 'challenger', 'cruiser', 'bagger', 'touring']);
+        }
+
+        return array_unique(array_filter($terms));
+    }
+
     public function getFilteredProducts(Request $request)
     {
         $query = Product::with(['category', 'productAttributeValues.attribute', 'productAttributeValues.attributeValue', 'variants', 'fitments'])
@@ -149,6 +213,13 @@ class ProductFilterService
                     } elseif (in_array($lowerT, ['scooter', 'scooters'])) {
                         $q->orWhere('vehicle_type', 'like', '%scooter%')
                           ->orWhere('product_type', 'like', '%scooter%');
+                    } elseif (in_array($lowerT, ['street bike', 'street bikes', 'street'])) {
+                        $q->orWhere('vehicle_type', 'like', '%street%')
+                          ->orWhere('product_type', 'like', '%street%')
+                          ->orWhere('product_type', 'like', '%cruiser%')
+                          ->orWhere('product_type', 'like', '%touring%')
+                          ->orWhere('product_type', 'like', '%sport%')
+                          ->orWhere('product_type', 'like', '%dot%');
                     } else {
                         $q->orWhere('vehicle_type', 'like', "%{$trimT}%")
                           ->orWhere('product_type', 'like', "%{$trimT}%");
@@ -233,13 +304,17 @@ class ProductFilterService
         $model = trim($request->input('model') ?? '');
 
         if (!empty($year) || !empty($make) || !empty($model)) {
-            $query->where(function ($q) use ($year, $make, $model) {
+            $terms = $this->getModelSearchTerms($model, $make);
+
+            $query->where(function ($q) use ($year, $make, $model, $terms) {
                 // Primary: check structured fitments table
-                $q->whereHas('fitments', function ($fitQ) use ($year, $make, $model) {
+                $q->whereHas('fitments', function ($fitQ) use ($year, $make, $model, $terms) {
                     if (!empty($year)) {
                         $yInt = (int)$year;
                         $fitQ->where(function ($subQ) use ($year, $yInt) {
-                            $subQ->where('year', 'like', "%{$year}%");
+                            $subQ->where('year', 'like', "%{$year}%")
+                                 ->orWhereNull('year')
+                                 ->orWhere('year', '');
                             if ($yInt > 0) {
                                 $subQ->orWhereRaw("CAST(SUBSTRING_INDEX(year, '-', 1) AS UNSIGNED) <= ? AND CAST(SUBSTRING_INDEX(year, '-', -1) AS UNSIGNED) >= ?", [$yInt, $yInt]);
                             }
@@ -249,22 +324,43 @@ class ProductFilterService
                         $fitQ->where('make', 'like', "%{$make}%");
                     }
                     if (!empty($model)) {
-                        $fitQ->where('model', 'like', "%{$model}%");
+                        $fitQ->where(function ($subModelQ) use ($model, $terms) {
+                            $subModelQ->where('model', 'like', "%{$model}%");
+                            foreach ($terms as $t) {
+                                $subModelQ->orWhere('model', 'like', "%{$t}%");
+                            }
+                        });
                     }
                 });
 
                 // Fallback: check columns on products table
-                $q->orWhere(function ($textQ) use ($year, $make, $model) {
+                $q->orWhere(function ($textQ) use ($year, $make, $model, $terms) {
                     if (!empty($make)) {
-                        $textQ->where('compatible_makes', 'like', "%{$make}%");
+                        $textQ->where(function($mQ) use ($make) {
+                            $mQ->where('compatible_makes', 'like', "%{$make}%");
+                            $makeLower = strtolower($make);
+                            if (str_contains($makeLower, 'harley')) {
+                                $mQ->orWhere('product_type', 'like', '%harley%')
+                                   ->orWhere('name', 'like', '%harley%');
+                            }
+                        });
                     }
                     if (!empty($model)) {
-                        $textQ->where('compatible_models', 'like', "%{$model}%");
+                        $textQ->where(function ($subModelQ) use ($model, $terms) {
+                            $subModelQ->where('compatible_models', 'like', "%{$model}%");
+                            foreach ($terms as $t) {
+                                $subModelQ->orWhere('compatible_models', 'like', "%{$t}%")
+                                          ->orWhere('product_type', 'like', "%{$t}%")
+                                          ->orWhere('name', 'like', "%{$t}%");
+                            }
+                        });
                     }
                     if (!empty($year)) {
                         $yInt = (int)$year;
                         $textQ->where(function($yQ) use ($year, $yInt) {
-                            $yQ->where('fitment_year_range', 'like', "%{$year}%");
+                            $yQ->where('fitment_year_range', 'like', "%{$year}%")
+                               ->orWhereNull('fitment_year_range')
+                               ->orWhere('fitment_year_range', '');
                             if ($yInt > 0) {
                                 $yQ->orWhereRaw("CAST(SUBSTRING_INDEX(fitment_year_range, '-', 1) AS UNSIGNED) <= ? AND CAST(SUBSTRING_INDEX(fitment_year_range, '-', -1) AS UNSIGNED) >= ?", [$yInt, $yInt]);
                             }
@@ -277,7 +373,18 @@ class ProductFilterService
             $modelLower = strtolower($model);
             $makeLower  = strtolower($make);
 
-            $isCruiserVehicle = str_contains($makeLower, 'harley') || str_contains($modelLower, 'street glide') || str_contains($modelLower, 'road glide') || str_contains($modelLower, 'softail') || str_contains($modelLower, 'fat boy') || str_contains($modelLower, 'dyna') || str_contains($modelLower, 'sportster') || str_contains($modelLower, 'vulcan') || str_contains($modelLower, 'boulevard') || str_contains($modelLower, 'shadow');
+            $isCruiserVehicle = str_contains($makeLower, 'harley') || 
+                                str_contains($modelLower, 'electra') || 
+                                str_contains($modelLower, 'street glide') || 
+                                str_contains($modelLower, 'road glide') || 
+                                str_contains($modelLower, 'road king') || 
+                                str_contains($modelLower, 'softail') || 
+                                str_contains($modelLower, 'fat boy') || 
+                                str_contains($modelLower, 'dyna') || 
+                                str_contains($modelLower, 'sportster') || 
+                                str_contains($modelLower, 'vulcan') || 
+                                str_contains($modelLower, 'boulevard') || 
+                                str_contains($modelLower, 'shadow');
 
             if ($isCruiserVehicle) {
                 // Cruiser bike selected: exclude Scooter, UTV/ATV, Dirt, and pure Hypersport/Race tires
