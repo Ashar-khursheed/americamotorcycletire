@@ -337,40 +337,42 @@ class ProductFilterService
                     }
                 });
 
-                // Fallback: check columns on products table
-                $q->orWhere(function ($textQ) use ($year, $make, $model, $terms) {
-                    if (!empty($make)) {
-                        $textQ->where(function($mQ) use ($make) {
-                            $mQ->where('compatible_makes', 'like', "%{$make}%");
-                            $makeLower = strtolower($make);
-                            if (str_contains($makeLower, 'harley')) {
-                                $mQ->orWhere('product_type', 'like', '%harley%')
-                                   ->orWhere('name', 'like', '%harley%');
-                            }
-                        });
-                    }
-                    if (!empty($model)) {
-                        $textQ->where(function ($subModelQ) use ($model, $terms) {
-                            $subModelQ->where('compatible_models', 'like', "%{$model}%");
-                            foreach ($terms as $t) {
-                                $subModelQ->orWhere('compatible_models', 'like', "%{$t}%")
-                                          ->orWhere('product_type', 'like', "%{$t}%")
-                                          ->orWhere('name', 'like', "%{$t}%");
-                            }
-                        });
-                    }
-                    if (!empty($year)) {
-                        $yInt = (int)$year;
-                        $textQ->where(function($yQ) use ($year, $yInt) {
-                            $yQ->where('fitment_year_range', 'like', "%{$year}%")
-                               ->orWhereNull('fitment_year_range')
-                               ->orWhere('fitment_year_range', '');
-                            if ($yInt > 0) {
-                                $yQ->orWhereRaw("CAST(SUBSTRING_INDEX(fitment_year_range, '-', 1) AS UNSIGNED) <= ? AND CAST(SUBSTRING_INDEX(fitment_year_range, '-', -1) AS UNSIGNED) >= ?", [$yInt, $yInt]);
-                            }
-                        });
-                    }
-                });
+                // Fallback: check columns on products table (only if subCategory is not explicitly filtering fitments)
+                if (empty($subCategory)) {
+                    $q->orWhere(function ($textQ) use ($year, $make, $model, $terms) {
+                        if (!empty($make)) {
+                            $textQ->where(function($mQ) use ($make) {
+                                $mQ->where('compatible_makes', 'like', "%{$make}%");
+                                $makeLower = strtolower($make);
+                                if (str_contains($makeLower, 'harley')) {
+                                    $mQ->orWhere('product_type', 'like', '%harley%')
+                                       ->orWhere('name', 'like', '%harley%');
+                                }
+                            });
+                        }
+                        if (!empty($model)) {
+                            $textQ->where(function ($subModelQ) use ($model, $terms) {
+                                $subModelQ->where('compatible_models', 'like', "%{$model}%");
+                                foreach ($terms as $t) {
+                                    $subModelQ->orWhere('compatible_models', 'like', "%{$t}%")
+                                              ->orWhere('product_type', 'like', "%{$t}%")
+                                              ->orWhere('name', 'like', "%{$t}%");
+                                }
+                            });
+                        }
+                        if (!empty($year)) {
+                            $yInt = (int)$year;
+                            $textQ->where(function($yQ) use ($year, $yInt) {
+                                $yQ->where('fitment_year_range', 'like', "%{$year}%")
+                                   ->orWhereNull('fitment_year_range')
+                                   ->orWhere('fitment_year_range', '');
+                                if ($yInt > 0) {
+                                    $yQ->orWhereRaw("CAST(SUBSTRING_INDEX(fitment_year_range, '-', 1) AS UNSIGNED) <= ? AND CAST(SUBSTRING_INDEX(fitment_year_range, '-', -1) AS UNSIGNED) >= ?", [$yInt, $yInt]);
+                                }
+                            });
+                        }
+                    });
+                }
             });
 
             // Enforce vehicle model category compatibility (e.g. Cruiser models exclude Scooter / Dirt / Pure Sportbike)

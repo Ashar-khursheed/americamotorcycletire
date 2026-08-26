@@ -35,6 +35,17 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
   const [modelsList, setModelsList] = useState<string[]>([]);
   const [groupedModels, setGroupedModels] = useState<Record<string, string[]>>({});
 
+  const selectedModelOptionValue = React.useMemo(() => {
+    if (!selectedModel) return '';
+    if (selectedSubCategory) return `${selectedModel}|||${selectedSubCategory}`;
+    for (const [gName, gMods] of Object.entries(groupedModels)) {
+      if (Array.isArray(gMods) && gMods.includes(selectedModel)) {
+        return `${selectedModel}|||${gName}`;
+      }
+    }
+    return selectedModel;
+  }, [selectedModel, selectedSubCategory, groupedModels]);
+
   const [loadingTypes, setLoadingTypes] = useState(false);
   const [loadingYears, setLoadingYears] = useState(false);
   const [loadingMakes, setLoadingMakes] = useState(false);
@@ -392,7 +403,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
                   {selectedModel && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
                 </label>
                 <select
-                  value={selectedSubCategory ? `${selectedModel}|||${selectedSubCategory}` : selectedModel}
+                  value={selectedModelOptionValue}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (val.includes('|||')) {
@@ -414,6 +425,11 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
                       ? 'LOADING MODELS...'
                       : '-- SELECT MODEL --'}
                   </option>
+                  {selectedModel && (
+                    <option value={selectedModelOptionValue} hidden>
+                      {selectedModel.toUpperCase()}
+                    </option>
+                  )}
                   {Object.keys(groupedModels).length > 0 ? (
                     Object.entries(groupedModels).map(([groupName, groupModels]) => (
                       <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">

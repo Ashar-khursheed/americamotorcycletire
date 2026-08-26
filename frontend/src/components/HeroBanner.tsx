@@ -25,6 +25,17 @@ export function HeroBanner() {
   const [selectedSubCategory, setSelectedSubCategory] = useState('');
   const [loadingModels, setLoadingModels] = useState(false);
 
+  const selectedModelOptionValue = React.useMemo(() => {
+    if (!selectedModel) return '';
+    if (selectedSubCategory) return `${selectedModel}|||${selectedSubCategory}`;
+    for (const [gName, gMods] of Object.entries(groupedModels)) {
+      if (Array.isArray(gMods) && gMods.includes(selectedModel)) {
+        return `${selectedModel}|||${gName}`;
+      }
+    }
+    return selectedModel;
+  }, [selectedModel, selectedSubCategory, groupedModels]);
+
   // 1. Initial fetch for Vehicle Types
   useEffect(() => {
     api
@@ -301,7 +312,7 @@ export function HeroBanner() {
                     {selectedModel && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
                   </label>
                   <select
-                    value={selectedSubCategory ? `${selectedModel}|||${selectedSubCategory}` : selectedModel}
+                    value={selectedModelOptionValue}
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val.includes('|||')) {
@@ -323,6 +334,11 @@ export function HeroBanner() {
                         ? 'LOADING MODELS...'
                         : '-- SELECT MODEL --'}
                     </option>
+                    {selectedModel && (
+                      <option value={selectedModelOptionValue} hidden>
+                        {selectedModel.toUpperCase()}
+                      </option>
+                    )}
                     {Object.keys(groupedModels).length > 0 ? (
                       Object.entries(groupedModels).map(([groupName, groupModels]) => (
                         <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">

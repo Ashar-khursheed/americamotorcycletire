@@ -83,6 +83,17 @@ function ProductsContent() {
   const [typesList, setTypesList] = useState<string[]>([]);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
+  const selectedModelOptionValue = React.useMemo(() => {
+    if (!selectedModel) return '';
+    if (selectedSubCategory) return `${selectedModel}|||${selectedSubCategory}`;
+    for (const [gName, gMods] of Object.entries(groupedModels)) {
+      if (Array.isArray(gMods) && gMods.includes(selectedModel)) {
+        return `${selectedModel}|||${gName}`;
+      }
+    }
+    return selectedModel;
+  }, [selectedModel, selectedSubCategory, groupedModels]);
+
   const addItem = useCartStore((state) => state.addItem);
 
   // Update state when searchParams change dynamically (e.g. client navigation)
@@ -91,6 +102,7 @@ function ProductsContent() {
       const year = searchParams.get('year') || '';
       const make = searchParams.get('make') || '';
       const model = searchParams.get('model') || '';
+      const subCat = searchParams.get('sub_category') || '';
       const type = searchParams.get('type') || searchParams.get('vehicle_type') || searchParams.get('product_type') || '';
       const vType = searchParams.get('vehicle_type') || searchParams.get('type') || '';
       const brand = searchParams.get('brand') || '';
@@ -101,6 +113,7 @@ function ProductsContent() {
       setSelectedYear(year);
       setSelectedMake(make);
       setSelectedModel(model);
+      setSelectedSubCategory(subCat);
       setSelectedType(type);
       setSelectedBikeCategory(bikeCat);
       setSelectedVehicleType(vType ? vType.split(',') : []);
@@ -770,7 +783,7 @@ function ProductsContent() {
                 <div>
                   <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">MODEL</label>
                   <select
-                    value={selectedSubCategory ? `${selectedModel}|||${selectedSubCategory}` : selectedModel}
+                    value={selectedModelOptionValue}
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val.includes('|||')) {
@@ -785,6 +798,11 @@ function ProductsContent() {
                     className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
                   >
                     <option value="">ALL MODELS</option>
+                    {selectedModel && (
+                      <option value={selectedModelOptionValue} hidden>
+                        {selectedModel.toUpperCase()}
+                      </option>
+                    )}
                     {Object.keys(groupedModels).length > 0 ? (
                       Object.entries(groupedModels).map(([groupName, groupModels]) => (
                         <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">
