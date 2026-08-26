@@ -469,16 +469,27 @@ class ProductFilterService
                 break;
             case 'featured':
                 $query->orderByRaw("CASE 
-                    WHEN name LIKE '%Shinko 777%' THEN 1 
-                    WHEN name LIKE '%Metzeler CruiseTec%' THEN 2 
-                    WHEN name LIKE '%Commander III%' THEN 3 
-                    WHEN name LIKE '%ME888%' THEN 4 
-                    WHEN name LIKE '%D402%' THEN 5 
-                    WHEN name LIKE '%Night Dragon%' THEN 6 
-                    WHEN name LIKE '%American Elite%' THEN 7 
-                    WHEN name LIKE '%AE2%' THEN 8 
-                    WHEN name LIKE '%D401%' THEN 9 
-                    WHEN name LIKE '%Cobra Chrome%' THEN 10 
+                    WHEN name LIKE '%Commander III%' OR name LIKE '%Commander 3%' THEN 1 
+                    WHEN name LIKE '%Commander II%' OR name LIKE '%Commander 2%' THEN 2 
+                    WHEN name LIKE '%Road 6%' THEN 3 
+                    WHEN name LIKE '%Power 6%' THEN 4 
+                    WHEN name LIKE '%Pilot Power%' THEN 5 
+                    WHEN name LIKE '%Power Cup%' THEN 6 
+                    WHEN name LIKE '%AE2%' OR name LIKE '%American Elite%' THEN 7 
+                    WHEN name LIKE '%D401%' THEN 8 
+                    WHEN name LIKE '%D404%' THEN 9 
+                    WHEN name LIKE '%Elite 4%' THEN 10 
+                    WHEN name LIKE '%Q5S%' OR name LIKE '%Q5%' THEN 11 
+                    WHEN name LIKE '%GPR300%' OR name LIKE '%GPR-300%' THEN 12 
+                    WHEN name LIKE '%Roadsmart%' THEN 13 
+                    WHEN name LIKE '%CruiseTec%' THEN 14 
+                    WHEN name LIKE '%ME888%' THEN 15 
+                    WHEN name LIKE '%RoadTec%' THEN 16 
+                    WHEN name LIKE '%SR777%' OR name LIKE '%777%' THEN 17 
+                    WHEN name LIKE '%SR999%' OR name LIKE '%999%' THEN 18 
+                    WHEN name LIKE '%Diablo Rosso%' THEN 19 
+                    WHEN name LIKE '%Supercorsa%' THEN 20 
+                    WHEN name LIKE '%Battlax%' THEN 21 
                     ELSE 100 END ASC")
                       ->orderBy('is_featured', 'desc')
                       ->orderBy('review_count', 'desc')
