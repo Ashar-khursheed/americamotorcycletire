@@ -446,10 +446,9 @@ class ProductFilterService
         }
 
         // 11. Sorting
-        $sort = $request->input('sort', 'name_asc');
+        $sort = $request->input('sort', 'featured');
         switch ($sort) {
             case 'name_asc':
-            default:
                 $query->orderBy('name', 'asc');
                 break;
             case 'name_desc':
@@ -468,6 +467,7 @@ class ProductFilterService
                 $query->orderBy('id', 'desc');
                 break;
             case 'featured':
+            default:
                 $query->orderByRaw("CASE 
                     WHEN name LIKE '%Commander III%' OR name LIKE '%Commander 3%' THEN 1 
                     WHEN name LIKE '%Commander II%' OR name LIKE '%Commander 2%' THEN 2 
@@ -493,7 +493,7 @@ class ProductFilterService
                     ELSE 100 END ASC")
                       ->orderBy('is_featured', 'desc')
                       ->orderBy('review_count', 'desc')
-                      ->orderBy('id', 'asc');
+                      ->orderBy('name', 'asc');
                 break;
         }
 

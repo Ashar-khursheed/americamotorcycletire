@@ -72,7 +72,7 @@ function ProductsContent() {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
-  const [sort, setSort] = useState('name_asc');
+  const [sort, setSort] = useState('featured');
   const [brandSearch, setBrandSearch] = useState('');
 
   // Dependent Fitment Dropdown Lists
