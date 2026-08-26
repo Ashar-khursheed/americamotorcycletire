@@ -62,3 +62,10 @@ backend/Homestead.yaml
 node_modules/
 vendor/
 *.log
+
+# Large Data Dumps & Archives
+*.zip
+*.sql
+*.csv
+*.xlsx
+

@@ -341,11 +341,17 @@ class AdminProductController extends Controller
                     }
                     $seenFitments[$key] = true;
 
+                    $subCat = trim($fit['sub_category'] ?? '');
+                    if (empty($subCat) && !empty($m) && !empty($md)) {
+                        $subCat = ProductController::getModelSubCategory($m, $md);
+                    }
+
                     ProductFitment::create([
                         'product_id' => $product->id,
                         'year' => $y ?: null,
                         'make' => $m ?: null,
                         'model' => $md ?: null,
+                        'sub_category' => $subCat ?: null,
                         'position' => $p ?: null,
                         'vendor_part_number' => $fit['vendor_part_number'] ?? null,
                         'notes' => $fit['notes'] ?? null,
@@ -472,11 +478,17 @@ class AdminProductController extends Controller
                         }
                         $seenFitments[$key] = true;
 
+                        $subCat = trim($fit['sub_category'] ?? '');
+                        if (empty($subCat) && !empty($m) && !empty($md)) {
+                            $subCat = ProductController::getModelSubCategory($m, $md);
+                        }
+
                         ProductFitment::create([
                             'product_id' => $product->id,
                             'year' => $y ?: null,
                             'make' => $m ?: null,
                             'model' => $md ?: null,
+                            'sub_category' => $subCat ?: null,
                             'position' => $p ?: null,
                             'vendor_part_number' => $fit['vendor_part_number'] ?? null,
                             'notes' => $fit['notes'] ?? null,
@@ -768,6 +780,11 @@ class AdminProductController extends Controller
                     $position = '';
                 }
 
+                $subCat = trim($row['Sub Category'] ?? $row['sub_category'] ?? $row['Sub-Category'] ?? $row['Model Family'] ?? $row['model_family'] ?? '');
+                if (empty($subCat) && !empty($make) && !empty($model)) {
+                    $subCat = ProductController::getModelSubCategory($make, $model);
+                }
+
                 if (!empty($year) || !empty($make) || !empty($model)) {
                     ProductFitment::updateOrCreate(
                         [
@@ -778,6 +795,7 @@ class AdminProductController extends Controller
                             'position' => $position ?: null,
                         ],
                         [
+                            'sub_category' => $subCat ?: null,
                             'tire_size' => $tireSize ?: null,
                             'sku_number' => $sku,
                             'item_number' => $itemNum,

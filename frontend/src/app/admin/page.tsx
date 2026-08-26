@@ -2041,61 +2041,75 @@ export default function AdminDashboardPage() {
                         <span className="text-[11px] font-black uppercase text-[#BF8647] bg-[#BF8647]/10 px-2.5 py-1 rounded min-w-[90px] text-center">
                           FITMENT #{fIdx + 1}
                         </span>
-                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 flex-1 w-full">
+                        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 flex-1 w-full">
                           <div>
                             <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Year</label>
                             <input
                               type="text"
-                              placeholder="Year (e.g. 2023)"
+                              placeholder="Year (2023)"
                               value={fitItem.year || ''}
                               onChange={(e) => {
                                 const updated = [...(newProd.fitments || [])];
                                 updated[fIdx].year = e.target.value;
                                 setNewProd({ ...newProd, fitments: updated });
                               }}
-                              className={`w-full rounded px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Make</label>
                             <input
                               type="text"
-                              placeholder="Make (e.g. Harley-Davidson)"
+                              placeholder="Make (Harley)"
                               value={fitItem.make || ''}
                               onChange={(e) => {
                                 const updated = [...(newProd.fitments || [])];
                                 updated[fIdx].make = e.target.value;
                                 setNewProd({ ...newProd, fitments: updated });
                               }}
-                              className={`w-full rounded px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Model</label>
                             <input
                               type="text"
-                              placeholder="Model (e.g. FLHT Road Glide)"
+                              placeholder="Model (FLHT)"
                               value={fitItem.model || ''}
                               onChange={(e) => {
                                 const updated = [...(newProd.fitments || [])];
                                 updated[fIdx].model = e.target.value;
                                 setNewProd({ ...newProd, fitments: updated });
                               }}
-                              className={`w-full rounded px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Position / Placement</label>
+                            <label className="text-[10px] font-bold uppercase text-[#BF8647] block mb-1">Sub-Category</label>
                             <input
                               type="text"
-                              placeholder="Position (e.g. Front, Rear)"
+                              placeholder="Sub-Category (Harley Dyna)"
+                              value={fitItem.sub_category || ''}
+                              onChange={(e) => {
+                                const updated = [...(newProd.fitments || [])];
+                                updated[fIdx].sub_category = e.target.value;
+                                setNewProd({ ...newProd, fitments: updated });
+                              }}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#BF8647]/40 text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Position</label>
+                            <input
+                              type="text"
+                              placeholder="Position (Front)"
                               value={fitItem.position || ''}
                               onChange={(e) => {
                                 const updated = [...(newProd.fitments || [])];
                                 updated[fIdx].position = e.target.value;
                                 setNewProd({ ...newProd, fitments: updated });
                               }}
-                              className={`w-full rounded px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                         </div>
@@ -2728,61 +2742,75 @@ export default function AdminDashboardPage() {
                         <span className="text-[11px] font-black uppercase text-[#BF8647] bg-[#BF8647]/10 px-2.5 py-1 rounded min-w-[90px] text-center">
                           FITMENT #{fIdx + 1}
                         </span>
-                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 flex-1 w-full">
+                        <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 flex-1 w-full">
                           <div>
                             <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Year</label>
                             <input
                               type="text"
-                              placeholder="Year (e.g. 2023)"
+                              placeholder="Year (2023)"
                               value={fitItem.year || ''}
                               onChange={(e) => {
                                 const updated = [...(editingProduct.fitments || [])];
                                 updated[fIdx].year = e.target.value;
                                 setEditingProduct({ ...editingProduct, fitments: updated });
                               }}
-                              className={`w-full rounded px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Make</label>
                             <input
                               type="text"
-                              placeholder="Make (e.g. Harley-Davidson)"
+                              placeholder="Make (Harley)"
                               value={fitItem.make || ''}
                               onChange={(e) => {
                                 const updated = [...(editingProduct.fitments || [])];
                                 updated[fIdx].make = e.target.value;
                                 setEditingProduct({ ...editingProduct, fitments: updated });
                               }}
-                              className={`w-full rounded px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Model</label>
                             <input
                               type="text"
-                              placeholder="Model (e.g. FLHT Road Glide)"
+                              placeholder="Model (FLHT)"
                               value={fitItem.model || ''}
                               onChange={(e) => {
                                 const updated = [...(editingProduct.fitments || [])];
                                 updated[fIdx].model = e.target.value;
                                 setEditingProduct({ ...editingProduct, fitments: updated });
                               }}
-                              className={`w-full rounded px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Position / Placement</label>
+                            <label className="text-[10px] font-bold uppercase text-[#BF8647] block mb-1">Sub-Category</label>
                             <input
                               type="text"
-                              placeholder="Position (e.g. Front, Rear)"
+                              placeholder="Sub-Category (Harley Dyna)"
+                              value={fitItem.sub_category || ''}
+                              onChange={(e) => {
+                                const updated = [...(editingProduct.fitments || [])];
+                                updated[fIdx].sub_category = e.target.value;
+                                setEditingProduct({ ...editingProduct, fitments: updated });
+                              }}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#BF8647]/40 text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Position</label>
+                            <input
+                              type="text"
+                              placeholder="Position (Front)"
                               value={fitItem.position || ''}
                               onChange={(e) => {
                                 const updated = [...(editingProduct.fitments || [])];
                                 updated[fIdx].position = e.target.value;
                                 setEditingProduct({ ...editingProduct, fitments: updated });
                               }}
-                              className={`w-full rounded px-3 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                         </div>

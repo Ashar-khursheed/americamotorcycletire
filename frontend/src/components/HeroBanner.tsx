@@ -13,6 +13,7 @@ export function HeroBanner() {
   const [years, setYears] = useState<string[]>([]);
   const [makes, setMakes] = useState<string[]>([]);
   const [models, setModels] = useState<string[]>([]);
+  const [groupedModels, setGroupedModels] = useState<Record<string, string[]>>({});
 
   const [selectedType, setSelectedType] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
@@ -43,6 +44,7 @@ export function HeroBanner() {
     setYears([]);
     setMakes([]);
     setModels([]);
+    setGroupedModels({});
 
     if (selectedType) {
       setLoadingYears(true);
@@ -62,6 +64,7 @@ export function HeroBanner() {
     setSelectedModel('');
     setMakes([]);
     setModels([]);
+    setGroupedModels({});
 
     if (selectedYear) {
       setLoadingMakes(true);
@@ -82,6 +85,7 @@ export function HeroBanner() {
   useEffect(() => {
     setSelectedModel('');
     setModels([]);
+    setGroupedModels({});
 
     if (selectedYear && selectedMake) {
       setLoadingModels(true);
@@ -91,7 +95,10 @@ export function HeroBanner() {
       api
         .get('/fitments/options', { params })
         .then((res) => {
-          if (res.data) setModels(res.data.models || []);
+          if (res.data) {
+            setModels(res.data.models || []);
+            setGroupedModels(res.data.grouped_models || {});
+          }
         })
         .catch(() => {})
         .finally(() => setLoadingModels(false));
@@ -301,11 +308,23 @@ export function HeroBanner() {
                         ? 'LOADING MODELS...'
                         : '-- SELECT MODEL --'}
                     </option>
-                    {models.map((mod) => (
-                      <option key={mod} value={mod}>
-                        {mod}
-                      </option>
-                    ))}
+                    {Object.keys(groupedModels).length > 0 ? (
+                      Object.entries(groupedModels).map(([groupName, groupModels]) => (
+                        <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">
+                          {groupModels.map((mod) => (
+                            <option key={mod} value={mod} className="bg-[#1A1A1A] text-white font-normal pl-4">
+                              {mod}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))
+                    ) : (
+                      models.map((mod) => (
+                        <option key={mod} value={mod}>
+                          {mod}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 

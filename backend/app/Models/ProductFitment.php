@@ -14,6 +14,7 @@ class ProductFitment extends Model
         'year',
         'make',
         'model',
+        'sub_category',
         'position',
         'tire_size',
         'sku_number',

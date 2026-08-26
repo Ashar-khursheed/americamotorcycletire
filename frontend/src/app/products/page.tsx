@@ -70,13 +70,14 @@ function ProductsContent() {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
-  const [sort, setSort] = useState('newest');
+  const [sort, setSort] = useState('name_asc');
   const [brandSearch, setBrandSearch] = useState('');
 
   // Dependent Fitment Dropdown Lists
   const [yearsList, setYearsList] = useState<string[]>([]);
   const [makesList, setMakesList] = useState<string[]>([]);
   const [modelsList, setModelsList] = useState<string[]>([]);
+  const [groupedModels, setGroupedModels] = useState<Record<string, string[]>>({});
   const [typesList, setTypesList] = useState<string[]>([]);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
@@ -126,6 +127,7 @@ function ProductsContent() {
           setYearsList(res.data.years || []);
           setMakesList(res.data.makes || []);
           setModelsList(res.data.models || []);
+          setGroupedModels(res.data.grouped_models || {});
           setTypesList(res.data.types || []);
         }
       })
@@ -295,7 +297,7 @@ function ProductsContent() {
     setMinPrice('');
     setMaxPrice('');
     setMinRating('');
-    setSort('newest');
+    setSort('name_asc');
     setCurrentPage(1);
     if (typeof window !== 'undefined') {
       const newUrl = new URL(window.location.href);
@@ -768,11 +770,23 @@ function ProductsContent() {
                     className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
                   >
                     <option value="">ALL MODELS</option>
-                    {modelsList.map((mod) => (
-                      <option key={mod} value={mod}>
-                        {mod}
-                      </option>
-                    ))}
+                    {Object.keys(groupedModels).length > 0 ? (
+                      Object.entries(groupedModels).map(([groupName, groupModels]) => (
+                        <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">
+                          {groupModels.map((mod) => (
+                            <option key={mod} value={mod} className="bg-[#1A1A1A] text-white font-normal pl-4">
+                              {mod}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))
+                    ) : (
+                      modelsList.map((mod) => (
+                        <option key={mod} value={mod}>
+                          {mod}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
               </div>
@@ -821,11 +835,12 @@ function ProductsContent() {
                 onChange={(e) => setSort(e.target.value)}
                 className="flex-1 lg:w-48 bg-[#1F1F1F] border border-[#333] rounded-lg px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#BF8647] uppercase font-bold"
               >
+                <option value="name_asc">SORT BY: NAME (A TO Z)</option>
+                <option value="name_desc">SORT BY: NAME (Z TO A)</option>
                 <option value="newest">SORT BY: NEWEST</option>
                 <option value="price_asc">PRICE: LOW TO HIGH</option>
                 <option value="price_desc">PRICE: HIGH TO LOW</option>
                 <option value="rating_desc">HIGHEST RATED</option>
-                <option value="name_asc">NAME: A TO Z</option>
               </select>
             </div>
           </div>

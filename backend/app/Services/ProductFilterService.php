@@ -440,8 +440,15 @@ class ProductFilterService
         }
 
         // 11. Sorting
-        $sort = $request->input('sort', 'featured');
+        $sort = $request->input('sort', 'name_asc');
         switch ($sort) {
+            case 'name_asc':
+            default:
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
             case 'price_asc':
                 $query->orderBy('price', 'asc');
                 break;
@@ -451,17 +458,10 @@ class ProductFilterService
             case 'rating_desc':
                 $query->orderBy('rating', 'desc');
                 break;
-            case 'name_asc':
-                $query->orderBy('name', 'asc');
-                break;
-            case 'name_desc':
-                $query->orderBy('name', 'desc');
-                break;
             case 'newest':
                 $query->orderBy('id', 'desc');
                 break;
             case 'featured':
-            default:
                 $query->orderByRaw("CASE 
                     WHEN name LIKE '%Shinko 777%' THEN 1 
                     WHEN name LIKE '%Metzeler CruiseTec%' THEN 2 

@@ -57,6 +57,7 @@ class Product extends Model
         'category_id',
         'vehicle_type',
         'product_type',
+        'sub_category',
         'compatible_makes',
         'compatible_models',
         'fitment_year_range',

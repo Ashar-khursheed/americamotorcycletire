@@ -32,6 +32,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
   const [yearsList, setYearsList] = useState<string[]>([]);
   const [makesList, setMakesList] = useState<string[]>([]);
   const [modelsList, setModelsList] = useState<string[]>([]);
+  const [groupedModels, setGroupedModels] = useState<Record<string, string[]>>({});
 
   const [loadingTypes, setLoadingTypes] = useState(false);
   const [loadingYears, setLoadingYears] = useState(false);
@@ -74,6 +75,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
     setYearsList([]);
     setMakesList([]);
     setModelsList([]);
+    setGroupedModels({});
 
     if (selectedType) {
       setLoadingYears(true);
@@ -95,6 +97,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
     setSelectedModel('');
     setMakesList([]);
     setModelsList([]);
+    setGroupedModels({});
 
     if (selectedYear) {
       setLoadingMakes(true);
@@ -117,6 +120,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
   useEffect(() => {
     setSelectedModel('');
     setModelsList([]);
+    setGroupedModels({});
 
     if (selectedYear && selectedMake) {
       setLoadingModels(true);
@@ -128,6 +132,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
         .then((res) => {
           if (res.data) {
             setModelsList(res.data.models || []);
+            setGroupedModels(res.data.grouped_models || {});
           }
         })
         .catch(() => {})
@@ -394,11 +399,23 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
                       ? 'LOADING MODELS...'
                       : '-- SELECT MODEL --'}
                   </option>
-                  {modelsList.map((mod) => (
-                    <option key={mod} value={mod}>
-                      {mod}
-                    </option>
-                  ))}
+                  {Object.keys(groupedModels).length > 0 ? (
+                    Object.entries(groupedModels).map(([groupName, groupModels]) => (
+                      <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">
+                        {groupModels.map((mod) => (
+                          <option key={mod} value={mod} className="bg-[#1A1A1A] text-white font-normal pl-4">
+                            {mod}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))
+                  ) : (
+                    modelsList.map((mod) => (
+                      <option key={mod} value={mod}>
+                        {mod}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
             </div>

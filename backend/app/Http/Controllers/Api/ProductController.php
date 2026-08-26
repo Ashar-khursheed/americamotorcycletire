@@ -371,6 +371,22 @@ class ProductController extends Controller
         }
         sort($cleanModels);
 
+        // Group models into Sub-Categories (e.g., Harley CVO/SE, Harley Dyna, Harley Softail, Harley Sportster)
+        $groupedModelsMap = [];
+        $activeMakeName = $make ?: ($targetMakeCanonical ?? '');
+
+        foreach ($cleanModels as $mod) {
+            $explicitSubCat = ProductFitment::where('model', $mod)->whereNotNull('sub_category')->where('sub_category', '!=', '')->value('sub_category');
+            $subCat = static::getModelSubCategory($activeMakeName, $mod, $explicitSubCat);
+            if (!isset($groupedModelsMap[$subCat])) {
+                $groupedModelsMap[$subCat] = [];
+            }
+            $groupedModelsMap[$subCat][] = $mod;
+        }
+
+        // Sort grouped categories logically
+        ksort($groupedModelsMap);
+
         // 4. Clean Vehicle Types list
         $typesSet = ['Street Bike', 'Dirt Bike', 'UTV/ATV'];
 
@@ -378,7 +394,182 @@ class ProductController extends Controller
             'years' => $years,
             'makes' => $cleanMakes,
             'models' => array_values($cleanModels),
+            'grouped_models' => $groupedModelsMap,
             'types' => $typesSet,
         ]);
+    }
+
+    public static function getModelSubCategory(string $make, string $model, ?string $explicitSubCat = null): string
+    {
+        if (!empty($explicitSubCat)) {
+            return trim($explicitSubCat);
+        }
+
+        $makeLower = strtolower(trim($make));
+        $modelUpper = strtoupper(trim($model));
+        $modelLower = strtolower(trim($model));
+
+        // Harley-Davidson Sub-Families
+        if (str_contains($makeLower, 'harley') || str_contains($makeLower, 'davidson') || str_contains($modelLower, 'harley') || str_contains($modelLower, 'flh') || str_contains($modelLower, 'fls') || str_contains($modelLower, 'fxd')) {
+            if (
+                str_contains($modelUpper, 'CVO') ||
+                str_contains($modelUpper, 'FLHTKSE') ||
+                str_contains($modelUpper, 'FLTRUSE') ||
+                str_contains($modelUpper, 'FLSTNSE') ||
+                str_contains($modelUpper, 'FLHXSE') ||
+                str_contains($modelLower, 'screamin') ||
+                str_contains($modelLower, 'custom vehicle')
+            ) {
+                return 'Harley CVO/SE';
+            }
+
+            if (
+                str_contains($modelLower, 'dyna') ||
+                preg_match('/\b(fxdf|fxdl|fxdb|fld|fxdwg|fxd|fxdc|fxd35)\b/i', $modelUpper) ||
+                str_contains($modelLower, 'street bob') ||
+                str_contains($modelLower, 'fat bob') ||
+                str_contains($modelLower, 'low rider') ||
+                str_contains($modelLower, 'wide glide') ||
+                str_contains($modelLower, 'switchback') ||
+                str_contains($modelLower, 'super glide')
+            ) {
+                return 'Harley Dyna';
+            }
+
+            if (
+                str_contains($modelLower, 'softail') ||
+                preg_match('/\b(fxsb|flstn|flstf|flstfb|flstc|fls|fxst|flst|fxstd|fxcw|fxstw)\b/i', $modelUpper) ||
+                str_contains($modelLower, 'fat boy') ||
+                str_contains($modelLower, 'heritage') ||
+                str_contains($modelLower, 'breakout') ||
+                str_contains($modelLower, 'deluxe') ||
+                str_contains($modelLower, 'slim') ||
+                str_contains($modelLower, 'deuce') ||
+                str_contains($modelLower, 'cross bones') ||
+                str_contains($modelLower, 'springer') ||
+                str_contains($modelLower, 'night train') ||
+                str_contains($modelLower, 'bad boy')
+            ) {
+                return 'Harley Softail';
+            }
+
+            if (
+                str_contains($modelLower, 'sportster') ||
+                preg_match('/\b(xl|xlh|xl883|xl1200|xr1200)\b/i', $modelUpper) ||
+                str_contains($modelLower, 'iron 883') ||
+                str_contains($modelLower, 'forty-eight') ||
+                str_contains($modelLower, 'forty eight') ||
+                str_contains($modelLower, 'nightster') ||
+                str_contains($modelLower, 'superlow') ||
+                str_contains($modelLower, 'seventy-two') ||
+                str_contains($modelLower, 'seventy two') ||
+                str_contains($modelLower, 'roadster')
+            ) {
+                return 'Harley Sportster';
+            }
+
+            if (
+                str_contains($modelLower, 'touring') ||
+                preg_match('/\b(flht|fltr|flhx|flhr|flhtc|flhtcu|fltrk|flhrc|flhxst|fltrxst)\b/i', $modelUpper) ||
+                str_contains($modelLower, 'electra glide') ||
+                str_contains($modelLower, 'road glide') ||
+                str_contains($modelLower, 'street glide') ||
+                str_contains($modelLower, 'road king') ||
+                str_contains($modelLower, 'ultra limited') ||
+                str_contains($modelLower, 'tri glide') ||
+                str_contains($modelLower, 'freewheeler')
+            ) {
+                return 'Harley Touring';
+            }
+
+            if (
+                str_contains($modelLower, 'v-rod') ||
+                str_contains($modelLower, 'v rod') ||
+                preg_match('/\b(vrsc|vrsca|vrscb|vrscd|vrscdx|vrscr|vrscf)\b/i', $modelUpper) ||
+                str_contains($modelLower, 'night rod') ||
+                str_contains($modelLower, 'street rod') ||
+                str_contains($modelLower, 'vrod')
+            ) {
+                return 'Harley V-Rod';
+            }
+
+            if (
+                str_contains($modelLower, 'street 500') ||
+                str_contains($modelLower, 'street 750') ||
+                preg_match('/\b(xg500|xg750)\b/i', $modelUpper)
+            ) {
+                return 'Harley Street';
+            }
+
+            return 'Harley-Davidson Models';
+        }
+
+        // Honda Sub-Families
+        if (str_contains($makeLower, 'honda')) {
+            if (preg_match('/cbr|fireblade|rc51/i', $modelLower)) return 'Honda Sportbike';
+            if (preg_match('/crf|xr|cr\d/i', $modelLower)) return 'Honda Off-Road / Dirt';
+            if (preg_match('/goldwing|gl1800|gl1500|ctx1300|st1300/i', $modelLower)) return 'Honda Touring';
+            if (preg_match('/shadow|rebel|vtx|fury|sabre|stateline|interstate|magna/i', $modelLower)) return 'Honda Cruiser';
+            if (preg_match('/africa twin|cb500x|nc750x|transalp/i', $modelLower)) return 'Honda Adventure';
+            return 'Honda Motorcycles';
+        }
+
+        // Yamaha Sub-Families
+        if (str_contains($makeLower, 'yamaha')) {
+            if (preg_match('/yzf|r1|r6|r3|r7/i', $modelLower)) return 'Yamaha Sportbike';
+            if (preg_match('/yz|wr/i', $modelLower)) return 'Yamaha Off-Road / Dirt';
+            if (preg_match('/v-star|bolt|raider|stryker|road star|royal star|virago/i', $modelLower)) return 'Yamaha Cruiser';
+            if (preg_match('/mt-|fz-|xs/i', $modelLower)) return 'Yamaha Hyper Naked';
+            if (preg_match('/ténéré|tenere|tracer|super ténéré/i', $modelLower)) return 'Yamaha Adventure';
+            return 'Yamaha Motorcycles';
+        }
+
+        // Kawasaki Sub-Families
+        if (str_contains($makeLower, 'kawasaki')) {
+            if (preg_match('/ninja|zx-/i', $modelLower)) return 'Kawasaki Sportbike';
+            if (preg_match('/kx|klx/i', $modelLower)) return 'Kawasaki Off-Road / Dirt';
+            if (preg_match('/vulcan|eliminator/i', $modelLower)) return 'Kawasaki Cruiser';
+            if (preg_match('/klr|versys/i', $modelLower)) return 'Kawasaki Adventure';
+            if (preg_match('/z\d00|z650|z400|z900/i', $modelLower)) return 'Kawasaki Naked';
+            return 'Kawasaki Motorcycles';
+        }
+
+        // Suzuki Sub-Families
+        if (str_contains($makeLower, 'suzuki')) {
+            if (preg_match('/gsx-r|hayabusa|katana/i', $modelLower)) return 'Suzuki Sportbike';
+            if (preg_match('/rm-z|dr-z|rm\d|dr\d/i', $modelLower)) return 'Suzuki Off-Road / Dirt';
+            if (preg_match('/boulevard|intruder|s40|m109r|c50|c90/i', $modelLower)) return 'Suzuki Cruiser';
+            if (preg_match('/v-strom/i', $modelLower)) return 'Suzuki Adventure';
+            return 'Suzuki Motorcycles';
+        }
+
+        // BMW Sub-Families
+        if (str_contains($makeLower, 'bmw')) {
+            if (preg_match('/s1000rr|m1000rr/i', $modelLower)) return 'BMW Superbike';
+            if (preg_match('/gs|r1250gs|f850gs|g310gs/i', $modelLower)) return 'BMW Adventure';
+            if (preg_match('/rt|gt|k1600/i', $modelLower)) return 'BMW Touring';
+            if (preg_match('/r ninet|r18/i', $modelLower)) return 'BMW Heritage';
+            return 'BMW Motorcycles';
+        }
+
+        // KTM
+        if (str_contains($makeLower, 'ktm')) {
+            if (preg_match('/sx|xc|exc/i', $modelLower)) return 'KTM Motocross / Off-Road';
+            if (preg_match('/duke/i', $modelLower)) return 'KTM Naked';
+            if (preg_match('/adventure/i', $modelLower)) return 'KTM Adventure';
+            return 'KTM Motorcycles';
+        }
+
+        // Ducati
+        if (str_contains($makeLower, 'ducati')) {
+            if (preg_match('/panigale/i', $modelLower)) return 'Ducati Superbike';
+            if (preg_match('/monster|streetfighter/i', $modelLower)) return 'Ducati Naked';
+            if (preg_match('/multistrada/i', $modelLower)) return 'Ducati Touring';
+            if (preg_match('/scrambler/i', $modelLower)) return 'Ducati Scrambler';
+            if (preg_match('/diavel/i', $modelLower)) return 'Ducati Cruiser';
+            return 'Ducati Motorcycles';
+        }
+
+        return trim($make) ? ucfirst(trim($make)) . ' Models' : 'Motorcycle Models';
     }
 }
