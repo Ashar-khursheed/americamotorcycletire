@@ -41,6 +41,7 @@ function ProductsContent() {
   const initialBrand = getInitialParam('brand');
   const initialQ = getInitialParam('search');
   const initialBikeCategory = getInitialParam('bike_category');
+  const initialSubCategory = getInitialParam('sub_category');
   const initialPage = getInitialParam('page') ? Number(getInitialParam('page')) : 1;
 
   const [products, setProducts] = useState<any[]>([]);
@@ -67,6 +68,7 @@ function ProductsContent() {
   const [selectedYear, setSelectedYear] = useState(initialYear);
   const [selectedMake, setSelectedMake] = useState(initialMake);
   const [selectedModel, setSelectedModel] = useState(initialModel);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(initialSubCategory);
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minRating, setMinRating] = useState('');
@@ -157,6 +159,7 @@ function ProductsContent() {
     selectedYear,
     selectedMake,
     selectedModel,
+    selectedSubCategory,
     minPrice,
     maxPrice,
     minRating,
@@ -179,6 +182,7 @@ function ProductsContent() {
     if (selectedYear) params.year = selectedYear;
     if (selectedMake) params.make = selectedMake;
     if (selectedModel) params.model = selectedModel;
+    if (selectedSubCategory) params.sub_category = selectedSubCategory;
     if (minPrice) params.min_price = minPrice;
     if (maxPrice) params.max_price = maxPrice;
     if (minRating) params.min_rating = minRating;
@@ -294,6 +298,7 @@ function ProductsContent() {
     setSelectedYear('');
     setSelectedMake('');
     setSelectedModel('');
+    setSelectedSubCategory('');
     setMinPrice('');
     setMaxPrice('');
     setMinRating('');
@@ -765,8 +770,18 @@ function ProductsContent() {
                 <div>
                   <label className="text-[9px] sm:text-[10px] text-gray-400 font-bold block mb-1">MODEL</label>
                   <select
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
+                    value={selectedSubCategory ? `${selectedModel}|||${selectedSubCategory}` : selectedModel}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.includes('|||')) {
+                        const [m, sub] = val.split('|||');
+                        setSelectedModel(m);
+                        setSelectedSubCategory(sub);
+                      } else {
+                        setSelectedModel(val);
+                        setSelectedSubCategory('');
+                      }
+                    }}
                     className="w-full bg-[#1A1A1A] border border-[#333] rounded px-2.5 py-1.5 sm:py-2 text-[11px] sm:text-xs text-white focus:border-[#BF8647] focus:outline-none"
                   >
                     <option value="">ALL MODELS</option>
@@ -774,7 +789,7 @@ function ProductsContent() {
                       Object.entries(groupedModels).map(([groupName, groupModels]) => (
                         <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">
                           {groupModels.map((mod) => (
-                            <option key={mod} value={mod} className="bg-[#1A1A1A] text-white font-normal pl-4">
+                            <option key={`${mod}|||${groupName}`} value={`${mod}|||${groupName}`} className="bg-[#1A1A1A] text-white font-normal pl-4">
                               {mod}
                             </option>
                           ))}

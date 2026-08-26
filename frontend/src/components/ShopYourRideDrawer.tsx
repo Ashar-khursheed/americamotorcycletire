@@ -26,6 +26,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedMake, setSelectedMake] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState('');
 
   // Options populated step-by-step from backend
   const [typesList, setTypesList] = useState<string[]>([]);
@@ -119,6 +120,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
   // Step 4: When Make changes -> Enable & fetch Models
   useEffect(() => {
     setSelectedModel('');
+    setSelectedSubCategory('');
     setModelsList([]);
     setGroupedModels({});
 
@@ -171,6 +173,9 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
     queryParams.set('year', yr);
     queryParams.set('make', mk);
     queryParams.set('model', md);
+    if (selectedSubCategory) {
+      queryParams.set('sub_category', selectedSubCategory);
+    }
 
     router.push(`/products?${queryParams.toString()}`);
   };
@@ -387,8 +392,18 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
                   {selectedModel && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
                 </label>
                 <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
+                  value={selectedSubCategory ? `${selectedModel}|||${selectedSubCategory}` : selectedModel}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.includes('|||')) {
+                      const [m, sub] = val.split('|||');
+                      setSelectedModel(m);
+                      setSelectedSubCategory(sub);
+                    } else {
+                      setSelectedModel(val);
+                      setSelectedSubCategory('');
+                    }
+                  }}
                   disabled={!selectedMake || loadingModels}
                   className="w-full bg-[#1A1A1A] border border-[#333] rounded-lg px-3.5 py-3 text-xs text-white uppercase font-bold focus:outline-none focus:border-[#BF8647] disabled:opacity-40 disabled:bg-[#141414] disabled:border-[#222] disabled:cursor-not-allowed cursor-pointer"
                 >
@@ -403,7 +418,7 @@ export function ShopYourRideDrawer({ isOpen, onClose }: ShopYourRideDrawerProps)
                     Object.entries(groupedModels).map(([groupName, groupModels]) => (
                       <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">
                         {groupModels.map((mod) => (
-                          <option key={mod} value={mod} className="bg-[#1A1A1A] text-white font-normal pl-4">
+                          <option key={`${mod}|||${groupName}`} value={`${mod}|||${groupName}`} className="bg-[#1A1A1A] text-white font-normal pl-4">
                             {mod}
                           </option>
                         ))}

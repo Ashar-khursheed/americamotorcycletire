@@ -298,17 +298,18 @@ class ProductFilterService
             }
         }
 
-        // 6. Motorcycle Fitment Filter (Year, Make, Model)
+        // 6. Motorcycle Fitment Filter (Year, Make, Model, Sub-Category)
         $year = trim($request->input('year') ?? '');
         $make = trim($request->input('make') ?? '');
         $model = trim($request->input('model') ?? '');
+        $subCategory = trim($request->input('sub_category') ?? '');
 
-        if (!empty($year) || !empty($make) || !empty($model)) {
+        if (!empty($year) || !empty($make) || !empty($model) || !empty($subCategory)) {
             $terms = $this->getModelSearchTerms($model, $make);
 
-            $query->where(function ($q) use ($year, $make, $model, $terms) {
+            $query->where(function ($q) use ($year, $make, $model, $subCategory, $terms) {
                 // Primary: check structured fitments table
-                $q->whereHas('fitments', function ($fitQ) use ($year, $make, $model, $terms) {
+                $q->whereHas('fitments', function ($fitQ) use ($year, $make, $model, $subCategory, $terms) {
                     if (!empty($year)) {
                         $yInt = (int)$year;
                         $fitQ->where(function ($subQ) use ($year, $yInt) {
@@ -322,6 +323,9 @@ class ProductFilterService
                     }
                     if (!empty($make)) {
                         $fitQ->where('make', 'like', "%{$make}%");
+                    }
+                    if (!empty($subCategory)) {
+                        $fitQ->where('sub_category', 'like', "%{$subCategory}%");
                     }
                     if (!empty($model)) {
                         $fitQ->where(function ($subModelQ) use ($model, $terms) {

@@ -22,6 +22,7 @@ export function HeroBanner() {
 
   const [loadingYears, setLoadingYears] = useState(false);
   const [loadingMakes, setLoadingMakes] = useState(false);
+  const [selectedSubCategory, setSelectedSubCategory] = useState('');
   const [loadingModels, setLoadingModels] = useState(false);
 
   // 1. Initial fetch for Vehicle Types
@@ -84,6 +85,7 @@ export function HeroBanner() {
   // 4. Make changed -> Fetch Models
   useEffect(() => {
     setSelectedModel('');
+    setSelectedSubCategory('');
     setModels([]);
     setGroupedModels({});
 
@@ -117,6 +119,9 @@ export function HeroBanner() {
     query.set('year', selectedYear);
     query.set('make', selectedMake);
     query.set('model', selectedModel);
+    if (selectedSubCategory) {
+      query.set('sub_category', selectedSubCategory);
+    }
 
     router.push(`/products?${query.toString()}`);
   };
@@ -296,8 +301,18 @@ export function HeroBanner() {
                     {selectedModel && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
                   </label>
                   <select
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
+                    value={selectedSubCategory ? `${selectedModel}|||${selectedSubCategory}` : selectedModel}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val.includes('|||')) {
+                        const [m, sub] = val.split('|||');
+                        setSelectedModel(m);
+                        setSelectedSubCategory(sub);
+                      } else {
+                        setSelectedModel(val);
+                        setSelectedSubCategory('');
+                      }
+                    }}
                     disabled={!selectedMake || loadingModels}
                     className="w-full bg-[#1A1A1A] border border-[#333] text-white rounded px-3 py-2.5 text-xs font-semibold uppercase focus:border-[#BF8647] focus:outline-none disabled:opacity-40 disabled:bg-[#141414] disabled:border-[#222] disabled:cursor-not-allowed cursor-pointer"
                   >
@@ -312,7 +327,7 @@ export function HeroBanner() {
                       Object.entries(groupedModels).map(([groupName, groupModels]) => (
                         <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">
                           {groupModels.map((mod) => (
-                            <option key={mod} value={mod} className="bg-[#1A1A1A] text-white font-normal pl-4">
+                            <option key={`${mod}|||${groupName}`} value={`${mod}|||${groupName}`} className="bg-[#1A1A1A] text-white font-normal pl-4">
                               {mod}
                             </option>
                           ))}
