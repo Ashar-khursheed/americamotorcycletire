@@ -399,7 +399,14 @@ class ProductController extends Controller
         $activeMakeName = $make ?: ($targetMakeCanonical ?? '');
 
         foreach ($cleanModels as $mod) {
-            $explicitSubCat = ProductFitment::where('model', $mod)->whereNotNull('sub_category')->where('sub_category', '!=', '')->value('sub_category');
+            $explicitSubCat = ProductFitment::where(function($q) use ($mod) {
+                $q->where('model', $mod)
+                  ->orWhere('model', 'like', "%{$mod}%");
+            })
+            ->whereNotNull('sub_category')
+            ->where('sub_category', '!=', '')
+            ->value('sub_category');
+
             $subCat = static::getModelSubCategory($activeMakeName, $mod, $explicitSubCat);
             if (!isset($groupedModelsMap[$subCat])) {
                 $groupedModelsMap[$subCat] = [];
