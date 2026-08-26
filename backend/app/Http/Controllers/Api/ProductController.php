@@ -359,9 +359,32 @@ class ProductController extends Controller
                     }
 
                     $finalModelName = $modelWithoutMake ?: $trimmed;
-                    // Clean trailing parens or weird chars
-                    $finalModelName = rtrim($finalModelName, ')');
+                    $finalModelName = ltrim(rtrim($finalModelName, ')'), '(');
                     $finalModelName = trim($finalModelName);
+
+                    $modelCleanMap = [
+                        'sportster' => 'Sportster',
+                        'dyna fat bo' => 'Dyna Fat Bob',
+                        'dyna street' => 'Dyna Street Bob',
+                        'dyna super' => 'Dyna Super Glide',
+                        'dyna switch' => 'Dyna Switchback',
+                        'softail del' => 'Softail Deluxe',
+                        'softail deu' => 'Softail Deuce',
+                        'softail fa' => 'Softail Fat Boy',
+                        'softail fat' => 'Softail Fat Boy',
+                        'softail her' => 'Softail Heritage',
+                        'softail nig' => 'Softail Night Train',
+                        'touring ele' => 'Electra Glide',
+                        'touring roa' => 'Road Glide',
+                        'touring str' => 'Street Glide',
+                        'fxfxr' => 'FX / FXR',
+                        'v rod' => 'V-Rod',
+                    ];
+
+                    $finalModelLower = strtolower($finalModelName);
+                    if (isset($modelCleanMap[$finalModelLower])) {
+                        $finalModelName = $modelCleanMap[$finalModelLower];
+                    }
 
                     if ($finalModelName && !in_array(strtolower($finalModelName), array_map('strtolower', $cleanModels))) {
                         $cleanModels[] = $finalModelName;
