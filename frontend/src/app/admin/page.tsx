@@ -2071,20 +2071,6 @@ export default function AdminDashboardPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Model</label>
-                            <input
-                              type="text"
-                              placeholder="Model (FLHT)"
-                              value={fitItem.model || ''}
-                              onChange={(e) => {
-                                const updated = [...(newProd.fitments || [])];
-                                updated[fIdx].model = e.target.value;
-                                setNewProd({ ...newProd, fitments: updated });
-                              }}
-                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
-                            />
-                          </div>
-                          <div>
                             <label className="text-[10px] font-bold uppercase text-[#BF8647] block mb-1">Sub-Category</label>
                             <input
                               type="text"
@@ -2096,6 +2082,20 @@ export default function AdminDashboardPage() {
                                 setNewProd({ ...newProd, fitments: updated });
                               }}
                               className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#BF8647]/40 text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Model</label>
+                            <input
+                              type="text"
+                              placeholder="Model (FLHT)"
+                              value={fitItem.model || ''}
+                              onChange={(e) => {
+                                const updated = [...(newProd.fitments || [])];
+                                updated[fIdx].model = e.target.value;
+                                setNewProd({ ...newProd, fitments: updated });
+                              }}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                           <div>
@@ -2772,20 +2772,6 @@ export default function AdminDashboardPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Model</label>
-                            <input
-                              type="text"
-                              placeholder="Model (FLHT)"
-                              value={fitItem.model || ''}
-                              onChange={(e) => {
-                                const updated = [...(editingProduct.fitments || [])];
-                                updated[fIdx].model = e.target.value;
-                                setEditingProduct({ ...editingProduct, fitments: updated });
-                              }}
-                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
-                            />
-                          </div>
-                          <div>
                             <label className="text-[10px] font-bold uppercase text-[#BF8647] block mb-1">Sub-Category</label>
                             <input
                               type="text"
@@ -2797,6 +2783,20 @@ export default function AdminDashboardPage() {
                                 setEditingProduct({ ...editingProduct, fitments: updated });
                               }}
                               className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#BF8647]/40 text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-400 block mb-1">Model</label>
+                            <input
+                              type="text"
+                              placeholder="Model (FLHT)"
+                              value={fitItem.model || ''}
+                              onChange={(e) => {
+                                const updated = [...(editingProduct.fitments || [])];
+                                updated[fIdx].model = e.target.value;
+                                setEditingProduct({ ...editingProduct, fitments: updated });
+                              }}
+                              className={`w-full rounded px-2.5 py-1.5 text-xs font-semibold ${isDarkMode ? 'bg-[#101010] border border-[#333] text-white' : 'bg-white border border-gray-300 text-gray-900'}`}
                             />
                           </div>
                           <div>
