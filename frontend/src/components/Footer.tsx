@@ -65,7 +65,7 @@ export function Footer() {
                 <Link href="/about" className="hover:text-[#BF8647] transition-colors">About Us</Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-[#BF8647] transition-colors">Contact</Link>
+                <Link href="/contact" className="hover:text-[#BF8647] transition-colors">Book Now</Link>
               </li>
               <li>
                 <Link href="/orders" className="hover:text-[#BF8647] transition-colors">Order Lookup</Link>
