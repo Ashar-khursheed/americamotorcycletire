@@ -164,8 +164,9 @@ export function HeroBanner() {
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-white uppercase mb-4 leading-tight">
-              MOTORCYCLE <br />
-              <span className="text-[#BF8647]">TIRES & PARTS</span>
+              BMG is NOT just #1 Motorcycle Shop
+               <br />
+              <span className="text-[#BF8647]">We are a 1-STOP <br /> Shop</span>
             </h1>
 
             <p className="text-gray-300 text-sm leading-relaxed mb-8 max-w-xl">
