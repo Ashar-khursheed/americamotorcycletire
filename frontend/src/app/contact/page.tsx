@@ -12,6 +12,8 @@ export default function ContactPage() {
     name: '',
     email: '',
     phone: '',
+    date: '',
+    time: '',
     message: '',
   });
 
@@ -29,7 +31,7 @@ export default function ContactPage() {
       const res = await api.post('/contact', formData);
       if (res.data?.status === 'success') {
         setSuccessMsg(res.data.message || 'Your service inquiry has been submitted! We will contact you shortly.');
-        setFormData({ name: '', email: '', phone: '', message: '' });
+        setFormData({ name: '', email: '', phone: '', date: '', time: '', message: '' });
       }
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Failed to submit inquiry. Please call us directly at 408-591-8484.');
@@ -97,8 +99,8 @@ export default function ContactPage() {
                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block">
                     VOICE LINK
                   </span>
-                  <a
-                    href="tel:408-591-8484"
+
+                  <a href="tel:408-591-8484"
                     className="text-xl sm:text-2xl font-black uppercase text-white font-heading tracking-wider hover:text-[#BF8647] transition-colors block"
                   >
                     408-591-8484
@@ -110,8 +112,8 @@ export default function ContactPage() {
                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block">
                     DATA LINK
                   </span>
-                  <a
-                    href="mailto:tennis2016@yahoo.com"
+
+                  <a href="mailto:tennis2016@yahoo.com"
                     className="text-xl sm:text-2xl font-black text-white font-heading tracking-wider hover:text-[#BF8647] transition-colors block"
                   >
                     tennis2016@yahoo.com
@@ -121,22 +123,22 @@ export default function ContactPage() {
 
               {/* Social Links */}
               <div className="flex items-center gap-3 pt-4">
-                <a
-                  href="#"
+
+                <a href="#"
                   className="w-10 h-10 rounded-full bg-[#141414] border border-[#262626] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#BF8647] hover:bg-[#BF8647]/10 transition-all"
                   aria-label="Facebook"
                 >
                   <Facebook className="w-4 h-4" />
                 </a>
-                <a
-                  href="#"
+
+                <a href="#"
                   className="w-10 h-10 rounded-full bg-[#141414] border border-[#262626] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#BF8647] hover:bg-[#BF8647]/10 transition-all"
                   aria-label="Instagram"
                 >
                   <Instagram className="w-4 h-4" />
                 </a>
-                <a
-                  href="#"
+
+                <a href="#"
                   className="w-10 h-10 rounded-full bg-[#141414] border border-[#262626] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#BF8647] hover:bg-[#BF8647]/10 transition-all font-bold text-xs"
                   aria-label="TikTok"
                 >
@@ -208,6 +210,33 @@ export default function ContactPage() {
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full bg-[#121212] border border-[#262626] rounded-lg px-4 py-3.5 text-white font-medium text-sm focus:outline-none focus:border-[#BF8647] transition-colors"
                     />
+                  </div>
+
+                  {/* Date & Time Inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase text-gray-400 tracking-wider">
+                        Preferred Date
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        className="w-full bg-[#121212] border border-[#262626] rounded-lg px-4 py-3.5 text-white font-medium text-sm focus:outline-none focus:border-[#BF8647] transition-colors [color-scheme:dark]"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase text-gray-400 tracking-wider">
+                        Preferred Time
+                      </label>
+                      <input
+                        type="time"
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        className="w-full bg-[#121212] border border-[#262626] rounded-lg px-4 py-3.5 text-white font-medium text-sm focus:outline-none focus:border-[#BF8647] transition-colors [color-scheme:dark]"
+                      />
+                    </div>
                   </div>
 
                   {/* Message Input */}

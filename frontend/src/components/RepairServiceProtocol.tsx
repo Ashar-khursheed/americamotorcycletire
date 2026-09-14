@@ -1,71 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import React from 'react';
 
 export function RepairServiceProtocol() {
-  const [openIndex, setOpenIndex] = useState<number>(0);
-
   const services = [
-    {
-      title: 'Tires',
-      description: 'Precision mounting and digital wheel balancing to eliminate vibrations and ensure maximum tire lifespan on road or track.',
-    },
-    {
-      title: 'Service',
-      description: 'Complete tune-ups covering oil change, filter replacement, and multi-point inspection to keep your bike running at peak condition.',
-    },
-    {
-      title: 'Brakes',
-      description: 'Full brake pad and rotor replacement with fluid bleeding to ensure sharp, reliable stopping power in every ride.',
-    },
-    {
-      title: 'Clutch',
-      description: 'Clutch plate inspection, replacement, and cable/hydraulic adjustment for smooth, responsive gear engagement.',
-    },
-    {
-      title: 'Coolant Flush',
-      description: 'Complete radiator and coolant system flush to prevent overheating and protect your engine year-round.',
-    },
-    {
-      title: 'Carburetor Rebuild',
-      description: 'Full carburetor teardown, cleaning, and rejetting to restore smooth throttle response and fuel efficiency.',
-    },
-    {
-      title: 'Chain & Sprocket Replacement',
-      description: 'Heavy-duty chain and sprocket replacement with laser alignment for smooth, efficient power delivery.',
-    },
-    {
-      title: 'Electrical Repair',
-      description: 'Diagnosis and repair of wiring, battery, ignition, and charging system issues to keep your bike reliably powered.',
-    },
-    {
-      title: 'Front Fork Rebuild',
-      description: 'Fork seal replacement and oil rebuild to restore proper suspension damping and a smoother ride.',
-    },
-    {
-      title: 'Transmission Rebuild',
-      description: 'Complete gearbox inspection and rebuild to fix slipping, grinding, or hard-shifting issues.',
-    },
-    {
-      title: 'Handlebars',
-      description: 'Handlebar replacement, repositioning, and grip installation tailored to your riding comfort and style.',
-    },
-    {
-      title: 'Audio Installation',
-      description: 'Custom motorcycle audio system installation with weatherproof speakers wired cleanly into your bike.',
-    },
-    {
-      title: 'Headlight & Tail Light Installation',
-      description: 'Upgraded headlight and tail light installation for improved visibility and a customized look.',
-    },
-    {
-      title: 'CUSTOM INSTALLATIONS',
-      description: 'We also do custom installations on any bike.',
-    },
+    { title: 'Tires' },
+    { title: 'Service' },
+    { title: 'Brakes' },
+    { title: 'Clutch' },
+    { title: 'Coolant Flush' },
+    { title: 'Carburetor Rebuild' },
+    { title: 'Chain & Sprocket Replacement' },
+    { title: 'Electrical Repair' },
+    { title: 'Front Fork Rebuild' },
+    { title: 'Transmission Rebuild' },
+    { title: 'Handlebars' },
+    { title: 'Audio Installation' },
+    { title: 'Headlight & Tail Light Installation' },
+    { title: 'CUSTOM INSTALLATIONS' },
   ];
 
-  
   return (
     <section className="bg-[#B87B35] text-black py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -85,33 +39,16 @@ export function RepairServiceProtocol() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
-            {/* Left: Accordion in 2 columns */}
+            {/* Left: Static list in 2 columns */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
               {services.map((item, idx) => (
                 <div
                   key={idx}
-                  className="border-b border-black/20 pb-1 h-fit"
+                  className="border-b border-black/20 py-3"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setOpenIndex(openIndex === idx ? -1 : idx)}
-                    className="w-full flex items-center justify-between text-left font-extrabold text-sm sm:text-base uppercase tracking-wider text-black py-3 hover:opacity-80 transition-opacity"
-                  >
-                    <span>{item.title}</span>
-                    <ChevronDown
-                      className={`w-5 h-5 text-black transition-transform duration-300 flex-shrink-0 ml-2 ${openIndex === idx ? 'rotate-180' : 'rotate-0'
-                        }`}
-                    />
-                  </button>
-
-                  <div
-                    className={`grid transition-all duration-300 ease-in-out ${openIndex === idx ? 'grid-rows-[1fr] opacity-100 pb-3' : 'grid-rows-[0fr] opacity-0'
-                      }`}
-                  >
-                    <div className="overflow-hidden text-black/90 text-xs sm:text-sm font-medium leading-relaxed">
-                      {item.description}
-                    </div>
-                  </div>
+                  <span className="font-extrabold text-sm sm:text-base uppercase tracking-wider text-black">
+                    {item.title}
+                  </span>
                 </div>
               ))}
             </div>
