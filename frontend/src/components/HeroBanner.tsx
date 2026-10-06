@@ -354,23 +354,38 @@ export function HeroBanner() {
                         {selectedModel.toUpperCase()}
                       </option>
                     )}
-                    {Object.keys(groupedModels).length > 0 ? (
-                      Object.entries(groupedModels).map(([groupName, groupModels]) => (
-                        <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">
-                          {groupModels.map((mod) => (
-                            <option key={`${mod}|||${groupName}`} value={`${mod}|||${groupName}`} className="bg-[#1A1A1A] text-white font-normal pl-4">
-                              {mod}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))
-                    ) : (
-                      models.map((mod) => (
+                    {(() => {
+                      const makeLower = (selectedMake || '').toLowerCase();
+                      const isGroupedMake = makeLower.includes('harley') || makeLower.includes('can-am') || makeLower.includes('canam') || makeLower.includes('polaris');
+
+                      if (isGroupedMake && Object.keys(groupedModels).length > 0) {
+                        const validGroups = Object.entries(groupedModels).filter(([groupName]) => {
+                          const gLower = groupName.toLowerCase();
+                          if (makeLower.includes('harley')) return gLower.includes('harley');
+                          if (makeLower.includes('polaris')) return gLower.includes('polaris');
+                          if (makeLower.includes('can-am') || makeLower.includes('canam')) return gLower.includes('can-am') || gLower.includes('canam');
+                          return true;
+                        });
+
+                        if (validGroups.length > 0) {
+                          return validGroups.map(([groupName, groupModels]) => (
+                            <optgroup key={groupName} label={groupName} className="bg-[#1A1A1A] font-bold text-[#BF8647]">
+                              {groupModels.map((mod) => (
+                                <option key={`${mod}|||${groupName}`} value={`${mod}|||${groupName}`} className="bg-[#1A1A1A] text-white font-normal pl-4">
+                                  {mod}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ));
+                        }
+                      }
+
+                      return models.map((mod) => (
                         <option key={mod} value={mod}>
                           {mod}
                         </option>
-                      ))
-                    )}
+                      ));
+                    })()}
                   </select>
                 </div>
 
