@@ -21,6 +21,43 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+const ALPHA_WIDTH_MAP: Record<string, number> = {
+  MH: 80, MJ: 90, MM: 100, MN: 110, MP: 110, MR: 120, MS: 130, MT: 130, MU: 140, MV: 150
+};
+
+export function sortTireSizesList(list: string[]): string[] {
+  return [...list].sort((a, b) => {
+    // 1. Width (Harley alpha code MH/MT/MU or standard numeric width 80-240)
+    let wA = 0, wB = 0;
+    const matchWA = a.match(/^([A-Z]{2})/i);
+    const matchWB = b.match(/^([A-Z]{2})/i);
+    if (matchWA && ALPHA_WIDTH_MAP[matchWA[1].toUpperCase()]) wA = ALPHA_WIDTH_MAP[matchWA[1].toUpperCase()];
+    else wA = Number(a.match(/^(\d{2,3})/)?.[1] || 0);
+
+    if (matchWB && ALPHA_WIDTH_MAP[matchWB[1].toUpperCase()]) wB = ALPHA_WIDTH_MAP[matchWB[1].toUpperCase()];
+    else wB = Number(b.match(/^(\d{2,3})/)?.[1] || 0);
+
+    if (wA !== wB && wA > 0 && wB > 0) return wA - wB;
+
+    // 2. Aspect ratio (50, 55, 60, 70, 80, 90)
+    const aspA = Number(a.match(/[/](\d{2})/)?.[1] || 0);
+    const aspB = Number(b.match(/[/](\d{2})/)?.[1] || 0);
+    if (aspA !== aspB && aspA > 0 && aspB > 0) return aspA - aspB;
+
+    // 3. Rim diameter (16, 17, 18, 19, 21)
+    const rimA = Number(a.match(/[-/BRZ](\d{2})\b/i)?.[1] || 0);
+    const rimB = Number(b.match(/[-/BRZ](\d{2})\b/i)?.[1] || 0);
+    if (rimA !== rimB && rimA > 0 && rimB > 0) return rimA - rimB;
+
+    // 4. Load index (e.g. 65 before 72 before 74 before 77 before 81)
+    const loadA = Number(a.match(/\b(\d{2,3})[A-Z]/)?.[1] || 0);
+    const loadB = Number(b.match(/\b(\d{2,3})[A-Z]/)?.[1] || 0);
+    if (loadA !== loadB && loadA > 0 && loadB > 0) return loadA - loadB;
+
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  });
+}
+
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -167,8 +204,23 @@ export default function ProductDetailPage() {
   const calculateCalculatedUnitPrice = () => {
     let baseP = selectedVariant ? Number(selectedVariant.price) : 0;
     if (!baseP || isNaN(baseP)) {
-      const rawPrice = product?.price;
-      baseP = typeof rawPrice === 'number' ? rawPrice : parseFloat(String(rawPrice || '249.95').replace(/[^0-9.]/g, '')) || 249.95;
+      const selectedLoc = Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('location') || k.toLowerCase().includes('position'))?.[1]?.toLowerCase() || '';
+      if (selectedLoc && Array.isArray(product?.variants) && product.variants.length > 0) {
+        const matchingLocVariants = product.variants.filter((v: any) => {
+          const vPos = (v.position || '').toLowerCase();
+          return vPos === selectedLoc || selectedLoc.includes(vPos) || vPos.includes(selectedLoc);
+        });
+        if (matchingLocVariants.length > 0) {
+          const prices = matchingLocVariants.map((v: any) => Number(v.price)).filter((p: number) => !isNaN(p) && p > 0);
+          if (prices.length > 0) {
+            baseP = Math.min(...prices);
+          }
+        }
+      }
+      if (!baseP || isNaN(baseP)) {
+        const rawPrice = product?.price;
+        baseP = typeof rawPrice === 'number' ? rawPrice : parseFloat(String(rawPrice || '249.95').replace(/[^0-9.]/g, '')) || 249.95;
+      }
     }
     const addOnP = getFormattedGlobalSelections().reduce((sum, opt) => sum + opt.price, 0);
     return baseP + addOnP;
@@ -233,7 +285,7 @@ export default function ProductDetailPage() {
       const selectedLoc = Object.entries(updatedAttrs).find(([k]) => k.toLowerCase().includes('location') || k.toLowerCase().includes('position'))?.[1]?.toLowerCase() || '';
       const selectedSize = Object.entries(updatedAttrs).find(([k]) => k.toLowerCase().includes('size'))?.[1]?.toLowerCase() || '';
 
-      if (!selectedLoc && !selectedSize) {
+      if (!selectedSize) {
         setSelectedVariant(null);
       } else {
         const matched = product.variants.find((v: any) => {
@@ -241,7 +293,7 @@ export default function ProductDetailPage() {
           const vSize = (v.tire_size || v.name || '').toLowerCase();
 
           const matchLoc = !selectedLoc || vPos === selectedLoc || selectedLoc.includes(vPos) || vPos.includes(selectedLoc);
-          const matchSize = !selectedSize || vSize === selectedSize || selectedSize.includes(vSize) || vSize.includes(selectedSize);
+          const matchSize = vSize === selectedSize || selectedSize.includes(vSize) || vSize.includes(selectedSize);
 
           return matchLoc && matchSize;
         });
@@ -250,10 +302,8 @@ export default function ProductDetailPage() {
           setSelectedVariant(matched);
         } else {
           const partialMatched = product.variants.find((v: any) => {
-            const vPos = (v.position || '').toLowerCase();
             const vSize = (v.tire_size || v.name || '').toLowerCase();
-            return (selectedSize && (vSize === selectedSize || selectedSize.includes(vSize))) ||
-                   (selectedLoc && (vPos === selectedLoc || selectedLoc.includes(vPos)));
+            return vSize === selectedSize || selectedSize.includes(vSize) || vSize.includes(selectedSize);
           });
           setSelectedVariant(partialMatched || null);
         }
@@ -483,11 +533,41 @@ export default function ProductDetailPage() {
                       const rawCompare = product.compare_at_price;
                       const parsedCompare = rawCompare ? (typeof rawCompare === 'number' ? rawCompare : parseFloat(String(rawCompare).replace(/[^0-9.]/g, '')) || null) : null;
 
+                      const selectedLoc = Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('location') || k.toLowerCase().includes('position'))?.[1]?.toLowerCase() || '';
+                      const selectedSize = Object.entries(selectedAttributes).find(([k]) => k.toLowerCase().includes('size'))?.[1]?.toLowerCase() || '';
+
+                      let priceDisplay = `$${calculatedPrice.toFixed(2)}`;
+                      let priceNote = '';
+
+                      if (selectedLoc && !selectedSize && Array.isArray(product.variants) && product.variants.length > 0) {
+                        const locVars = product.variants.filter((v: any) => {
+                          const vPos = (v.position || '').toLowerCase();
+                          return vPos === selectedLoc || selectedLoc.includes(vPos) || vPos.includes(selectedLoc);
+                        });
+                        const locPrices = locVars.map((v: any) => Number(v.price)).filter((p: number) => !isNaN(p) && p > 0);
+                        if (locPrices.length > 0) {
+                          const minP = Math.min(...locPrices);
+                          const maxP = Math.max(...locPrices);
+                          if (minP !== maxP) {
+                            priceDisplay = `$${minP.toFixed(2)} – $${maxP.toFixed(2)}`;
+                            priceNote = `${selectedLoc.toUpperCase()} TIRE RANGE`;
+                          } else {
+                            priceDisplay = `$${minP.toFixed(2)}`;
+                            priceNote = `${selectedLoc.toUpperCase()} TIRE`;
+                          }
+                        }
+                      }
+
                       return (
                         <div className="bg-[#181818] border border-[#262626] p-3.5 sm:p-5 rounded-xl mb-5 sm:mb-6 flex flex-wrap items-baseline gap-2.5 sm:gap-4 animate-scale-in">
                           <span className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#BF8647]">
-                            ${calculatedPrice.toFixed(2)}
+                            {priceDisplay}
                           </span>
+                          {priceNote && (
+                            <span className="text-xs bg-[#BF8647]/10 text-[#BF8647] border border-[#BF8647]/30 px-2.5 py-1 rounded font-bold uppercase tracking-wide">
+                              {priceNote}
+                            </span>
+                          )}
                           {parsedCompare && parsedCompare > basePrice && (
                             <>
                               <span className="text-base sm:text-lg text-gray-500 line-through">
@@ -757,22 +837,31 @@ export default function ProductDetailPage() {
 
                             let optsList = attr.options;
 
-                            // Filter sizes dynamically based on selected Wheel Location
-                            if (isSizeAttr(attrName) && selectedLocationVal && Array.isArray(product.variants)) {
-                              const filteredSizes: string[] = Array.from(
-                                new Set(
-                                  product.variants
-                                    .filter((v: any) => {
+                            // Filter sizes dynamically based on selected Wheel Location & sort in sequence
+                            if (isSizeAttr(attrName)) {
+                              if (Array.isArray(product.variants) && product.variants.length > 0) {
+                                const matchingVariants = selectedLocationVal
+                                  ? product.variants.filter((v: any) => {
                                       const vPos = (v.position || '').toLowerCase();
                                       const locVal = selectedLocationVal.toLowerCase();
                                       return vPos === locVal || locVal.includes(vPos) || vPos.includes(locVal);
                                     })
-                                    .map((v: any) => (v.tire_size || v.name || '').trim())
-                                    .filter(Boolean)
-                                )
-                              );
-                              if (filteredSizes.length > 0) {
-                                optsList = filteredSizes;
+                                  : product.variants;
+
+                                const filteredSizes: string[] = Array.from(
+                                  new Set(
+                                    matchingVariants
+                                      .map((v: any) => (v.tire_size || v.name || '').trim())
+                                      .filter(Boolean)
+                                  )
+                                );
+                                if (filteredSizes.length > 0) {
+                                  optsList = sortTireSizesList(filteredSizes);
+                                } else {
+                                  optsList = sortTireSizesList(attr.options);
+                                }
+                              } else {
+                                optsList = sortTireSizesList(attr.options);
                               }
                             }
 
@@ -801,11 +890,31 @@ export default function ProductDetailPage() {
                                       {isDisabled ? `SELECT WHEEL LOCATION FIRST` : `SELECT ${attrName.toUpperCase()}`}
                                     </option>
                                     {!isDisabled &&
-                                      optsList.map((optVal: string, oIdx: number) => (
-                                        <option key={oIdx} value={optVal} className="bg-[#121212] text-white">
-                                          {optVal}
-                                        </option>
-                                      ))}
+                                      optsList.map((optVal: string, oIdx: number) => {
+                                        let priceSuffix = '';
+                                        if (isSizeAttr(attrName) && Array.isArray(product.variants)) {
+                                          const matchingV = product.variants.find((v: any) => {
+                                            const vSize = (v.tire_size || v.name || '').trim().toLowerCase();
+                                            const oVal = optVal.trim().toLowerCase();
+                                            const matchSize = vSize === oVal || vSize.includes(oVal) || oVal.includes(vSize);
+                                            if (!matchSize) return false;
+                                            if (!selectedLocationVal) return true;
+                                            const vPos = (v.position || '').toLowerCase();
+                                            const locVal = selectedLocationVal.toLowerCase();
+                                            return vPos === locVal || locVal.includes(vPos) || vPos.includes(locVal);
+                                          });
+                                          const p = matchingV ? Number(matchingV.price) : 0;
+                                          if (p && !isNaN(p) && p > 0) {
+                                            priceSuffix = ` — $${p.toFixed(2)}`;
+                                          }
+                                        }
+
+                                        return (
+                                          <option key={oIdx} value={optVal} className="bg-[#121212] text-white">
+                                            {optVal}{priceSuffix}
+                                          </option>
+                                        );
+                                      })}
                                   </select>
                                   <div className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 ${isDisabled ? 'text-gray-600' : 'text-gray-400'}`}>
                                     <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
