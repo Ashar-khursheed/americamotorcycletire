@@ -145,6 +145,26 @@ label {
   animation: pulseGold 2.5s infinite;
 }
 
+/* Infinite Smooth Marquee Animation */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
 /* Print Media Styles for Professional Invoices */
 @media print {
   @page {

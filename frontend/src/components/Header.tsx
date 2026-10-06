@@ -17,7 +17,7 @@ export function Header() {
   const [settings, setSettings] = useState<any>({
     site_name: 'BMG CYCLES',
     contact_phone: '408-591-8484',
-    announcement_bar: 'FREE SHIPPING ON ORDERS OVER $99 | REPAIR & SERVICE SPECIALISTS',
+    announcement_bar: 'SPECIAL PROMO: FREE MOUNT & BALANCED — BUY FROM US! | CALL 408-591-8484',
   });
 
   const totalCount = useCartStore((state) => state.getTotalCount());
@@ -35,9 +35,27 @@ export function Header() {
 
   return (
     <>
-      {/* Announcement Bar */}
-      <div suppressHydrationWarning className="bg-[#BF8647] text-black text-xs font-bold uppercase tracking-wider py-1.5 px-4 text-center font-heading">
-        {settings.announcement_bar || 'FREE SHIPPING ON ORDERS OVER $99 | REPAIR & SERVICE SPECIALISTS'}
+      {/* Announcement Bar (Infinite Continuous Marquee) */}
+      <div suppressHydrationWarning className="bg-[#BF8647] text-black text-xs font-black uppercase tracking-wider py-1.5 overflow-hidden select-none border-b border-black/10 font-heading">
+        <div className="flex w-max animate-marquee gap-8 whitespace-nowrap">
+          {[1, 2].map((loopIdx) => (
+            <div key={loopIdx} className="flex items-center gap-8 shrink-0">
+              <span className="flex items-center gap-2">
+                <span className="bg-black text-[#BF8647] px-2 py-0.5 rounded text-[10px] font-black tracking-wider">
+                  ★ SPECIAL PROMO
+                </span>
+                <span className="tracking-wide">FREE MOUNT & BALANCED — BUY FROM US!</span>
+              </span>
+              <span className="opacity-40">•</span>
+              <span className="tracking-wide">FREE SHIPPING ON ORDERS OVER $99</span>
+              <span className="opacity-40">•</span>
+              <span className="tracking-wide">REPAIR & SERVICE SPECIALISTS • FREMONT CA</span>
+              <span className="opacity-40">•</span>
+              <span className="tracking-wide">CALL: 408-591-8484</span>
+              <span className="opacity-40">•</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Main Header */}

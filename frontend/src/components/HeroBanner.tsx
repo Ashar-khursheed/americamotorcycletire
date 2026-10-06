@@ -156,10 +156,24 @@ export function HeroBanner() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column Text */}
           <div className="lg:col-span-7">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <span className="w-8 h-0.5 bg-[#BF8647]" />
               <span className="text-[#BF8647] text-xs font-semibold tracking-widest uppercase">
                 REPAIR & SERVICE SPECIALISTS
+              </span>
+            </div>
+
+            {/* Special Promo: Free Mount & Balanced Buy from us */}
+            <div className="inline-flex flex-wrap items-center gap-2.5 px-4 py-2 rounded-lg bg-[#BF8647]/15 border border-[#BF8647]/60 text-white mb-5 backdrop-blur-md shadow-lg shadow-[#BF8647]/10">
+              <span className="flex h-2.5 w-2.5 relative shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#BF8647] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#BF8647]"></span>
+              </span>
+              <span className="text-[11px] sm:text-xs font-black tracking-wider uppercase text-[#BF8647]">
+                ★ SPECIAL PROMO:
+              </span>
+              <span className="text-[11px] sm:text-xs font-extrabold tracking-wide uppercase text-white">
+                FREE MOUNT & BALANCED — BUY FROM US!
               </span>
             </div>
 

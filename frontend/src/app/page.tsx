@@ -1,6 +1,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { HeroBanner } from '@/components/HeroBanner';
+import { SpecialPromoStrip } from '@/components/SpecialPromoStrip';
 import { RepairServiceProtocol } from '@/components/RepairServiceProtocol';
 import { WhyChooseUs } from '@/components/WhyChooseUs';
 import { FeaturedTires } from '@/components/FeaturedTires';
@@ -26,6 +27,9 @@ export default function HomePage() {
 
       {/* 2. Hero Banner */}
       <HeroBanner />
+
+      {/* Special Promo Banner Strip */}
+      <SpecialPromoStrip />
 
       {/* 3. Section 2: Repair & Service Protocol */}
       <RepairServiceProtocol />

@@ -390,7 +390,8 @@ export default function AdminDashboardPage() {
       options: [
         { id: '1', label: 'No Installation', price_type: 'fixed', price: 0 },
         { id: '2', label: 'Sport Bike Installation', price_type: 'fixed', price: 80 },
-        { id: '3', label: 'Touring Model Installation', price_type: 'fixed', price: 115 },
+        { id: '3', label: 'Touring Model Installation (Front)', price_type: 'fixed', price: 105 },
+        { id: '4', label: 'Touring Model Installation (Rear)', price_type: 'fixed', price: 115 },
       ],
     },
   ];
